@@ -1,8 +1,11 @@
-# Human - Computer Interaction Assignment: ChefMate
+# Hệ thống ứng dụng công thức nấu ăn - ChefMate
 
-# I. FE (Client) - Mobile App
+# I. Client - Ứng dụng di động
 
-## 1. Func
+- Công nghệ: Kotlin với thư viện Jetpack Compose
+- Cơ sở dữ liệu: RoomDB
+
+## 1. Tính năng
 
 | User | Recipe | Interaction |
 | --- | --- | --- |
@@ -19,7 +22,7 @@
 |  | Lấy danh sách công thức Top Trending |  |
 |  | Lấy danh sách nguyên liệu sẵn có |  |
 
-## 2. DB
+## 2. Cơ sở dữ liệu
 
 - Bảng Recipes
 
