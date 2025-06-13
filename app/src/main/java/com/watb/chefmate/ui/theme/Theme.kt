@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -97,24 +99,30 @@ fun ChefMateTheme(
 }
 
 @Composable
-fun Header(text: String, icons: @Composable () -> Unit) {
+fun Header(
+    text: String,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxWidth()
             .height(60.dp)
             .background(brush = AppConstant.headerGradient)
-//            .safeDrawingPadding()
             .padding(16.dp),
     ) {
+        leadingIcon?.invoke()
         Text(
             text = text,
             color = Color(0xFFFFFFFF),
             fontSize = 24.sp,
             fontWeight = FontWeight.W700,
+            modifier = Modifier
+                .padding(start = if (leadingIcon != null) 8.dp else 0.dp)
         )
-        icons()
+        Spacer(modifier = Modifier.weight(1f))
+        trailingIcon?.invoke()
     }
 }
 
