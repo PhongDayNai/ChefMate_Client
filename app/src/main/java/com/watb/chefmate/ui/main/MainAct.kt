@@ -219,11 +219,6 @@ fun BottomNavigationBar(
         animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow),
         label = "Options background"
     )
-    val animateOptions by animateFloatAsState(
-        targetValue = if (!isShowOptions) 1f else 0f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow),
-        label = "Options"
-    )
 
     val items = listOf("Trang chủ", "Kho công thức", "Tài khoản")
     val icons = listOf(R.drawable.ic_home, R.drawable.ic_marker, R.drawable.ic_profile)
@@ -280,7 +275,7 @@ fun BottomNavigationBar(
             ),
             contentPadding = PaddingValues(0.dp),
             modifier = Modifier
-                .size((animateOptions * 48).dp)
+                .size(((1f - animateOptionsBackground) * 48).dp)
                 .constrainAs(optionsRef) {
                     bottom.linkTo(bottomBarRef.top, margin = 24.dp)
                     end.linkTo(parent.end, margin = 24.dp)
@@ -334,13 +329,14 @@ fun BottomNavigationBar(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
                                 .size(40.dp)
-                                .background(color = Color(0xFFFB923C), shape = CircleShape)
+                                .background(color = Color(0xFFFFFFFF), shape = CircleShape)
                         ) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_home),
+                                painter = painterResource(R.drawable.ic_add_recipe),
                                 contentDescription = "Add Recipe",
-                                tint = Color(0xFFFFFFFF),
+                                tint = Color.Unspecified,
                                 modifier = Modifier
+                                    .size(28.dp)
                             )
                         }
                     }
@@ -350,7 +346,7 @@ fun BottomNavigationBar(
                             .padding(top = 24.dp)
                     ) {
                         Text(
-                            text = "Lập danh sách mua ",
+                            text = "Lập danh sách\nmua sắm",
                             fontSize = 16.sp,
                             fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
                             color = Color(0xFFFFFFFF),
@@ -361,13 +357,14 @@ fun BottomNavigationBar(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
                                 .size(40.dp)
-                                .background(color = Color(0xFFFB923C), shape = CircleShape)
+                                .background(color = Color(0xFFFFFFFF), shape = CircleShape)
                         ) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_marker),
+                                painter = painterResource(R.drawable.ic_shopping),
                                 contentDescription = "Create Shopping List",
-                                tint = Color(0xFFFFFFFF),
+                                tint = Color.Unspecified,
                                 modifier = Modifier
+                                    .size(28.dp)
                             )
                         }
                     }
