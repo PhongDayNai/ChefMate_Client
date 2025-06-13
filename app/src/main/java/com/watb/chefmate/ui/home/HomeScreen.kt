@@ -1,8 +1,6 @@
 package com.watb.chefmate.ui.home
 
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -55,11 +53,6 @@ import com.watb.chefmate.ui.theme.SearchTextField
 fun HomeScreen(navController: NavController, recipes: List<Recipe> = emptyList()) {
     val scrollState = rememberScrollState()
     val showPopular = remember { derivedStateOf { scrollState.value == 0 } }
-    val animateShowPopular by animateDpAsState(
-        targetValue = if (showPopular.value) 230.dp else 0.dp,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow),
-        label = "Show popular"
-    )
 
     var searchValue by remember { mutableStateOf("") }
 
@@ -114,32 +107,35 @@ fun HomeScreen(navController: NavController, recipes: List<Recipe> = emptyList()
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(animateShowPopular)
+                .animateContentSize()
         ) {
-            for (index in 0..2) {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier
-                        .padding(top = 12.dp)
-                        .fillMaxWidth(0.85f)
-                ) {
-                    TopSearchItem(
-                        onClick = {},
-                        text = "Công thức đồ uống",
-                        image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
+            if (showPopular.value) {
+                for (index in 0..2) {
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier
-                            .padding(end = 16.dp)
-                            .weight(1f)
-                    )
-                    TopSearchItem(
-                        onClick = {},
-                        text = "Công thức Salad",
-                        image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
-                        modifier = Modifier
-                            .padding(start = 16.dp)
-                            .weight(1f)
-                    )
+                            .padding(top = 12.dp)
+                            .fillMaxWidth(0.85f)
+                    ) {
+                        TopSearchItem(
+                            onClick = {},
+                            text = "Công thức đồ uống",
+                            image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
+                            modifier = Modifier
+                                .padding(end = 16.dp)
+                                .weight(1f)
+                        )
+                        TopSearchItem(
+                            onClick = {},
+                            text = "Công thức Salad",
+                            image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
+                            modifier = Modifier
+                                .padding(start = 16.dp)
+                                .weight(1f)
+                        )
+                    }
                 }
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
         Text(
@@ -148,7 +144,7 @@ fun HomeScreen(navController: NavController, recipes: List<Recipe> = emptyList()
             fontSize = 18.sp,
             fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
             modifier = Modifier
-                .padding(top = 20.dp)
+                .padding(top = 10.dp)
                 .fillMaxWidth(0.9f)
         )
         Column(
