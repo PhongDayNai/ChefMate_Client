@@ -48,6 +48,7 @@ import com.watb.chefmate.data.CommentItem
 import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.helper.CommonHelper
 import com.watb.chefmate.ui.theme.Header
+import com.watb.chefmate.ui.theme.RecipeItem
 import com.watb.chefmate.ui.theme.SearchTextField
 
 @Composable
