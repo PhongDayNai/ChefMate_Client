@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,7 +21,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -100,7 +98,7 @@ fun ChefMateTheme(
 
 @Composable
 fun Header(
-    text: String,
+    text: String? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
 ) {
@@ -113,14 +111,16 @@ fun Header(
             .padding(16.dp),
     ) {
         leadingIcon?.invoke()
-        Text(
-            text = text,
-            color = Color(0xFFFFFFFF),
-            fontSize = 24.sp,
-            fontWeight = FontWeight.W700,
-            modifier = Modifier
-                .padding(start = if (leadingIcon != null) 8.dp else 0.dp)
-        )
+        text?.let {
+            Text(
+                text = text,
+                color = Color(0xFFFFFFFF),
+                fontSize = 24.sp,
+                fontWeight = FontWeight.W700,
+                modifier = Modifier
+                    .padding(start = if (leadingIcon != null) 8.dp else 0.dp)
+            )
+        }
         Spacer(modifier = Modifier.weight(1f))
         trailingIcon?.invoke()
     }
