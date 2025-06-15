@@ -166,7 +166,7 @@ fun RecipeCard(recipe: Recipes, onClick: () -> Unit) {
 
 @Preview(showBackground = true)
 @Composable
-fun RecipeListScreenPreview() {
+fun RecipeListScreensPreview() {
     // Để preview màn hình này, bạn cần cung cấp NavController giả lập
     // và có thể một ViewModel giả lập nếu ViewModel có logic phức tạp
     RecipeListScreen(navController = rememberNavController())

@@ -463,7 +463,7 @@ data class StepInput(
 
 @Preview
 @Composable
-fun AddRecipeScreenPreview() {
+fun AddRecipeScreensPreview() {
     val navController = rememberNavController()
     val viewModel: RecipeViewModel = viewModel(
         factory = RecipeViewModel.Factory(
