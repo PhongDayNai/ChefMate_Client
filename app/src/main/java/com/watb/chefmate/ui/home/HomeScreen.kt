@@ -1,5 +1,6 @@
 package com.watb.chefmate.ui.home
 
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -45,7 +46,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
 import com.watb.chefmate.data.CommentItem
 import com.watb.chefmate.data.Recipe
-import com.watb.chefmate.helper.UsuallyHelper
+import com.watb.chefmate.helper.CommonHelper
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.ui.theme.SearchTextField
 
@@ -95,7 +96,7 @@ fun HomeScreen(navController: NavController, recipes: List<Recipe> = emptyList()
                 .fillMaxWidth(0.9f)
         )
         Text(
-            text = "Phổ biến",
+            text = "Thể loại",
             color = Color(0xFF000000),
             fontSize = 18.sp,
             fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
@@ -109,8 +110,13 @@ fun HomeScreen(navController: NavController, recipes: List<Recipe> = emptyList()
                 .fillMaxWidth()
                 .animateContentSize()
         ) {
+            val imageLeft = listOf(R.drawable.img_drinks_recipes, R.drawable.img_sauce_recipes, R.drawable.img_soup_recipes)
+            val recipesTypeLeft = listOf("Công thức đồ uống", "Công thức nước chấm", "Công thức món súp")
+            val imageRight = listOf(R.drawable.img_salad_recipes, R.drawable.img_main_course_recipes, R.drawable.img_vegetarian_recipes)
+            val recipesTypeRight = listOf("Công thức salad", "Công thức món chính", "Công thức món chay")
+
             if (showPopular.value) {
-                for (index in 0..2) {
+                imageLeft.forEachIndexed { index, image ->
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier
@@ -119,16 +125,16 @@ fun HomeScreen(navController: NavController, recipes: List<Recipe> = emptyList()
                     ) {
                         TopSearchItem(
                             onClick = {},
-                            text = "Công thức đồ uống",
-                            image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
+                            text = recipesTypeLeft[index],
+                            image = image,
                             modifier = Modifier
                                 .padding(end = 16.dp)
                                 .weight(1f)
                         )
                         TopSearchItem(
                             onClick = {},
-                            text = "Công thức Salad",
-                            image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
+                            text = recipesTypeRight[index],
+                            image = imageRight[index],
                             modifier = Modifier
                                 .padding(start = 16.dp)
                                 .weight(1f)
@@ -162,7 +168,7 @@ fun HomeScreen(navController: NavController, recipes: List<Recipe> = emptyList()
 }
 
 @Composable
-fun TopSearchItem(onClick: () -> Unit, text: String, image: String, modifier: Modifier = Modifier) {
+fun TopSearchItem(onClick: () -> Unit, text: String, @DrawableRes image: Int, modifier: Modifier = Modifier) {
     Card(
         onClick = onClick,
         colors = CardDefaults.cardColors(
@@ -182,16 +188,17 @@ fun TopSearchItem(onClick: () -> Unit, text: String, image: String, modifier: Mo
             Text(
                 text = text,
                 color = Color(0xFF000000),
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                 fontWeight = FontWeight(400),
                 textAlign = TextAlign.Center,
+                maxLines = 2,
                 modifier = Modifier
                     .padding(horizontal = 6.dp)
                     .fillMaxWidth(0.6f)
             )
             Image(
-                painter = rememberAsyncImagePainter(image),
+                painter = painterResource(image),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -263,7 +270,7 @@ fun RecipeItem(
                             .size(16.dp)
                     )
                     Text(
-                        text = UsuallyHelper.parseNumber(recipe.likesQuantity),
+                        text = CommonHelper.parseNumber(recipe.likesQuantity),
                         color = Color(0xFF6B7280),
                         fontSize = 14.sp,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
@@ -280,7 +287,7 @@ fun RecipeItem(
                             .size(16.dp)
                     )
                     Text(
-                        text = UsuallyHelper.parseNumber(recipe.userViews),
+                        text = CommonHelper.parseNumber(recipe.userViews),
                         color = Color(0xFF6B7280),
                         fontSize = 14.sp,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
@@ -297,7 +304,7 @@ fun RecipeItem(
                             .size(16.dp)
                     )
                     Text(
-                        text = UsuallyHelper.parseNumber(recipe.comments.size),
+                        text = CommonHelper.parseNumber(recipe.comments.size),
                         color = Color(0xFF6B7280),
                         fontSize = 14.sp,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),

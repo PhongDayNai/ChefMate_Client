@@ -2,7 +2,7 @@ package com.watb.chefmate.helper
 
 import android.annotation.SuppressLint
 
-object UsuallyHelper {
+object CommonHelper {
     @SuppressLint("DefaultLocale")
     fun parseNumber(number: Int): String {
         return when {
