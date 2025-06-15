@@ -2,6 +2,7 @@ package com.watb.chefmate.ui.theme
 
 import android.annotation.SuppressLint
 import android.os.Build
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +41,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -47,8 +51,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
 import com.watb.chefmate.data.AppConstant
+import com.watb.chefmate.data.Recipe
+import com.watb.chefmate.helper.CommonHelper
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -198,6 +205,116 @@ fun SearchTextField(
                         isFocused.value = focusState.isFocused
                     }
             )
+        }
+    }
+}
+
+@Composable
+fun RecipeItem(
+    onClick: () -> Unit,
+    recipe: Recipe,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFFFFFFF)
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 8.dp
+        ),
+        modifier = modifier
+            .padding(top = 16.dp)
+            .fillMaxWidth(0.9f)
+    ) {
+        Column {
+            Image(
+                painter = rememberAsyncImagePainter(recipe.image),
+                contentDescription = recipe.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+            )
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = recipe.name,
+                    color = Color(0xFF000000),
+                    fontSize = 16.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                    fontWeight = FontWeight(700),
+                )
+                Text(
+                    text = recipe.author,
+                    color = Color(0xFFF97316),
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                    fontWeight = FontWeight(400),
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .background(color = Color(0xFFFFEDD5), RoundedCornerShape(4.dp))
+                        .padding(4.dp)
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_like),
+                        contentDescription = "Like",
+                        tint = Color(0xFFF97316),
+                        modifier = Modifier
+                            .size(16.dp)
+                    )
+                    Text(
+                        text = CommonHelper.parseNumber(recipe.likesQuantity),
+                        color = Color(0xFF6B7280),
+                        fontSize = 14.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                        fontWeight = FontWeight(400),
+                        modifier = Modifier
+                            .padding(start = 2.dp)
+                    )
+                    Icon(
+                        painter = painterResource(R.drawable.ic_view),
+                        contentDescription = "Like",
+                        tint = Color(0xFFF97316),
+                        modifier = Modifier
+                            .padding(start = 16.dp)
+                            .size(16.dp)
+                    )
+                    Text(
+                        text = CommonHelper.parseNumber(recipe.userViews),
+                        color = Color(0xFF6B7280),
+                        fontSize = 14.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                        fontWeight = FontWeight(400),
+                        modifier = Modifier
+                            .padding(start = 2.dp)
+                    )
+                    Icon(
+                        painter = painterResource(R.drawable.ic_comment),
+                        contentDescription = "Like",
+                        tint = Color(0xFFF97316),
+                        modifier = Modifier
+                            .padding(start = 16.dp)
+                            .size(16.dp)
+                    )
+                    Text(
+                        text = CommonHelper.parseNumber(recipe.comments.size),
+                        color = Color(0xFF6B7280),
+                        fontSize = 14.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                        fontWeight = FontWeight(400),
+                        modifier = Modifier
+                            .padding(start = 2.dp)
+                    )
+                }
+            }
         }
     }
 }
