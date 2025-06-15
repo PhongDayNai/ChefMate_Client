@@ -274,6 +274,10 @@ fun BottomNavigationBar(
                 containerColor = Color(0xFFF97316)
             ),
             contentPadding = PaddingValues(0.dp),
+            elevation = ButtonDefaults.elevatedButtonElevation(
+                defaultElevation = 4.dp,
+                pressedElevation = 8.dp
+            ),
             modifier = Modifier
                 .size(((1f - animateOptionsBackground) * 48).dp)
                 .constrainAs(optionsRef) {
