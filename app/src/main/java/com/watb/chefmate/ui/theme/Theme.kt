@@ -228,8 +228,13 @@ fun RecipeItem(
             .fillMaxWidth(0.9f)
     ) {
         Column {
+            val painter = if (recipe.image.isNotBlank()) {
+                rememberAsyncImagePainter(recipe.image)
+            } else {
+                painterResource(R.drawable.placeholder_image)
+            }
             Image(
-                painter = rememberAsyncImagePainter(recipe.image),
+                painter = painter,
                 contentDescription = recipe.name,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
