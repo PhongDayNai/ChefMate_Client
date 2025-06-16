@@ -17,7 +17,7 @@ data class Recipe(
 )
 
 data class IngredientItem(
-    val ingredientId: Int,
+    val ingredientId: Int? = null,
     val ingredientName: String,
     val weight: Int,
     val unit: String,
