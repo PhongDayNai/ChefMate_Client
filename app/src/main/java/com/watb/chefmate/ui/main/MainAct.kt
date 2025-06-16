@@ -1,5 +1,6 @@
 package com.watb.chefmate.ui.main
 
+import android.util.Log
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -28,6 +29,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +51,7 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
+import com.watb.chefmate.api.ApiClient
 import com.watb.chefmate.data.CommentItem
 import com.watb.chefmate.data.CookingStep
 import com.watb.chefmate.data.IngredientItem
@@ -69,117 +73,11 @@ fun MainAct(
         pageCount = { 3 }
     )
 
-    val recipes = listOf(
-        Recipe(
-            recipeId = 1,
-            image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
-            name = "Matcha Latte",
-            author = "Admin",
-            likesQuantity = 100,
-            viewCount = 1151,
-            ingredients = listOf(
-                IngredientItem(1, "Matcha", 5, "gram"),
-                IngredientItem(2, "Cream", 20, "ml"),
-                IngredientItem(3, "Milk", 100, "ml")
-            ),
-            cookingSteps = listOf(
-                CookingStep(1, "Cho Matcha vào ly"),
-                CookingStep(2, "Đổ Cream lên trên"),
-                CookingStep(3, "Thêm sữa và khuấy đều")
-            ),
-            cookingTime = "30 phút",
-            ration = 3,
-            isLiked = false,
-            comments = listOf(
-                CommentItem("User 1", "2024-06-15 10:20:00", "Nội dung bình luận 1"),
-                CommentItem("User 2", "2023-06-15 10:20:00", "Nội dung bình luận 2"),
-                CommentItem("User 3", "2023-06-15 10:20:00", "Nội dung bình luận 3"),
-                CommentItem("User 4", "2023-06-15 10:20:00", "Nội dung bình luận 4"),
-                CommentItem("User 5", "2023-06-15 10:20:00", "Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 "),
-                CommentItem("User 6", "2023-06-15 10:20:00", "Nội dung bình luận 6")
-            ),
-            createdAt = "2023-06-15 10:20:00"
-        ),
-        Recipe(
-            recipeId = 2,
-            image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
-            name = "Matcha Latte",
-            author = "Admin",
-            likesQuantity = 100,
-            viewCount = 1151,
-            ingredients = listOf(
-                IngredientItem(1, "Matcha", 5, "gram"),
-                IngredientItem(2, "Cream", 20, "ml"),
-                IngredientItem(3, "Milk", 100, "ml")
-            ),
-            cookingSteps = listOf(
-                CookingStep(1, "Cho Matcha vào ly"),
-                CookingStep(2, "Đổ Cream lên trên"),
-                CookingStep(3, "Thêm sữa và khuấy đều")
-            ),
-            cookingTime = "30 phút",
-            ration = 3,
-            isLiked = false,
-            comments = listOf(
-                CommentItem("User 1", "2024-06-15 10:20:00", "Nội dung bình luận 1"),
-                CommentItem("User 2", "2023-06-15 10:20:00", "Nội dung bình luận 2")
-            ),
-            createdAt = "2023-06-15 10:20:00"
-        ),
-        Recipe(
-            recipeId = 3,
-            image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
-            name = "Matcha Latte",
-            author = "Admin",
-            likesQuantity = 100,
-            viewCount = 1151,
-            ingredients = listOf(
-                IngredientItem(1, "Matcha", 5, "gram"),
-                IngredientItem(2, "Cream", 20, "ml"),
-                IngredientItem(3, "Milk", 100, "ml")
-            ),
-            cookingSteps = listOf(
-                CookingStep(1, "Cho Matcha vào ly"),
-                CookingStep(2, "Đổ Cream lên trên"),
-                CookingStep(3, "Thêm sữa và khuấy đều")
-            ),
-            cookingTime = "30 phút",
-            ration = 3,
-            isLiked = false,
-            comments = listOf(
-                CommentItem("User 1", "2024-06-15 10:20:00", "Nội dung bình luận 1"),
-                CommentItem("User 2", "2023-06-15 10:20:00", "Nội dung bình luận 2")
-            ),
-            createdAt = "2023-06-15 10:20:00"
-        ),
-        Recipe(
-            recipeId = 4,
-            image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
-            name = "Matcha Latte",
-            author = "Admin",
-            likesQuantity = 100,
-            viewCount = 1151,
-            ingredients = listOf(
-                IngredientItem(1, "Matcha", 5, "gram"),
-                IngredientItem(2, "Cream", 20, "ml"),
-                IngredientItem(3, "Milk", 100, "ml")
-            ),
-            cookingSteps = listOf(
-                CookingStep(1, "Cho Matcha vào ly"),
-                CookingStep(2, "Đổ Cream lên trên"),
-                CookingStep(3, "Thêm sữa và khuấy đều")
-            ),
-            cookingTime = "30 phút",
-            ration = 3,
-            isLiked = false,
-            comments = listOf(
-                CommentItem("User 1", "2024-05-13 19:00:00", "Nội dung bình luận 1"),
-                CommentItem("User 2", "2025-01-04 12:30:00", "Nội dung bình luận 2")
-            ),
-            createdAt = "2023-06-15 10:20:00"
-        )
-    )
+    val recipes by recipeViewModel.topTrending.collectAsState()
 
+    LaunchedEffect(Unit) {
+        recipeViewModel.getTopTrending()
+    }
 
     Box(
         contentAlignment = Alignment.Center,
