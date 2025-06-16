@@ -233,6 +233,7 @@ fun HomeScreenPreview() {
 
     val recipes = listOf(
         Recipe(
+            recipeId = 1,
             image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
             name = "Matcha Latte",
             author = "Admin",
@@ -257,6 +258,7 @@ fun HomeScreenPreview() {
             createdAt = Date().toString()
         ),
         Recipe(
+            recipeId = 2,
             image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
             name = "Matcha Latte",
             author = "Admin",

@@ -1,6 +1,7 @@
 package com.watb.chefmate.data
 
 data class Recipe(
+    val recipeId: Int,
     val image: String,
     val name: String,
     val author: String,

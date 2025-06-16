@@ -46,16 +46,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
 import com.watb.chefmate.data.CommentItem
 import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.ui.home.HomeScreen
+import com.watb.chefmate.ui.recipe.RecipeListScreen
+import com.watb.chefmate.viewmodel.RecipeViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun MainAct(
     navController: NavController,
-    onRecipeClick: (Recipe) -> Unit
+    onRecipeClick: (Recipe) -> Unit,
+    recipeViewModel: RecipeViewModel
 ) {
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(
@@ -65,6 +69,7 @@ fun MainAct(
 
     val recipes = listOf(
         Recipe(
+            recipeId = 1,
             image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
             name = "Matcha Latte",
             author = "Admin",
@@ -109,6 +114,7 @@ fun MainAct(
             createdAt = "2023-06-15 10:20:00"
         ),
         Recipe(
+            recipeId = 2,
             image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
             name = "Matcha Latte",
             author = "Admin",
@@ -133,6 +139,7 @@ fun MainAct(
             createdAt = "2023-06-15 10:20:00"
         ),
         Recipe(
+            recipeId = 3,
             image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
             name = "Matcha Latte",
             author = "Admin",
@@ -157,6 +164,7 @@ fun MainAct(
             createdAt = "2023-06-15 10:20:00"
         ),
         Recipe(
+            recipeId = 4,
             image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
             name = "Matcha Latte",
             author = "Admin",
@@ -190,7 +198,8 @@ fun MainAct(
         Scaffold(
             bottomBar = {
                 BottomNavigationBar(
-                    selectedIndex = pagerState.currentPage
+                    selectedIndex = pagerState.currentPage,
+                    navController = navController
                 ) {
                     coroutineScope.launch {
                         pagerState.animateScrollToPage(it)
@@ -215,7 +224,7 @@ fun MainAct(
                             navController = navController,
                             recipes = recipes
                         )
-//                        1 -> RecipeScreen()
+                        1 -> RecipeListScreen(navController, recipeViewModel)
 //                        2 -> ProfileScreen()
                     }
                 }
@@ -226,6 +235,7 @@ fun MainAct(
 
 @Composable
 fun BottomNavigationBar(
+    navController: NavController,
     selectedIndex: Int,
     modifier: Modifier = Modifier,
     onTabSelected: (Int) -> Unit,
@@ -337,6 +347,10 @@ fun BottomNavigationBar(
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clickable {
+                                navController.navigate("addRecipe")
+                            }
                     ) {
                         Text(
                             text = "Thêm công thức",
@@ -424,6 +438,7 @@ fun Preview() {
             .background(Color(0xFFFFFFFF))
     ) {
         BottomNavigationBar(
+            navController = rememberNavController(),
             selectedIndex = 0,
             onTabSelected = {},
             modifier = Modifier

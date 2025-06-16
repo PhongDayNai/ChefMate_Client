@@ -701,6 +701,7 @@ fun RecipeViewPreview() {
     val navController = rememberNavController()
 
     val recipe = Recipe(
+        recipeId = 0,
         image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
         name = "Phở bò Hà Nội",
         author = "duonghung99",
