@@ -5,11 +5,14 @@ data class Recipe(
     val name: String,
     val author: String,
     val likesQuantity: Int,
-    val userViews: Int,
+    val viewCount: Int,
     val ingredients: List<String>,
     val cookingSteps: List<String>,
     val cookingTime: String,
-    val comments: List<CommentItem>
+    val ration: Int,
+    val isLiked: Boolean = false,
+    val comments: List<CommentItem>,
+    val createdAt: String
 )
 
 data class CommentItem(

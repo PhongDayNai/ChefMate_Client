@@ -16,6 +16,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.createGraph
+import com.watb.chefmate.data.CommentItem
+import com.watb.chefmate.data.Recipe
+import com.watb.chefmate.ui.recipe.RecipeViewScreen
 import com.watb.chefmate.ui.theme.ChefMateTheme
 
 class MainActivity : ComponentActivity() {
@@ -55,9 +58,28 @@ fun MainScreen() {
 fun navGraph(
     navController: NavController
 ): NavGraph {
+    var recipe = Recipe(
+        image = "",
+        name = "",
+        author = "Admin",
+        likesQuantity = 100,
+        viewCount = 1151,
+        ingredients = listOf<String>(),
+        cookingSteps = listOf<String>(),
+        cookingTime = "Unknown",
+        comments = listOf<CommentItem>(),
+        ration = 0,
+        createdAt = "2023-06-15 10:20:00"
+    )
     return navController.createGraph("mainAct") {
         composable("mainAct") {
-            MainAct(navController)
+            MainAct(navController) { selectedRecipe ->
+                recipe = selectedRecipe
+                navController.navigate("recipeView")
+            }
+        }
+        composable("recipeView") {
+            RecipeViewScreen(navController, recipe)
         }
     }
 }

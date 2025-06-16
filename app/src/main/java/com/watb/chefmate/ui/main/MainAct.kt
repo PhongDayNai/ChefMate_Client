@@ -53,7 +53,10 @@ import com.watb.chefmate.ui.home.HomeScreen
 import kotlinx.coroutines.launch
 
 @Composable
-fun MainAct(navController: NavController) {
+fun MainAct(
+    navController: NavController,
+    onRecipeClick: (Recipe) -> Unit
+) {
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(
         initialPage = 0,
@@ -66,108 +69,116 @@ fun MainAct(navController: NavController) {
             name = "Matcha Latte",
             author = "Admin",
             likesQuantity = 100,
-            userViews = 1151,
+            viewCount = 1151,
             ingredients = listOf("Matcha", "Cream", "Milk"),
             cookingSteps = listOf("Step 1", "Step 2", "Step 3"),
             cookingTime = "30 phút",
             comments = listOf(
                 CommentItem(
                     author = "User 1",
-                    time = "1 giờ trước",
+                    time = "2024-06-15 10:20:00",
                     content = "Nội dung bình luận 1"
                 ),
                 CommentItem(
                     author = "User 2",
-                    time = "2 giờ trước",
+                    time = "2023-06-15 10:20:00",
                     content = "Nội dung bình luận 2"
                 ),
                 CommentItem(
                     author = "User 3",
-                    time = "3 giờ trước",
+                    time = "2023-06-15 10:20:00",
                     content = "Nội dung bình luận 3"
                 ),
                 CommentItem(
                     author = "User 4",
-                    time = "4 giờ trước",
+                    time = "2023-06-15 10:20:00",
                     content = "Nội dung bình luận 4"
                 ),
                 CommentItem(
                     author = "User 5",
-                    time = "5 giờ trước",
-                    content = "Nội dung bình luận 5"
+                    time = "2023-06-15 10:20:00",
+                    content = "Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 "
                 ),
                 CommentItem(
                     author = "User 6",
-                    time = "6 giờ trước",
+                    time = "2023-06-15 10:20:00",
                     content = "Nội dung bình luận 6"
-                ),
+                )
             ),
+            ration = 3,
+            createdAt = "2023-06-15 10:20:00"
         ),
         Recipe(
             image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
             name = "Matcha Latte",
             author = "Admin",
             likesQuantity = 100,
-            userViews = 1151,
+            viewCount = 1151,
             ingredients = listOf("Matcha", "Cream", "Milk"),
             cookingSteps = listOf("Step 1", "Step 2", "Step 3"),
             cookingTime = "30 phút",
             comments = listOf(
                 CommentItem(
                     author = "User 1",
-                    time = "1 giờ trước",
+                    time = "2024-06-15 10:20:00",
                     content = "Nội dung bình luận 1"
                 ),
                 CommentItem(
                     author = "User 2",
-                    time = "2 giờ trước",
+                    time = "2023-06-15 10:20:00",
                     content = "Nội dung bình luận 2"
                 )
             ),
+            ration = 3,
+            createdAt = "2023-06-15 10:20:00"
         ),
         Recipe(
             image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
             name = "Matcha Latte",
             author = "Admin",
             likesQuantity = 100,
-            userViews = 1151,
+            viewCount = 1151,
             ingredients = listOf("Matcha", "Cream", "Milk"),
             cookingSteps = listOf("Step 1", "Step 2", "Step 3"),
             cookingTime = "30 phút",
             comments = listOf(
                 CommentItem(
                     author = "User 1",
-                    time = "1 giờ trước",
+                    time = "2024-06-15 10:20:00",
                     content = "Nội dung bình luận 1"
                 ),
                 CommentItem(
                     author = "User 2",
-                    time = "2 giờ trước",
+                    time = "2023-06-15 10:20:00",
                     content = "Nội dung bình luận 2"
                 )
             ),
+            ration = 3,
+            createdAt = "2023-06-15 10:20:00"
         ),
         Recipe(
             image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
             name = "Matcha Latte",
             author = "Admin",
             likesQuantity = 100,
-            userViews = 1151,
+            viewCount = 1151,
             ingredients = listOf("Matcha", "Cream", "Milk"),
             cookingSteps = listOf("Step 1", "Step 2", "Step 3"),
             cookingTime = "30 phút",
             comments = listOf(
                 CommentItem(
                     author = "User 1",
-                    time = "1 giờ trước",
+                    time = "2024-05-13 19:00:00",
                     content = "Nội dung bình luận 1"
                 ),
                 CommentItem(
                     author = "User 2",
-                    time = "2 giờ trước",
+                    time = "2025-01-04 12:30:00",
                     content = "Nội dung bình luận 2"
                 )
             ),
+            ration = 3,
+            createdAt = "2023-06-15 10:20:00"
         ),
     )
 
@@ -197,7 +208,13 @@ fun MainAct(navController: NavController) {
                         .fillMaxSize()
                 ) {
                     when (page) {
-                        0 -> HomeScreen(navController, recipes)
+                        0 -> HomeScreen(
+                            onRecipeClick = { selectedRecipe ->
+                                onRecipeClick(selectedRecipe)
+                            },
+                            navController = navController,
+                            recipes = recipes
+                        )
 //                        1 -> RecipeScreen()
 //                        2 -> ProfileScreen()
                     }

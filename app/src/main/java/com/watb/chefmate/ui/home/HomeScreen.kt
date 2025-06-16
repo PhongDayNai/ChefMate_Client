@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -42,17 +41,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
 import com.watb.chefmate.data.CommentItem
 import com.watb.chefmate.data.Recipe
-import com.watb.chefmate.helper.CommonHelper
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.ui.theme.RecipeItem
 import com.watb.chefmate.ui.theme.SearchTextField
+import java.util.Date
 
 @Composable
-fun HomeScreen(navController: NavController, recipes: List<Recipe> = emptyList()) {
+fun HomeScreen(
+    onRecipeClick: (Recipe) -> Unit,
+    navController: NavController,
+    recipes: List<Recipe> = emptyList()
+) {
     val scrollState = rememberScrollState()
     val showPopular = remember { derivedStateOf { scrollState.value == 0 } }
 
@@ -161,7 +163,14 @@ fun HomeScreen(navController: NavController, recipes: List<Recipe> = emptyList()
                 .verticalScroll(state = scrollState)
         ) {
             recipes.forEach { recipe ->
-                RecipeItem({}, recipe, Modifier.fillMaxWidth(0.9f))
+                RecipeItem(
+                    onClick = { selectedRecipe ->
+                        onRecipeClick(selectedRecipe)
+//                        navController.navigate("recipeView")
+                    },
+                    recipe = recipe,
+                    modifier = Modifier.fillMaxWidth(0.9f)
+                )
             }
             Spacer(modifier = Modifier.height(32.dp))
         }
@@ -228,7 +237,7 @@ fun HomeScreenPreview() {
             name = "Matcha Latte",
             author = "Admin",
             likesQuantity = 100,
-            userViews = 1151,
+            viewCount = 1151,
             ingredients = listOf("Matcha", "Cream", "Milk"),
             cookingSteps = listOf("Step 1", "Step 2", "Step 3"),
             cookingTime = "30 phút",
@@ -244,13 +253,15 @@ fun HomeScreenPreview() {
                     content = "Nội dung bình luận 2"
                 )
             ),
+            ration = 3,
+            createdAt = Date().toString()
         ),
         Recipe(
             image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
             name = "Matcha Latte",
             author = "Admin",
             likesQuantity = 100,
-            userViews = 1151,
+            viewCount = 1151,
             ingredients = listOf("Matcha", "Cream", "Milk"),
             cookingSteps = listOf("Step 1", "Step 2", "Step 3"),
             cookingTime = "30 phút",
@@ -266,7 +277,9 @@ fun HomeScreenPreview() {
                     content = "Nội dung bình luận 2"
                 )
             ),
+            ration = 3,
+            createdAt = Date().toString()
         ),
     )
-    HomeScreen(navController = NavController(LocalContext.current), recipes = recipes)
+    HomeScreen({}, navController = NavController(LocalContext.current), recipes = recipes)
 }
