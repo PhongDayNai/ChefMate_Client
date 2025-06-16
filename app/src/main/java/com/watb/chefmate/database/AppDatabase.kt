@@ -7,15 +7,11 @@ import androidx.room.TypeConverters
 import com.watb.chefmate.database.dao.*
 import com.watb.chefmate.database.entities.*
 import androidx.room.Room
-import com.watb.chefmate.database.converter.BitmapConverter
 import com.watb.chefmate.database.converter.DateConverter
 
 @Database(
     entities = [
         RecipeEntity::class,
-        IngredientEntity::class,
-        RecipeIngredientEntity::class,
-        StepEntity::class,
         ShoppingTimeEntity::class,
         ShoppingRecipeEntity::class,
         ShoppingIngredientEntity::class
@@ -23,11 +19,10 @@ import com.watb.chefmate.database.converter.DateConverter
     version = 1,
     exportSchema = false
 )
-@TypeConverters(DateConverter::class, BitmapConverter::class)
+@TypeConverters(DateConverter::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun recipeDao(): RecipeDao
-    abstract fun ingredientDao(): IngredientDao
     abstract fun shoppingDao(): ShoppingDao
 
     companion object {
@@ -39,7 +34,7 @@ abstract class AppDatabase : RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "recipe_app_database"
+                    "chefmate_database"
                 )
                     .build()
                 INSTANCE = instance
