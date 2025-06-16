@@ -19,13 +19,13 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
     fun addRecipe(
         recipeName: String,
         imageUri: Bitmap,
-        userId: Int,
+        userName: String,
         isPublic: Boolean,
         likeQuantity: Int,
         cookTime: String,
         ration: Int,
         viewCount: Int,
-        createAt: Date,
+        createdAt: String,
         ingredients: List<Pair<String, Pair<Int, String>>>, // (name, (weight, unit))
         steps: List<Pair<Int, String>> // (index, content)
     ) {
@@ -33,13 +33,13 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
             val newRecipe = Recipes(
                 recipeName = recipeName,
                 image = imageUri,
-                userId = userId,
+                userName = userName,
                 isPublic = isPublic,
                 likeQuantity = likeQuantity,
                 cookTime = cookTime,
                 ration = ration,
                 viewCount = viewCount,
-                createAt = createAt
+                createdAt = createdAt
             )
             val recipeId = repository.insertRecipe(newRecipe)
 
@@ -76,13 +76,13 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         recipeId: Int,
         recipeName: String,
         imageUri: Bitmap,
-        userId: Int,
+        userName: String,
         isPublic: Boolean,
         likeQuantity: Int,
         cookTime: String,
         ration: Int,
         viewCount: Int,
-        createAt: Date,
+        createdAt: String,
         ingredients: List<Pair<String, Pair<Int, String>>>,
         steps: List<Pair<Int, String>>
     ) {
@@ -91,13 +91,13 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
                 recipeId = recipeId,
                 recipeName = recipeName,
                 image = imageUri,
-                userId = userId,
+                userName = userName,
                 isPublic = isPublic,
                 likeQuantity = likeQuantity,
                 cookTime = cookTime,
                 ration = ration,
                 viewCount = viewCount,
-                createAt = createAt
+                createdAt = createdAt
             )
             repository.updateRecipe(updatedRecipe)
 
