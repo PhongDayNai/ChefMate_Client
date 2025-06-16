@@ -479,6 +479,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -569,6 +570,7 @@ fun AddRecipeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFFB923C))
+            .safeDrawingPadding()
     ) {
         val (headerRef, contentRef) = createRefs()
         Row(
@@ -876,7 +878,7 @@ fun AddRecipeScreen(
                                 userName = "Thanh",
                                 isPublic = isPublic,
                                 likeQuantity = 0,
-                                cookTime = cookTime.value,
+                                cookingTime = cookTime.value,
                                 ration = parsedRation,
                                 viewCount = 0,
                                 createdAt = "",
