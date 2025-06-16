@@ -38,3 +38,14 @@ data class LoginData(
     val followCount: Int,
     val createdAt: String
 )
+
+data class IngredientInput(
+    var name: String,
+    var weight: String,
+    var unit: String
+)
+
+data class StepInput(
+    val index: Int,
+    var content: String
+)
