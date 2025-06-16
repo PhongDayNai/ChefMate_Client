@@ -161,7 +161,13 @@ fun HomeScreen(navController: NavController, recipes: List<Recipe> = emptyList()
                 .verticalScroll(state = scrollState)
         ) {
             recipes.forEach { recipe ->
-                RecipeItem({}, recipe, Modifier.fillMaxWidth(0.9f))
+                RecipeItem(
+                    onClick = {
+
+                    },
+                    recipe = recipe,
+                    modifier = Modifier.fillMaxWidth(0.9f)
+                )
             }
             Spacer(modifier = Modifier.height(32.dp))
         }
@@ -224,6 +230,7 @@ fun HomeScreenPreview() {
 
     val recipes = listOf(
         Recipe(
+            recipeId = 1,
             image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
             name = "Matcha Latte",
             author = "Admin",
@@ -246,6 +253,7 @@ fun HomeScreenPreview() {
             ),
         ),
         Recipe(
+            recipeId = 2,
             image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
             name = "Matcha Latte",
             author = "Admin",
