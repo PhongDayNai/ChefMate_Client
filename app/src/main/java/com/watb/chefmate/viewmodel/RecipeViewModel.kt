@@ -185,7 +185,7 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         userName: String, // Changed to userName
         isPublic: Boolean,
         likeQuantity: Int,
-        cookTime: String,
+        cookingTime: String,
         ration: Int,
         viewCount: Int,
         createdAt: String, // Changed to String
@@ -193,10 +193,10 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         steps: List<Pair<Int, String>> // (index, content)
     ) {
         viewModelScope.launch {
-            // Convert ingredients and steps to JSON strings
-            val gson = Gson()
-            val ingredientsJson = gson.toJson(ingredients)
-            val stepsJson = gson.toJson(steps)
+            val ingredientNames = ingredients.joinToString(";;;") { it.first }
+            val ingredientWeights = ingredients.joinToString(";;;") { it.second.first.toString() }
+            val ingredientUnits = ingredients.joinToString(";;;") { it.second.second }
+            val cookingSteps = steps.sortedBy { it.first }.joinToString(";;;") { it.second } // Đảm bảo đúng thứ tự
 
             val newRecipe = RecipeEntity(
                 recipeName = recipeName,
@@ -204,12 +204,14 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
                 userName = userName,
                 isPublic = isPublic,
                 likeQuantity = likeQuantity,
-                cookTime = cookTime,
+                cookingTime = cookingTime,
                 ration = ration,
                 viewCount = viewCount,
-                ingredients = ingredientsJson,
-                cookingSteps = stepsJson,
-                createdAt = createdAt
+                ingredientNames = ingredientNames,
+                ingredientWeights = ingredientWeights,
+                ingredientUnits = ingredientUnits,
+                cookingSteps = cookingSteps,
+                createdAt = createdAt,
             )
             repository.insertRecipe(newRecipe)
         }
@@ -222,7 +224,7 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         userName: String,
         isPublic: Boolean,
         likeQuantity: Int,
-        cookTime: String,
+        cookingTime: String,
         ration: Int,
         viewCount: Int,
         createdAt: String,
@@ -230,9 +232,10 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         steps: List<Pair<Int, String>>
     ) {
         viewModelScope.launch {
-            val gson = Gson()
-            val ingredientsJson = gson.toJson(ingredients)
-            val stepsJson = gson.toJson(steps)
+            val ingredientNames = ingredients.joinToString(";;;") { it.first }
+            val ingredientWeights = ingredients.joinToString(";;;") { it.second.first.toString() }
+            val ingredientUnits = ingredients.joinToString(";;;") { it.second.second }
+            val cookingSteps = steps.sortedBy { it.first }.joinToString(";;;") { it.second }
 
             val updatedRecipe = RecipeEntity(
                 recipeId = recipeId,
@@ -241,12 +244,14 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
                 userName = userName,
                 isPublic = isPublic,
                 likeQuantity = likeQuantity,
-                cookTime = cookTime,
+                cookingTime = cookingTime,
                 ration = ration,
                 viewCount = viewCount,
-                ingredients = ingredientsJson,
-                cookingSteps = stepsJson,
-                createdAt = createdAt
+                ingredientNames = ingredientNames,
+                ingredientWeights = ingredientWeights,
+                ingredientUnits = ingredientUnits,
+                cookingSteps = cookingSteps,
+                createdAt = createdAt,
             )
             repository.updateRecipe(updatedRecipe)
         }
