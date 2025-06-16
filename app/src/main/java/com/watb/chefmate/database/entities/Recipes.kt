@@ -14,10 +14,9 @@ data class RecipeEntity(
     val userName: String,
     val isPublic: Boolean,
     val likeQuantity: Int,
-    val cookTime: String,
+    val cookingTime: String,
     val ration: Int,
     val viewCount: Int,
-    val ingredientIds: String,
     val ingredientNames: String,
     val ingredientWeights: String,
     val ingredientUnits: String,
@@ -26,13 +25,11 @@ data class RecipeEntity(
 )
 
 fun RecipeEntity.toRecipe(): Recipe {
-    val ingredientIds = ingredientIds.split(";;;").map { it.toInt() }
     val ingredientNames = ingredientNames.split(";;;")
     val ingredientWeights = ingredientWeights.split(";;;").map { it.toInt() }
     val ingredientUnits = ingredientUnits.split(";;;")
-    val ingredients = ingredientIds.indices.map { index ->
+    val ingredients = ingredientNames.indices.map { index ->
         IngredientItem(
-            ingredientId = ingredientIds[index],
             ingredientName = ingredientNames[index],
             weight = ingredientWeights[index],
             unit = ingredientUnits[index]
@@ -56,7 +53,7 @@ fun RecipeEntity.toRecipe(): Recipe {
         viewCount = viewCount,
         ingredients = ingredients,
         cookingSteps = cookingSteps,
-        cookingTime = cookTime,
+        cookingTime = cookingTime,
         ration = ration,
         comments = emptyList(),
         createdAt = createdAt
