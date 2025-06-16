@@ -211,12 +211,12 @@ fun SearchTextField(
 
 @Composable
 fun RecipeItem(
-    onClick: () -> Unit,
+    onClick: (Recipe) -> Unit,
     recipe: Recipe,
     modifier: Modifier = Modifier
 ) {
     Card(
-        onClick = onClick,
+        onClick = { onClick(recipe) },
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFFFFFFF)
         ),
@@ -249,7 +249,7 @@ fun RecipeItem(
                 )
                 Text(
                     text = recipe.author,
-                    color = Color(0xFFF97316),
+                    color = Color(0xFFFB923C),
                     fontSize = 14.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
                     fontWeight = FontWeight(400),
@@ -263,10 +263,61 @@ fun RecipeItem(
                     modifier = Modifier
                         .padding(top = 8.dp)
                 ) {
+//                    Icon(
+//                        painter = painterResource(R.drawable.ic_like),
+//                        contentDescription = "Like",
+//                        tint = Color(0xFFFB923C),
+//                        modifier = Modifier
+//                            .size(16.dp)
+//                    )
+//                    Text(
+//                        text = CommonHelper.parseNumber(recipe.likesQuantity),
+//                        color = Color(0xFF6B7280),
+//                        fontSize = 14.sp,
+//                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+//                        fontWeight = FontWeight(400),
+//                        modifier = Modifier
+//                            .padding(start = 4.dp)
+//                    )
+//                    Icon(
+//                        painter = painterResource(R.drawable.ic_view),
+//                        contentDescription = "Like",
+//                        tint = Color(0xFFFB923C),
+//                        modifier = Modifier
+//                            .padding(start = 16.dp)
+//                            .size(16.dp)
+//                    )
+//                    Text(
+//                        text = CommonHelper.parseNumber(recipe.viewCount),
+//                        color = Color(0xFF6B7280),
+//                        fontSize = 14.sp,
+//                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+//                        fontWeight = FontWeight(400),
+//                        modifier = Modifier
+//                            .padding(start = 4.dp)
+//                    )
+//                    Icon(
+//                        painter = painterResource(R.drawable.ic_comment),
+//                        contentDescription = "Like",
+//                        tint = Color(0xFFFB923C),
+//                        modifier = Modifier
+//                            .padding(start = 16.dp)
+//                            .size(16.dp)
+//                    )
+//                    Text(
+//                        text = CommonHelper.parseNumber(recipe.comments.size),
+//                        color = Color(0xFF6B7280),
+//                        fontSize = 14.sp,
+//                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+//                        fontWeight = FontWeight(400),
+//                        modifier = Modifier
+//                            .padding(start = 4.dp)
+//                    )
+
                     Icon(
-                        painter = painterResource(R.drawable.ic_like),
+                        painter = painterResource(R.drawable.ic_like_filled),
                         contentDescription = "Like",
-                        tint = Color(0xFFF97316),
+                        tint = if (recipe.isLiked) Color(0xFFEF4444) else Color(0xFFCFCDCD),
                         modifier = Modifier
                             .size(16.dp)
                     )
@@ -277,29 +328,29 @@ fun RecipeItem(
                         fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
                         fontWeight = FontWeight(400),
                         modifier = Modifier
-                            .padding(start = 2.dp)
+                            .padding(start = 4.dp)
                     )
                     Icon(
-                        painter = painterResource(R.drawable.ic_view),
+                        painter = painterResource(R.drawable.ic_view_filled),
                         contentDescription = "Like",
-                        tint = Color(0xFFF97316),
+                        tint = Color(0xFFFB923C),
                         modifier = Modifier
                             .padding(start = 16.dp)
                             .size(16.dp)
                     )
                     Text(
-                        text = CommonHelper.parseNumber(recipe.userViews),
+                        text = CommonHelper.parseNumber(recipe.viewCount),
                         color = Color(0xFF6B7280),
                         fontSize = 14.sp,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
                         fontWeight = FontWeight(400),
                         modifier = Modifier
-                            .padding(start = 2.dp)
+                            .padding(start = 4.dp)
                     )
                     Icon(
-                        painter = painterResource(R.drawable.ic_comment),
+                        painter = painterResource(R.drawable.ic_comment_filled),
                         contentDescription = "Like",
-                        tint = Color(0xFFF97316),
+                        tint = Color(0xFFFB923C),
                         modifier = Modifier
                             .padding(start = 16.dp)
                             .size(16.dp)
@@ -311,7 +362,24 @@ fun RecipeItem(
                         fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
                         fontWeight = FontWeight(400),
                         modifier = Modifier
-                            .padding(start = 2.dp)
+                            .padding(start = 4.dp)
+                    )
+                    Icon(
+                        painter = painterResource(R.drawable.ic_clock_filled),
+                        contentDescription = "Like",
+                        tint = Color(0xFFFB923C),
+                        modifier = Modifier
+                            .padding(start = 16.dp)
+                            .size(16.dp)
+                    )
+                    Text(
+                        text = recipe.cookingTime,
+                        color = Color(0xFF6B7280),
+                        fontSize = 14.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                        fontWeight = FontWeight(400),
+                        modifier = Modifier
+                            .padding(start = 4.dp)
                     )
                 }
             }
