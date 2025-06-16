@@ -1,6 +1,7 @@
 package com.watb.chefmate.ui.recipe
 
 import android.icu.text.SimpleDateFormat
+import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -59,6 +60,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
@@ -88,10 +90,17 @@ import java.util.Locale
 
 @OptIn(FlowPreview::class)
 @Composable
-fun RecipeViewScreen(navController: NavController, recipe: Recipe) {
+fun RecipeViewScreen(
+    navController: NavController,
+    recipe: Recipe,
+    isHistory: Boolean = false
+) {
+    val context = LocalContext.current
     val screenWidth = LocalConfiguration.current.screenWidthDp
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
+
+    var markPainter by remember { mutableStateOf(R.drawable.ic_mark) }
 
     var selectedPageManual by remember { mutableIntStateOf(-1) }
 
@@ -151,10 +160,16 @@ fun RecipeViewScreen(navController: NavController, recipe: Recipe) {
             trailingIcon = {
                 Row {
                     IconButton(
-                        onClick = {}
+                        onClick = {
+                            if (markPainter == R.drawable.ic_mark) {
+                                markPainter = R.drawable.ic_mark_filled
+                            } else {
+                                Toast.makeText(context, "Đã lưu", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     ) {
                         Icon(
-                            painter = painterResource(R.drawable.ic_mark),
+                            painter = if (!isHistory) painterResource(markPainter) else painterResource(R.drawable.ic_mark_filled),
                             contentDescription = "Mark",
                             tint = Color(0xFFFFFFFF),
                             modifier = Modifier
@@ -294,23 +309,25 @@ fun RecipeViewScreen(navController: NavController, recipe: Recipe) {
                 modifier = Modifier
                     .padding(start = 4.dp)
             )
-            Icon(
-                painter = painterResource(R.drawable.ic_comment_filled),
-                contentDescription = "Like",
-                tint = Color(0xFFFB923C),
-                modifier = Modifier
-                    .padding(start = 16.dp)
-                    .size(16.dp)
-            )
-            Text(
-                text = CommonHelper.parseNumber(recipe.comments.size),
-                color = Color(0xFF6B7280),
-                fontSize = 14.sp,
-                fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
-                fontWeight = FontWeight(400),
-                modifier = Modifier
-                    .padding(start = 4.dp)
-            )
+            if (!isHistory) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_comment_filled),
+                    contentDescription = "Like",
+                    tint = Color(0xFFFB923C),
+                    modifier = Modifier
+                        .padding(start = 16.dp)
+                        .size(16.dp)
+                )
+                Text(
+                    text = CommonHelper.parseNumber(recipe.comments.size),
+                    color = Color(0xFF6B7280),
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                    fontWeight = FontWeight(400),
+                    modifier = Modifier
+                        .padding(start = 4.dp)
+                )
+            }
             Icon(
                 painter = painterResource(R.drawable.ic_clock_filled),
                 contentDescription = "Like",
@@ -412,7 +429,9 @@ fun RecipeViewScreen(navController: NavController, recipe: Recipe) {
             item { Spacer(modifier = Modifier.height((1.dp))) }
             item { IngredientsView(recipe) }
             item { StepsView(recipe) }
-            item { CommentsView(recipe, screenWidth) }
+            if (!isHistory) {
+                item { CommentsView(recipe, screenWidth) }
+            }
             item { Spacer(modifier = Modifier.height(20.dp)) }
         }
     }
