@@ -54,6 +54,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
+import com.watb.chefmate.data.IngredientInput
+import com.watb.chefmate.data.StepInput
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.viewmodel.RecipeViewModel
@@ -449,17 +451,6 @@ fun AddRecipeScreen(
     }
 }
 
-data class IngredientInput(
-    var name: String,
-    var weight: String,
-    var unit: String
-)
-
-// Data class để giữ trạng thái cho từng bước
-data class StepInput(
-    val index: Int,
-    var content: String
-)
 
 @Preview
 @Composable

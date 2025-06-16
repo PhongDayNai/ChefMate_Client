@@ -23,6 +23,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
+import com.watb.chefmate.data.CommentItem
+import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.database.entities.Recipes
 import com.watb.chefmate.repository.RecipeRepository
@@ -30,12 +32,7 @@ import com.watb.chefmate.viewmodel.RecipeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecipeListScreen(navController: NavController, viewModel: RecipeViewModel = viewModel(
-    factory = RecipeViewModel.Factory(
-        repository = RecipeRepository(AppDatabase.getDatabase(LocalContext.current).recipeDao())
-    )
-)) {
-    // Thu thập tất cả các công thức từ ViewModel dưới dạng State
+fun RecipeListScreen(navController: NavController, viewModel: RecipeViewModel) {
     val recipes by viewModel.allRecipes.collectAsState(initial = emptyList())
 
     Scaffold(
@@ -139,35 +136,64 @@ fun RecipeCard(recipe: Recipes, onClick: () -> Unit) {
                 Text(text = "Khẩu phần: ${recipe.ration}", style = MaterialTheme.typography.bodySmall)
             }
         }
-//        Row(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(16.dp),
-//            verticalAlignment = Alignment.CenterVertically
-//        ) {
-//            // Hiển thị ảnh sử dụng Coil
-//            Image(
-//                // Đảm bảo URI không null hoặc rỗng, sử dụng placeholder nếu cần
-//                painter = rememberAsyncImagePainter(model = Uri.parse(recipe.image.ifEmpty { "android.resource://com.watb.chefmate/drawable/placeholder_image" })), // Thay 'placeholder_image' bằng tên drawable của bạn
-//                contentDescription = recipe.recipeName,
-//                modifier = Modifier.size(90.dp),
-//                contentScale = ContentScale.Crop
-//            )
-//            Spacer(modifier = Modifier.size(16.dp))
-//            Column {
-//                Text(text = recipe.recipeName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-//                Spacer(modifier = Modifier.height(4.dp))
-//                Text(text = "Thời gian nấu: ${recipe.cookTime}", style = MaterialTheme.typography.bodySmall)
-//                Text(text = "Khẩu phần: ${recipe.ration}", style = MaterialTheme.typography.bodySmall)
-//            }
-//        }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun RecipeListScreensPreview() {
-    // Để preview màn hình này, bạn cần cung cấp NavController giả lập
-    // và có thể một ViewModel giả lập nếu ViewModel có logic phức tạp
-    RecipeListScreen(navController = rememberNavController())
+    val recipes = listOf(
+        Recipe(
+            image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
+            name = "Matcha Latte",
+            author = "Admin",
+            likesQuantity = 100,
+            userViews = 1151,
+            ingredients = listOf("Matcha", "Cream", "Milk"),
+            cookingSteps = listOf("Step 1", "Step 2", "Step 3"),
+            cookingTime = "30 phút",
+            comments = listOf(
+                CommentItem(
+                    author = "User 1",
+                    time = "1 giờ trước",
+                    content = "Nội dung bình luận 1"
+                ),
+                CommentItem(
+                    author = "User 2",
+                    time = "2 giờ trước",
+                    content = "Nội dung bình luận 2"
+                )
+            ),
+
+        ),
+        Recipe(
+            image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
+            name = "Matcha Latte",
+            author = "Admin",
+            likesQuantity = 100,
+            userViews = 1151,
+            ingredients = listOf("Matcha", "Cream", "Milk"),
+            cookingSteps = listOf("Step 1", "Step 2", "Step 3"),
+            cookingTime = "30 phút",
+            comments = listOf(
+                CommentItem(
+                    author = "User 1",
+                    time = "1 giờ trước",
+                    content = "Nội dung bình luận 1"
+                ),
+                CommentItem(
+                    author = "User 2",
+                    time = "2 giờ trước",
+                    content = "Nội dung bình luận 2"
+                )
+            ),
+        ),
+//    )
+//
+//    val viewModel: RecipeViewModel = viewModel(
+//        factory = RecipeViewModel.Factory(
+//            repository = RecipeRepository(AppDatabase.getDatabase(LocalContext.current).recipeDao())
+//        )
+//    )
+//    RecipeListScreen(navController = rememberNavController(), viewModel)
 }
