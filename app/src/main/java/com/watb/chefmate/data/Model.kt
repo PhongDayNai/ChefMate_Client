@@ -29,9 +29,11 @@ data class CookingStep(
 )
 
 data class CommentItem(
-    val author: String,
-    val time: String,
+    val commentId: Int,
+    val userId: Int,
+    val userName: String,
     val content: String,
+    val createdAt: String,
 )
 
 data class RegisterRequest(
@@ -58,6 +60,27 @@ data class LoginData(
 data class TopTrendingResponse(
     val success: Boolean,
     val data: List<Recipe>? = null,
+    val message: String? = null
+)
+
+data class LikeRequest(
+    val userId: Int,
+    val recipeId: Int
+)
+
+data class CommentRequest(
+    val userId: Int,
+    val recipeId: Int,
+    val content: String
+)
+
+data class IncreaseRequest(
+    val recipeId: Int
+)
+
+data class InteractionResponse(
+    val success: Boolean,
+    val data: Boolean? = null,
     val message: String? = null
 )
 

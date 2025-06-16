@@ -1,6 +1,9 @@
 package com.watb.chefmate.ui.recipe
 
+import android.annotation.SuppressLint
+import android.content.Intent
 import android.icu.text.SimpleDateFormat
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
@@ -8,6 +11,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,11 +44,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,6 +77,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
+import com.watb.chefmate.api.ApiClient
 import com.watb.chefmate.api.ApiConstant
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.data.CommentItem
@@ -78,12 +85,15 @@ import com.watb.chefmate.data.CookingStep
 import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.helper.CommonHelper
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.Locale
 
+@SuppressLint("MemberExtensionConflict")
 @OptIn(FlowPreview::class)
 @Composable
 fun RecipeViewScreen(
@@ -97,6 +107,11 @@ fun RecipeViewScreen(
     val lazyListState = rememberLazyListState()
 
     var markPainter by remember { mutableStateOf(R.drawable.ic_mark) }
+    var isLiked by remember { mutableStateOf(recipe.isLiked) }
+    var likeQuantity by remember { mutableStateOf(recipe.likeQuantity) }
+    var commentQuantity by remember { mutableStateOf(recipe.comments.size) }
+    var viewQuantity by remember { mutableStateOf(recipe.viewCount) }
+    val comments = remember { recipe.comments.toMutableStateList() }
 
     var selectedPageManual by remember { mutableIntStateOf(-1) }
 
@@ -122,6 +137,10 @@ fun RecipeViewScreen(
         animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow),
         label = "Footer Offset"
     )
+
+    LaunchedEffect(Unit) {
+        ApiClient.increaseViewCount(recipe.recipeId)
+    }
 
     LaunchedEffect(lazyListState) {
         snapshotFlow { lazyListState.firstVisibleItemIndex }
@@ -173,7 +192,35 @@ fun RecipeViewScreen(
                         )
                     }
                     IconButton(
-                        onClick = {}
+                        onClick = {
+                            val shareText = """
+${recipe.recipeName}
+${recipe.likeQuantity} yêu , ${recipe.viewCount} lượt xem, ${recipe.comments.size} bình luận, ${recipe.cookingTime} chế biến
+
+Nguyên liệu:
+${recipe.ingredients.joinToString("\n") { ingredient ->
+    "${ingredient.ingredientName} - ${ingredient.weight} ${ingredient.unit}"
+}}
+
+Cách thực hiện:
+${recipe.cookingSteps.joinToString("\n") { step ->
+    "${step.indexStep}. ${step.stepContent}"
+}}
+
+Tác giả: ${recipe.userName}
+                            """
+                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, shareText)
+                            }
+
+                            try {
+                                context.startActivity(Intent.createChooser(intent, "Chia sẻ qua"))
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                                Toast.makeText(context, "Vui lòng thử lại", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_share),
@@ -272,22 +319,51 @@ fun RecipeViewScreen(
                 .padding(top = 8.dp)
                 .fillMaxWidth(0.9f)
         ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_like_filled),
-                contentDescription = "Like",
-                tint = if (recipe.isLiked) Color(0xFFEF4444) else Color(0xFFCFCDCD),
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .size(16.dp)
-            )
-            Text(
-                text = CommonHelper.parseNumber(recipe.likeQuantity),
-                color = Color(0xFF6B7280),
-                fontSize = 14.sp,
-                fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
-                fontWeight = FontWeight(400),
-                modifier = Modifier
-                    .padding(start = 4.dp)
-            )
+                    .clickable {
+                        if (!isLiked) {
+                            coroutineScope.launch {
+                                val response = ApiClient.likeRecipe(recipeId = recipe.recipeId)
+                                if (response != null) {
+                                    if (response.success) {
+                                        if (response.data == true) {
+                                            isLiked = true
+                                            likeQuantity += 1
+                                        } else {
+                                            Log.e("RecipeViewScreen", "Error: ${response.message}")
+                                            Toast.makeText(context, "Bạn đã yêu thích công thức này", Toast.LENGTH_SHORT).show()
+                                        }
+                                    } else {
+                                        Log.e("RecipeViewScreen", "Error: ${response.message}")
+                                        Toast.makeText(context, "Bạn đã yêu thích công thức này", Toast.LENGTH_SHORT).show()
+                                    }
+                                } else {
+                                    Log.e("RecipeViewScreen", "Error: Response is null")
+                                    Toast.makeText(context, "Vui lòng thử lại", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    }
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_like_filled),
+                    contentDescription = "Like",
+                    tint = if (isLiked) Color(0xFFEF4444) else Color(0xFFCFCDCD),
+                    modifier = Modifier
+                        .size(24.dp)
+                )
+                Text(
+                    text = CommonHelper.parseNumber(likeQuantity),
+                    color = Color(0xFF6B7280),
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                    fontWeight = FontWeight(400),
+                    modifier = Modifier
+                        .padding(start = 4.dp)
+                )
+            }
             Icon(
                 painter = painterResource(R.drawable.ic_view_filled),
                 contentDescription = "Like",
@@ -297,7 +373,7 @@ fun RecipeViewScreen(
                     .size(16.dp)
             )
             Text(
-                text = CommonHelper.parseNumber(recipe.viewCount),
+                text = CommonHelper.parseNumber(viewQuantity),
                 color = Color(0xFF6B7280),
                 fontSize = 14.sp,
                 fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
@@ -315,7 +391,7 @@ fun RecipeViewScreen(
                         .size(16.dp)
                 )
                 Text(
-                    text = CommonHelper.parseNumber(recipe.comments.size),
+                    text = CommonHelper.parseNumber(commentQuantity),
                     color = Color(0xFF6B7280),
                     fontSize = 14.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
@@ -342,6 +418,15 @@ fun RecipeViewScreen(
                     .padding(start = 4.dp)
             )
         }
+//        Text(
+//            text = "Yêu thích",
+//            color = Color(0xFFEF4444),
+//            fontSize = 16.sp,
+//            fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+//            modifier = Modifier
+//                .padding(top = 8.dp, start = screenWidth.dp * 0.05f)
+//                .align(Alignment.Start)
+//        )
         Box(
             modifier = Modifier
                 .padding(top = 16.dp)
@@ -426,7 +511,42 @@ fun RecipeViewScreen(
             item { IngredientsView(recipe) }
             item { StepsView(recipe) }
             if (!isHistory) {
-                item { CommentsView(recipe, screenWidth) }
+                item {
+                    CommentsView(
+                        comments = comments.asReversed(),
+                        screenWidth = screenWidth,
+                        onComment = { commentContent ->
+                            coroutineScope.launch {
+                                val response = ApiClient.commentRecipe(recipeId = recipe.recipeId, content = commentContent)
+                                if (response != null) {
+                                    if (response.success) {
+                                        if (response.data == true) {
+                                            comments.add(
+                                                CommentItem(
+                                                    commentId = -1,
+                                                    userId = 1,
+                                                    userName = "Người dùng",
+                                                    content = commentContent,
+                                                    createdAt = CommonHelper.toIso8601UTC(Date())
+                                                )
+                                            )
+                                            commentQuantity += 1
+                                        } else {
+                                            Log.e("RecipeViewScreen", "Error: ${response.message}")
+                                            Toast.makeText(context, "Vui lòng thử lại", Toast.LENGTH_SHORT).show()
+                                        }
+                                    } else {
+                                        Log.e("RecipeViewScreen", "Error: ${response.message}")
+                                        Toast.makeText(context, "Vui lòng thử lại", Toast.LENGTH_SHORT).show()
+                                    }
+                                } else {
+                                    Log.e("RecipeViewScreen", "Error: Response is null")
+                                    Toast.makeText(context, "Vui lòng thử lại", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        },
+                    )
+                }
             }
             item { Spacer(modifier = Modifier.height(20.dp)) }
         }
@@ -544,15 +664,24 @@ fun CookingStepItem(cookingStep: CookingStep) {
 }
 
 @Composable
-fun CommentsView(recipe: Recipe, screenWidth: Int) {
+fun CommentsView(
+    comments: List<CommentItem>,
+    screenWidth: Int,
+    onComment: (String) -> Unit
+) {
     var isExpanded by remember { mutableStateOf(true) }
+    var commentContent by remember { mutableStateOf("") }
+
     val animateIconExpand by animateFloatAsState(
         targetValue = if (isExpanded) 0f else -90f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow),
         label = "Icon Expand"
     )
-
-    var commentContent by remember { mutableStateOf("") }
+    val animateSendButton by animateFloatAsState(
+        targetValue = if (commentContent != "") 1f else 0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow),
+        label = "Send Button"
+    )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -593,7 +722,7 @@ fun CommentsView(recipe: Recipe, screenWidth: Int) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
-                .padding(top = 4.dp)
+                .padding(top = 4.dp, bottom = 8.dp)
                 .fillMaxWidth()
                 .padding(horizontal = screenWidth.dp * 0.05f, vertical = 12.dp)
         ) {
@@ -604,29 +733,56 @@ fun CommentsView(recipe: Recipe, screenWidth: Int) {
                 modifier = Modifier
                     .size(42.dp)
                     .clip(CircleShape)
+                    .align(Alignment.CenterVertically)
             )
-            TextField(
-                value = commentContent,
-                onValueChange = { commentContent = it },
-                placeholder = { Text(text = "Thêm bình luận") },
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFFFFFFFF),
-                    unfocusedContainerColor = Color(0xFFFFFFFF),
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                ),
-                shape = CircleShape,
+            Row(
                 modifier = Modifier
-                    .padding(bottom = 16.dp)
                     .fillMaxWidth(0.9f)
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = CircleShape
-                    )
-            )
+            ) {
+                TextField(
+                    value = commentContent,
+                    onValueChange = { commentContent = it },
+                    placeholder = { Text(text = "Thêm bình luận") },
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFFFFFFFF),
+                        unfocusedContainerColor = Color(0xFFFFFFFF),
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                    ),
+                    shape = CircleShape,
+                    modifier = Modifier
+//                        .padding(bottom = 16.dp)
+//                        .fillMaxWidth()
+                        .weight(1f)
+                        .shadow(
+                            elevation = 8.dp,
+                            shape = CircleShape
+                        )
+                        .animateContentSize()
+                )
+                if (commentContent != "") {
+                    IconButton(
+                        onClick = {
+                            onComment(commentContent)
+                            commentContent = ""
+                        },
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .size(32.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_send),
+                            contentDescription = "Send",
+                            tint = Color(0xFF5164F3),
+                            modifier = Modifier
+                                .size(24.dp * animateSendButton)
+                        )
+                    }
+                }
+            }
         }
         if (isExpanded) {
-            recipe.comments.forEach { comment ->
+            comments.forEach { comment ->
                 CommentItemView(comment)
             }
         }
@@ -661,13 +817,13 @@ fun CommentItemView(comment: CommentItem, modifier: Modifier = Modifier) {
                     .padding(start = 8.dp)
             ) {
                 Text(
-                    text = comment.author,
+                    text = comment.userName,
                     color = Color(0xFF000000),
                     fontSize = 14.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
                 )
                 Text(
-                    text = CommonHelper.parseTime(comment.time),
+                    text = CommonHelper.parseTime(comment.createdAt),
                     color = Color(0xFF6B7280),
                     fontSize = 12.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -746,21 +902,41 @@ fun RecipeViewPreview() {
         isLiked = false,
         comments = listOf(
             CommentItem(
-                author = "nguyenvana",
+                commentId = 1,
+                userId = 1,
+                userName = "nguyenvana",
                 content = "Ngon tuyệt! Mình làm thử và thành công ngay lần đầu.",
-                time = "2025-06-15 10:20:00"
+                createdAt = "2025-06-15 10:20:00"
             ),
             CommentItem(
-                author = "tranthib",
+                commentId = 1,
+                userId = 1,
+                userName = "tranthib",
                 content = "Cảm ơn công thức! Cả nhà mình đều thích.",
-                time = "2025-06-15 12:45:00"
+                createdAt = "2025-06-15 12:45:00"
             )
         ),
         createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
     )
+    
+    val comments = listOf(
+        CommentItem(
+            commentId = 1,
+            userId = 1,
+            userName = "nguyenvana",
+            content = "Ngon tuyệt! Mình làm thử và thành công ngay lần đầu.",
+            createdAt = "2025-06-15 10:20:00"
+        ),
+        CommentItem(
+            commentId = 1,
+            userId = 1,
+            userName = "tranthib",
+            content = "Cảm ơn công thức! Cả nhà mình đều thích.",
+            createdAt = "2025-06-15 12:45:00"
+        )
+    )
 
-
-//    RecipeViewScreen(navController)
+//    RecipeViewScreen(navController, recipe, false)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -768,6 +944,6 @@ fun RecipeViewPreview() {
             .background(color = Color(0xFFFFFFFF))
     ) {
 //            StepsView(recipe)
-            CommentsView(recipe, 390)
+//            CommentsView(comments, 390)
     }
 }
