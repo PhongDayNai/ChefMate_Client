@@ -3,9 +3,9 @@ package com.watb.chefmate.data
 data class Recipe(
     val recipeId: Int,
     val image: String,
-    val name: String,
-    val author: String,
-    val likesQuantity: Int,
+    val recipeName: String,
+    val userName: String,
+    val likeQuantity: Int,
     val viewCount: Int,
     val ingredients: List<IngredientItem>,
     val cookingSteps: List<CookingStep>,
@@ -40,9 +40,9 @@ data class RegisterRequest(
     val password: String
 )
 
-data class Response(
+data class LoginResponse(
     val success: Boolean,
-    val data: Any? = null,
+    val data: LoginData? = null,
     val message: String? = null
 )
 
@@ -53,6 +53,12 @@ data class LoginData(
     val passwordHash: String,
     val followCount: Int,
     val createdAt: String
+)
+
+data class TopTrendingResponse(
+    val success: Boolean,
+    val data: List<Recipe>? = null,
+    val message: String? = null
 )
 
 data class IngredientInput(

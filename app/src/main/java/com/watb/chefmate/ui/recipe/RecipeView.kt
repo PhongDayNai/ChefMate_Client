@@ -8,7 +8,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,10 +23,8 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -54,7 +51,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -62,7 +58,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -76,6 +71,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
+import com.watb.chefmate.api.ApiConstant
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.data.CommentItem
 import com.watb.chefmate.data.CookingStep
@@ -196,7 +192,7 @@ fun RecipeViewScreen(
         ) {
             if (!isExpanded) {
                 Image(
-                    painter = rememberAsyncImagePainter(model = recipe.image),
+                    painter = if (recipe.image.startsWith("/")) rememberAsyncImagePainter("${ApiConstant.MAIN_URL}${recipe.image}") else rememberAsyncImagePainter(model = recipe.image),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -208,7 +204,7 @@ fun RecipeViewScreen(
             }
         }
         Text(
-            text = recipe.name,
+            text = recipe.recipeName,
             color = Color(0xFF000000),
             fontSize = 24.sp,
             fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
@@ -231,7 +227,7 @@ fun RecipeViewScreen(
                     .clip(RoundedCornerShape(16.dp))
             )
             Text(
-                text = recipe.author,
+                text = recipe.userName,
                 color = Color(0xFF555555),
                 fontSize = 16.sp,
                 fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
@@ -284,7 +280,7 @@ fun RecipeViewScreen(
                     .size(16.dp)
             )
             Text(
-                text = CommonHelper.parseNumber(recipe.likesQuantity),
+                text = CommonHelper.parseNumber(recipe.likeQuantity),
                 color = Color(0xFF6B7280),
                 fontSize = 14.sp,
                 fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
@@ -724,9 +720,9 @@ fun RecipeViewPreview() {
     val recipe = Recipe(
         recipeId = 0,
         image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
-        name = "Phở bò Hà Nội",
-        author = "duonghung99",
-        likesQuantity = 150,
+        recipeName = "Phở bò Hà Nội",
+        userName = "duonghung99",
+        likeQuantity = 150,
         viewCount = 3200,
         ingredients = listOf(
             IngredientItem(ingredientId = 1, ingredientName = "Thịt bò", weight = 500, unit = "g"),

@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
+import com.watb.chefmate.api.ApiConstant
 import com.watb.chefmate.data.AppConstant
 import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.helper.CommonHelper
@@ -229,13 +230,17 @@ fun RecipeItem(
     ) {
         Column {
             val painter = if (recipe.image.isNotBlank()) {
-                rememberAsyncImagePainter(recipe.image)
+                if (recipe.image.startsWith("/")) {
+                    rememberAsyncImagePainter("${ApiConstant.MAIN_URL}${recipe.image}")
+                } else {
+                    rememberAsyncImagePainter(recipe.image)
+                }
             } else {
                 painterResource(R.drawable.placeholder_image)
             }
             Image(
                 painter = painter,
-                contentDescription = recipe.name,
+                contentDescription = recipe.recipeName,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -246,14 +251,14 @@ fun RecipeItem(
                     .padding(16.dp)
             ) {
                 Text(
-                    text = recipe.name,
+                    text = recipe.recipeName,
                     color = Color(0xFF000000),
                     fontSize = 16.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
                     fontWeight = FontWeight(700),
                 )
                 Text(
-                    text = recipe.author,
+                    text = recipe.userName,
                     color = Color(0xFFFB923C),
                     fontSize = 14.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
@@ -322,12 +327,12 @@ fun RecipeItem(
                     Icon(
                         painter = painterResource(R.drawable.ic_like_filled),
                         contentDescription = "Like",
-                        tint = if (recipe.isLiked) Color(0xFFEF4444) else Color(0xFFCFCDCD),
+                        tint = Color(0xFFEF4444) ,
                         modifier = Modifier
                             .size(16.dp)
                     )
                     Text(
-                        text = CommonHelper.parseNumber(recipe.likesQuantity),
+                        text = CommonHelper.parseNumber(recipe.likeQuantity),
                         color = Color(0xFF6B7280),
                         fontSize = 14.sp,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),

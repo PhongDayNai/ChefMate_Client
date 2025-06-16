@@ -47,9 +47,9 @@ fun RecipeEntity.toRecipe(): Recipe {
     return Recipe(
         recipeId = recipeId,
         image = image,
-        name = recipeName,
-        author = userName,
-        likesQuantity = likeQuantity,
+        recipeName = recipeName,
+        userName = userName,
+        likeQuantity = likeQuantity,
         viewCount = viewCount,
         ingredients = ingredients,
         cookingSteps = cookingSteps,

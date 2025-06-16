@@ -72,9 +72,9 @@ fun navGraph(
     var recipe = Recipe(
         recipeId = -1,
         image = "",
-        name = "",
-        author = "Admin",
-        likesQuantity = 100,
+        recipeName = "",
+        userName = "Admin",
+        likeQuantity = 100,
         viewCount = 1151,
         ingredients = listOf<IngredientItem>(),
         cookingSteps = listOf<CookingStep>(),
