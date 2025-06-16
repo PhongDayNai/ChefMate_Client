@@ -1,16 +1,15 @@
 package com.watb.chefmate.database.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
-import com.watb.chefmate.database.entities.Ingredients
-import com.watb.chefmate.database.entities.Recipes
-import com.watb.chefmate.database.entities.RecipesIngredients
-import com.watb.chefmate.database.entities.Steps
+import com.watb.chefmate.database.entities.IngredientEntity
+import com.watb.chefmate.database.entities.RecipeEntity
+import com.watb.chefmate.database.entities.RecipeIngredientEntity
+import com.watb.chefmate.database.entities.StepEntity
 import com.watb.chefmate.database.relations.RecipeWithIngredientsAndSteps
 import kotlinx.coroutines.flow.Flow
 
@@ -18,28 +17,28 @@ import kotlinx.coroutines.flow.Flow
 interface RecipeDao {
     // --- Các thao tác với bảng Recipes ---
     @Query("SELECT * FROM Recipes")
-    fun getAllRecipes(): Flow<List<Recipes>>
+    fun getAllRecipes(): Flow<List<RecipeEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertRecipe(recipe: Recipes): Long
+    suspend fun insertRecipe(recipe: RecipeEntity): Long
 
     @Update
-    suspend fun updateRecipe(recipe: Recipes)
+    suspend fun updateRecipe(recipe: RecipeEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertIngredient(ingredient: Ingredients): Long
+    suspend fun insertIngredient(ingredient: IngredientEntity): Long
 
     @Query("SELECT * FROM Ingredients WHERE ingredientName = :name LIMIT 1")
-    fun getIngredientByName(name: String): Flow<Ingredients?>
+    fun getIngredientByName(name: String): Flow<IngredientEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertRecipeIngredient(recipeIngredient: RecipesIngredients)
+    suspend fun insertRecipeIngredient(recipeIngredient: RecipeIngredientEntity)
 
     @Query("DELETE FROM RecipesIngredients WHERE recipeId = :recipeId")
     suspend fun deleteRecipeIngredientsForRecipe(recipeId: Int)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertStep(step: Steps)
+    suspend fun insertStep(step: StepEntity)
 
     @Query("DELETE FROM Steps WHERE recipeId = :recipeId")
     suspend fun deleteStepsForRecipe(recipeId: Int)

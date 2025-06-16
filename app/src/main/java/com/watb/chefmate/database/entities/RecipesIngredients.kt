@@ -9,13 +9,13 @@ import androidx.room.Index
     primaryKeys = ["riId"],
     foreignKeys = [
         ForeignKey(
-            entity = Recipes::class,
+            entity = RecipeEntity::class,
             parentColumns = ["recipeId"],
             childColumns = ["recipeId"],
             onDelete = ForeignKey.CASCADE // Khi xóa recipe, các ingredient liên quan cũng bị xóa
         ),
         ForeignKey(
-            entity = Ingredients::class,
+            entity = IngredientEntity::class,
             parentColumns = ["ingredientId"],
             childColumns = ["ingredientId"],
             onDelete = ForeignKey.CASCADE // Khi xóa ingredient, các liên kết cũng bị xóa
@@ -26,7 +26,7 @@ import androidx.room.Index
         Index(value = ["ingredientId"])
     ]
 )
-data class RecipesIngredients(
+data class RecipeIngredientEntity(
     val riId: Int = 0, // Khóa chính tự động tăng
     val recipeId: Int,
     val ingredientId: Int,

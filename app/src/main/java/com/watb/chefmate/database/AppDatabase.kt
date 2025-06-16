@@ -12,18 +12,18 @@ import com.watb.chefmate.database.converter.DateConverter
 
 @Database(
     entities = [
-        Recipes::class, // Đã đổi tên
-        Ingredients::class, // Đã đổi tên
-        RecipesIngredients::class, // Đã đổi tên
-        Steps::class, // Đã đổi tên
-        ShoppingTimes::class, // Thêm ShoppingTimes
-        ShoppingRecipes::class, // Đã đổi tên
-        ShoppingIngredients::class // Đã đổi tên
+        RecipeEntity::class,
+        IngredientEntity::class,
+        RecipeIngredientEntity::class,
+        StepEntity::class,
+        ShoppingTimeEntity::class,
+        ShoppingRecipeEntity::class,
+        ShoppingIngredientEntity::class
     ],
-    version = 2, // Tăng version khi có thay đổi cấu trúc DB (thêm createAt, ShoppingTimes)
+    version = 1,
     exportSchema = false
 )
-@TypeConverters(DateConverter::class, BitmapConverter::class) // Đăng ký TypeConverter
+@TypeConverters(DateConverter::class, BitmapConverter::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun recipeDao(): RecipeDao
@@ -39,9 +39,8 @@ abstract class AppDatabase : RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "recipe_app_database" // Tên file database
+                    "recipe_app_database"
                 )
-                    .fallbackToDestructiveMigration() // Xóa DB khi nâng cấp version nếu không có migration path
                     .build()
                 INSTANCE = instance
                 instance

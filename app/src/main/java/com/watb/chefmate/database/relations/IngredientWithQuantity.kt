@@ -2,14 +2,14 @@ package com.watb.chefmate.database.relations
 
 import androidx.room.Embedded
 import androidx.room.Relation
-import com.watb.chefmate.database.entities.Ingredients
-import com.watb.chefmate.database.entities.RecipesIngredients
+import com.watb.chefmate.database.entities.IngredientEntity
+import com.watb.chefmate.database.entities.RecipeIngredientEntity
 
 data class IngredientWithQuantity(
-    @Embedded val recipesIngredients: RecipesIngredients, //
+    @Embedded val recipesIngredients: RecipeIngredientEntity, //
     @Relation(
         parentColumn = "ingredientId",
         entityColumn = "ingredientId"
     )
-    val ingredients: Ingredients
+    val ingredients: IngredientEntity
 )
