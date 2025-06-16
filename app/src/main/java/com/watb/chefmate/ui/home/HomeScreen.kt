@@ -148,7 +148,7 @@ fun HomeScreen(
             }
         }
         Text(
-            text = "Top tìm kiếm",
+            text = "Top thịnh hành",
             color = Color(0xFF000000),
             fontSize = 18.sp,
             fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),

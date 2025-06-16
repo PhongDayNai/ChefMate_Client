@@ -1,7 +1,5 @@
 package com.watb.chefmate.ui.recipe
 
-
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,12 +12,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
 import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.database.AppDatabase
@@ -43,15 +39,7 @@ fun RecipeListScreen(
             .background(Color(0xFFFFFFFF))
             .safeDrawingPadding()
     ) {
-        Header(
-            text = "Kho công thức",
-            leadingIcon = {
-                Icon(painterResource(R.drawable.ic_back),
-                    contentDescription = "Back",
-                    tint = Color(0xFFFFFFFF)
-                )
-            }
-        )
+        Header(text = "Kho công thức")
         if (recipes.isEmpty()) {
             Column(
                 modifier = Modifier
