@@ -60,7 +60,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun MainAct(
     navController: NavController,
-    onRecipeClick: (Recipe) -> Unit,
+    onRecipeClick: (Recipe, Boolean) -> Unit,
     recipeViewModel: RecipeViewModel
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -210,12 +210,18 @@ fun MainAct(
                     when (page) {
                         0 -> HomeScreen(
                             onRecipeClick = { selectedRecipe ->
-                                onRecipeClick(selectedRecipe)
+                                onRecipeClick(selectedRecipe, false)
                             },
                             navController = navController,
                             recipes = recipes
                         )
-                        1 -> RecipeListScreen(navController, recipeViewModel)
+                        1 -> RecipeListScreen(
+                            navController = navController,
+                            onRecipeClick = { selectedRecipe ->
+                                onRecipeClick(selectedRecipe, true)
+                            },
+                            recipeViewModel
+                        )
 //                        2 -> ProfileScreen()
                     }
                 }
