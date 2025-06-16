@@ -5,12 +5,12 @@ import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,6 +23,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -30,6 +32,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -97,9 +100,9 @@ fun AddRecipeScreen(
 
     ConstraintLayout(
         modifier = Modifier
+            .safeDrawingPadding()
             .fillMaxSize()
             .background(Color(0xFFFB923C))
-            .safeDrawingPadding()
     ) {
         val (headerRef, contentRef) = createRefs()
         Row(
@@ -170,10 +173,11 @@ fun AddRecipeScreen(
                     .fillMaxWidth()
                     .padding(top = 8.dp)
             )
-            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
             ) {
                 OutlinedTextField(
                     value = cookTime.value,
@@ -184,9 +188,10 @@ fun AddRecipeScreen(
                         unfocusedBorderColor = Color(0xFFE0E0E0)
                     ),
                     shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .padding(end = 20.dp)
+                        .weight(1f)
                 )
-                Spacer(modifier = Modifier.width(20.dp))
                 OutlinedTextField(
                     value = ration.value,
                     onValueChange = { ration.value = it},
@@ -199,10 +204,11 @@ fun AddRecipeScreen(
                     modifier = Modifier.weight(1f)
                 )
             }
-            Spacer(modifier = Modifier.height(20.dp))
 
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .padding(top = 20.dp)
+                    .fillMaxWidth()
             ) {
                 Text(
                     text = "Trạng thái",
@@ -216,88 +222,162 @@ fun AddRecipeScreen(
                         colors = RadioButtonDefaults.colors(selectedColor = Color(0xFFFB923C))
                     )
                     Text(text = "Công khai")
-                    Spacer(modifier = Modifier.width(40.dp))
+
                     RadioButton(
                         selected = !isPublic,
                         onClick = { isPublic = false },
-                        colors = RadioButtonDefaults.colors(selectedColor = Color(0xFFFB923C))
+                        colors = RadioButtonDefaults.colors(selectedColor = Color(0xFFFB923C)),
+                        modifier = Modifier
+                            .padding(start = 20.dp)
                     )
                     Text(text = "Riêng tư")
                 }
             }
-            Spacer(modifier = Modifier.height(20.dp))
 
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp)
             ) {
                 Text(
                     text = "Nguyên liệu",
                     fontWeight = FontWeight(600),
-                    fontSize = 16.sp
+                    fontSize = 16.sp,
+                    modifier = Modifier
+                        .padding(bottom = 10.dp)
                 )
-                Spacer(modifier = Modifier.height(10.dp))
 
                 ingredients.forEachIndexed { index, ingredient ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+//                        border = BorderStroke(1.dp, Color(0xFFE0E0E0)),
+                        elevation = CardDefaults.cardElevation(
+                            defaultElevation = 8.dp
+                        ),
+                        modifier = Modifier
+                            .padding(top = 12.dp)
+                            .background(Color(0xFFFFFFFF))
                     ) {
-                        OutlinedTextField(
-                            value = ingredient.name,
-                            onValueChange = { ingredients[index] = ingredient.copy(name = it) },
-                            label = { Text(text = "Tên nguyên liệu", fontSize = 12.sp) },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFE0E0E0),
-                                unfocusedBorderColor = Color(0xFFE0E0E0)
-                            ),
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.weight(4f)
-                        )
-                        Spacer(modifier = Modifier.width(5.dp))
-                        OutlinedTextField(
-                            value = ingredient.weight,
-                            onValueChange = { newValue ->
-                                if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
-                                    ingredients[index] = ingredient.copy(weight = newValue)
+                        Column {
+                            Row {
+                                TextField(
+                                    value = ingredient.name,
+                                    onValueChange = { ingredients[index] = ingredient.copy(name = it) },
+                                    label = { Text(text = "Tên nguyên liệu", fontSize = 12.sp) },
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = Color(0xFFE0E0E0),
+                                        unfocusedBorderColor = Color(0xFFE0E0E0)
+                                    ),
+                                    shape = RoundedCornerShape(10.dp),
+                                )
+                                if (ingredients.size > 1) { // Chỉ hiển thị nút xóa nếu có hơn 1 trường
+                                    IconButton(onClick = { ingredients.removeAt(index) }) {
+                                        Icon(
+                                            painterResource(R.drawable.ic_minus), // Bạn cần thêm icon xóa (ic_delete.xml) vào drawable
+                                            contentDescription = "Xóa nguyên liệu",
+                                            tint = Color.Red,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
                                 }
-                            },
-                            label = { Text(text = "Khối lượng", fontSize = 12.sp) },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFE0E0E0),
-                                unfocusedBorderColor = Color(0xFFE0E0E0)
-                            ),
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.weight(3f)
-                        )
-                        Spacer(modifier = Modifier.width(5.dp))
-                        OutlinedTextField(
-                            value = ingredient.unit,
-                            onValueChange = { ingredients[index] = ingredient.copy(unit = it) },
-                            label = { Text(text = "Đơn vị", fontSize = 12.sp) },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFE0E0E0),
-                                unfocusedBorderColor = Color(0xFFE0E0E0)
-                            ),
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.weight(2f)
-                        )
-                        if (ingredients.size > 1) { // Chỉ hiển thị nút xóa nếu có hơn 1 trường
-                            IconButton(onClick = { ingredients.removeAt(index) }) {
-                                Icon(
-                                    painterResource(R.drawable.ic_minus), // Bạn cần thêm icon xóa (ic_delete.xml) vào drawable
-                                    contentDescription = "Xóa nguyên liệu",
-                                    tint = Color.Red,
-                                    modifier = Modifier.size(24.dp)
+                            }
+                            Row {
+                                TextField(
+                                    value = ingredient.weight,
+                                    onValueChange = { newValue ->
+                                        if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
+                                            ingredients[index] = ingredient.copy(weight = newValue)
+                                        }
+                                    },
+                                    label = { Text(text = "Khối lượng", fontSize = 12.sp) },
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = Color(0xFFE0E0E0),
+                                        unfocusedBorderColor = Color(0xFFE0E0E0)
+                                    ),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier
+                                        .padding(start = 5.dp, end = 5.dp)
+                                        .weight(1f)
+                                )
+                                TextField(
+                                    value = ingredient.unit,
+                                    onValueChange = { ingredients[index] = ingredient.copy(unit = it) },
+                                    label = { Text(text = "Đơn vị", fontSize = 12.sp) },
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = Color(0xFFE0E0E0),
+                                        unfocusedBorderColor = Color(0xFFE0E0E0)
+                                    ),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.weight(1f)
                                 )
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(10.dp))
+//                    Row(
+//                        verticalAlignment = Alignment.CenterVertically,
+//                        modifier = Modifier.fillMaxWidth()
+//                    ) {
+//                        OutlinedTextField(
+//                            value = ingredient.name,
+//                            onValueChange = { ingredients[index] = ingredient.copy(name = it) },
+//                            label = { Text(text = "Tên nguyên liệu", fontSize = 12.sp) },
+//                            colors = OutlinedTextFieldDefaults.colors(
+//                                focusedBorderColor = Color(0xFFE0E0E0),
+//                                unfocusedBorderColor = Color(0xFFE0E0E0)
+//                            ),
+//                            shape = RoundedCornerShape(10.dp),
+//                            modifier = Modifier
+//                                .weight(4f)
+//                        )
+//                        OutlinedTextField(
+//                            value = ingredient.weight,
+//                            onValueChange = { newValue ->
+//                                if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
+//                                    ingredients[index] = ingredient.copy(weight = newValue)
+//                                }
+//                            },
+//                            label = { Text(text = "Khối lượng", fontSize = 12.sp) },
+//                            colors = OutlinedTextFieldDefaults.colors(
+//                                focusedBorderColor = Color(0xFFE0E0E0),
+//                                unfocusedBorderColor = Color(0xFFE0E0E0)
+//                            ),
+//                            shape = RoundedCornerShape(10.dp),
+//                            modifier = Modifier
+//                                .padding(start = 5.dp, end = 5.dp)
+//                                .weight(3f)
+//                        )
+//                        OutlinedTextField(
+//                            value = ingredient.unit,
+//                            onValueChange = { ingredients[index] = ingredient.copy(unit = it) },
+//                            label = { Text(text = "Đơn vị", fontSize = 12.sp) },
+//                            colors = OutlinedTextFieldDefaults.colors(
+//                                focusedBorderColor = Color(0xFFE0E0E0),
+//                                unfocusedBorderColor = Color(0xFFE0E0E0)
+//                            ),
+//                            shape = RoundedCornerShape(10.dp),
+//                            modifier = Modifier.weight(2f)
+//                        )
+//                        if (ingredients.size > 1) { // Chỉ hiển thị nút xóa nếu có hơn 1 trường
+//                            IconButton(onClick = { ingredients.removeAt(index) }) {
+//                                Icon(
+//                                    painterResource(R.drawable.ic_minus), // Bạn cần thêm icon xóa (ic_delete.xml) vào drawable
+//                                    contentDescription = "Xóa nguyên liệu",
+//                                    tint = Color.Red,
+//                                    modifier = Modifier.size(24.dp)
+//                                )
+//                            }
+//                        }
+//                    }
                 }
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { ingredients.add(IngredientInput("", "", "")) }
+                    modifier = Modifier
+                        .padding(top = 10.dp)
+                        .clickable { ingredients.add(IngredientInput("", "", "")) }
                 ) {
                     Icon(
                         painterResource(R.drawable.ic_add),
@@ -308,22 +388,25 @@ fun AddRecipeScreen(
                     Text(text = "Thêm nguyên liệu")
                 }
             }
-            Spacer(modifier = Modifier.height(20.dp))
 
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .padding(top = 20.dp).fillMaxWidth()
             ) {
                 Text(
                     text = "Các bước nấu",
                     fontWeight = FontWeight(600),
-                    fontSize = 16.sp
+                    fontSize = 16.sp,
+                    modifier = Modifier
+                        .padding(bottom = 20.dp)
                 )
-                Spacer(modifier = Modifier.height(10.dp))
 
                 steps.forEachIndexed { index, step ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .padding(bottom = 10.dp)
+                            .fillMaxWidth()
                     ) {
                         OutlinedTextField(
                             value = step.content,
@@ -334,9 +417,10 @@ fun AddRecipeScreen(
                                 unfocusedBorderColor = Color(0xFFE0E0E0)
                             ),
                             shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier
+                                .padding(end = 10.dp)
+                                .weight(1f)
                         )
-                        Spacer(modifier = Modifier.width(5.dp))
                         if (steps.size > 1) {
                             IconButton(onClick = { steps.removeAt(index) }) {
                                 Icon(
@@ -348,7 +432,6 @@ fun AddRecipeScreen(
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(10.dp))
                 }
 
                 Row(
@@ -364,7 +447,6 @@ fun AddRecipeScreen(
                     Text(text = "Thêm bước nấu")
                 }
             }
-            Spacer(modifier = Modifier.height(20.dp))
 
             Button(
                 onClick = {
@@ -403,6 +485,7 @@ fun AddRecipeScreen(
                     contentColor = Color.White
                 ),
                 modifier = Modifier
+                    .padding(top = 20.dp, bottom = 60.dp)
                     .fillMaxWidth()
                     .padding(bottom = 20.dp) // Thêm padding dưới cùng cho nút
             ) {
@@ -410,7 +493,6 @@ fun AddRecipeScreen(
                     text = "Đăng công thức"
                 )
             }
-            Spacer(modifier = Modifier.height(60.dp))
         }
     }
 }
