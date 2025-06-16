@@ -24,6 +24,8 @@ import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.ui.recipe.AddRecipeScreen
 import com.watb.chefmate.ui.recipe.RecipeListScreen
 import com.watb.chefmate.data.CommentItem
+import com.watb.chefmate.data.CookingStep
+import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.ui.recipe.RecipeViewScreen
 import com.watb.chefmate.ui.theme.ChefMateTheme
@@ -77,8 +79,8 @@ fun navGraph(
         author = "Admin",
         likesQuantity = 100,
         viewCount = 1151,
-        ingredients = listOf<String>(),
-        cookingSteps = listOf<String>(),
+        ingredients = listOf<IngredientItem>(),
+        cookingSteps = listOf<CookingStep>(),
         cookingTime = "Unknown",
         comments = listOf<CommentItem>(),
         ration = 0,

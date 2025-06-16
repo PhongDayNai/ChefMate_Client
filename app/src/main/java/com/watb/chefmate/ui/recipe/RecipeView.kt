@@ -76,6 +76,8 @@ import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.data.CommentItem
+import com.watb.chefmate.data.CookingStep
+import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.helper.CommonHelper
 import kotlinx.coroutines.FlowPreview
@@ -462,9 +464,9 @@ fun IngredientsView(recipe: Recipe) {
 }
 
 @Composable
-fun IngredientLine(ingredient: String) {
+fun IngredientLine(ingredient: IngredientItem) {
     Text(
-        text = ingredient,
+        text = "${ingredient.ingredientName} - ${ingredient.weight} ${ingredient.unit}",
         color = Color(0xFF000000),
         fontSize = 14.sp,
         fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -493,20 +495,20 @@ fun StepsView(recipe: Recipe) {
             .padding(top = 8.dp)
             .fillMaxWidth(0.9f)
     ) {
-        recipe.cookingSteps.forEachIndexed { index, cookingStep ->
-            CookingStepItem(index + 1, cookingStep)
+        recipe.cookingSteps.forEach { cookingStep ->
+            CookingStepItem(cookingStep)
         }
     }
 }
 
 @Composable
-fun CookingStepItem(index: Int, cookingStep: String) {
+fun CookingStepItem(cookingStep: CookingStep) {
     Column(
         modifier = Modifier
             .fillMaxWidth(0.9f)
     ) {
         Text(
-            text = "Bước $index",
+            text = "Bước ${cookingStep.indexStep}",
             color = Color(0xFF000000),
             fontSize = 14.sp,
             fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
@@ -514,7 +516,7 @@ fun CookingStepItem(index: Int, cookingStep: String) {
                 .padding(top = 8.dp)
         )
         Text(
-            text = cookingStep,
+            text = cookingStep.stepContent,
             color = Color(0xFF000000),
             fontSize = 14.sp,
             fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -708,22 +710,25 @@ fun RecipeViewPreview() {
         likesQuantity = 150,
         viewCount = 3200,
         ingredients = listOf(
-            "500g thịt bò",
-            "200g bánh phở",
-            "1 củ hành tây",
-            "5g quế",
-            "2 hoa hồi",
-            "Gừng, muối, nước mắm"
+            IngredientItem(ingredientId = 1, ingredientName = "Thịt bò", weight = 500, unit = "g"),
+            IngredientItem(ingredientId = 2, ingredientName = "Bánh phở", weight = 200, unit = "g"),
+            IngredientItem(ingredientId = 3, ingredientName = "Hành tây", weight = 1, unit = "củ"),
+            IngredientItem(ingredientId = 4, ingredientName = "Quế", weight = 5, unit = "g"),
+            IngredientItem(ingredientId = 5, ingredientName = "Hoa hồi", weight = 2, unit = "cái"),
+            IngredientItem(ingredientId = 6, ingredientName = "Gừng", weight = 1, unit = "nhánh"),
+            IngredientItem(ingredientId = 7, ingredientName = "Muối", weight = 1, unit = "muỗng cà phê"),
+            IngredientItem(ingredientId = 8, ingredientName = "Nước mắm", weight = 2, unit = "muỗng canh"),
         ),
         cookingSteps = listOf(
-            "Nướng hành và gừng cho thơm.",
-            "Luộc thịt bò, vớt bọt.",
-            "Thêm hành, gừng, quế, hồi vào nồi.",
-            "Nêm nếm gia vị vừa ăn.",
-            "Trụng bánh phở, xếp ra tô, chan nước dùng."
+            CookingStep(indexStep = 1, stepContent = "Nướng hành và gừng cho thơm."),
+            CookingStep(indexStep = 2, stepContent = "Luộc thịt bò, vớt bọt."),
+            CookingStep(indexStep = 3, stepContent = "Thêm hành, gừng, quế, hồi vào nồi."),
+            CookingStep(indexStep = 4, stepContent = "Nêm nếm gia vị vừa ăn."),
+            CookingStep(indexStep = 5, stepContent = "Trụng bánh phở, xếp ra tô, chan nước dùng.")
         ),
         cookingTime = "45 phút",
         ration = 4,
+        isLiked = false,
         comments = listOf(
             CommentItem(
                 author = "nguyenvana",
@@ -738,6 +743,7 @@ fun RecipeViewPreview() {
         ),
         createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
     )
+
 
 //    RecipeViewScreen(navController)
     Column(
