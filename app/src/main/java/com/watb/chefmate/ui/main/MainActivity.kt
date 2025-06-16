@@ -84,7 +84,10 @@ fun navGraph(
         createdAt = "2023-06-15 10:20:00"
     )
     val recipeViewModel = RecipeViewModel(repository)
-    return navController.createGraph("mainAct") {
+    return navController.createGraph("splash") {
+        composable("splash") {
+            SplashScreen(navController)
+        }
         composable("mainAct") {
             MainAct(
                 navController = navController,
