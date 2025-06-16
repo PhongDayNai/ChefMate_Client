@@ -49,6 +49,8 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
 import com.watb.chefmate.data.CommentItem
+import com.watb.chefmate.data.CookingStep
+import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.ui.home.HomeScreen
 import com.watb.chefmate.ui.recipe.RecipeListScreen
@@ -75,42 +77,27 @@ fun MainAct(
             author = "Admin",
             likesQuantity = 100,
             viewCount = 1151,
-            ingredients = listOf("Matcha", "Cream", "Milk"),
-            cookingSteps = listOf("Step 1", "Step 2", "Step 3"),
-            cookingTime = "30 phút",
-            comments = listOf(
-                CommentItem(
-                    author = "User 1",
-                    time = "2024-06-15 10:20:00",
-                    content = "Nội dung bình luận 1"
-                ),
-                CommentItem(
-                    author = "User 2",
-                    time = "2023-06-15 10:20:00",
-                    content = "Nội dung bình luận 2"
-                ),
-                CommentItem(
-                    author = "User 3",
-                    time = "2023-06-15 10:20:00",
-                    content = "Nội dung bình luận 3"
-                ),
-                CommentItem(
-                    author = "User 4",
-                    time = "2023-06-15 10:20:00",
-                    content = "Nội dung bình luận 4"
-                ),
-                CommentItem(
-                    author = "User 5",
-                    time = "2023-06-15 10:20:00",
-                    content = "Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 "
-                ),
-                CommentItem(
-                    author = "User 6",
-                    time = "2023-06-15 10:20:00",
-                    content = "Nội dung bình luận 6"
-                )
+            ingredients = listOf(
+                IngredientItem(1, "Matcha", 5, "gram"),
+                IngredientItem(2, "Cream", 20, "ml"),
+                IngredientItem(3, "Milk", 100, "ml")
             ),
+            cookingSteps = listOf(
+                CookingStep(1, "Cho Matcha vào ly"),
+                CookingStep(2, "Đổ Cream lên trên"),
+                CookingStep(3, "Thêm sữa và khuấy đều")
+            ),
+            cookingTime = "30 phút",
             ration = 3,
+            isLiked = false,
+            comments = listOf(
+                CommentItem("User 1", "2024-06-15 10:20:00", "Nội dung bình luận 1"),
+                CommentItem("User 2", "2023-06-15 10:20:00", "Nội dung bình luận 2"),
+                CommentItem("User 3", "2023-06-15 10:20:00", "Nội dung bình luận 3"),
+                CommentItem("User 4", "2023-06-15 10:20:00", "Nội dung bình luận 4"),
+                CommentItem("User 5", "2023-06-15 10:20:00", "Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 Nội dung bình luận 5 "),
+                CommentItem("User 6", "2023-06-15 10:20:00", "Nội dung bình luận 6")
+            ),
             createdAt = "2023-06-15 10:20:00"
         ),
         Recipe(
@@ -120,22 +107,23 @@ fun MainAct(
             author = "Admin",
             likesQuantity = 100,
             viewCount = 1151,
-            ingredients = listOf("Matcha", "Cream", "Milk"),
-            cookingSteps = listOf("Step 1", "Step 2", "Step 3"),
-            cookingTime = "30 phút",
-            comments = listOf(
-                CommentItem(
-                    author = "User 1",
-                    time = "2024-06-15 10:20:00",
-                    content = "Nội dung bình luận 1"
-                ),
-                CommentItem(
-                    author = "User 2",
-                    time = "2023-06-15 10:20:00",
-                    content = "Nội dung bình luận 2"
-                )
+            ingredients = listOf(
+                IngredientItem(1, "Matcha", 5, "gram"),
+                IngredientItem(2, "Cream", 20, "ml"),
+                IngredientItem(3, "Milk", 100, "ml")
             ),
+            cookingSteps = listOf(
+                CookingStep(1, "Cho Matcha vào ly"),
+                CookingStep(2, "Đổ Cream lên trên"),
+                CookingStep(3, "Thêm sữa và khuấy đều")
+            ),
+            cookingTime = "30 phút",
             ration = 3,
+            isLiked = false,
+            comments = listOf(
+                CommentItem("User 1", "2024-06-15 10:20:00", "Nội dung bình luận 1"),
+                CommentItem("User 2", "2023-06-15 10:20:00", "Nội dung bình luận 2")
+            ),
             createdAt = "2023-06-15 10:20:00"
         ),
         Recipe(
@@ -145,22 +133,23 @@ fun MainAct(
             author = "Admin",
             likesQuantity = 100,
             viewCount = 1151,
-            ingredients = listOf("Matcha", "Cream", "Milk"),
-            cookingSteps = listOf("Step 1", "Step 2", "Step 3"),
-            cookingTime = "30 phút",
-            comments = listOf(
-                CommentItem(
-                    author = "User 1",
-                    time = "2024-06-15 10:20:00",
-                    content = "Nội dung bình luận 1"
-                ),
-                CommentItem(
-                    author = "User 2",
-                    time = "2023-06-15 10:20:00",
-                    content = "Nội dung bình luận 2"
-                )
+            ingredients = listOf(
+                IngredientItem(1, "Matcha", 5, "gram"),
+                IngredientItem(2, "Cream", 20, "ml"),
+                IngredientItem(3, "Milk", 100, "ml")
             ),
+            cookingSteps = listOf(
+                CookingStep(1, "Cho Matcha vào ly"),
+                CookingStep(2, "Đổ Cream lên trên"),
+                CookingStep(3, "Thêm sữa và khuấy đều")
+            ),
+            cookingTime = "30 phút",
             ration = 3,
+            isLiked = false,
+            comments = listOf(
+                CommentItem("User 1", "2024-06-15 10:20:00", "Nội dung bình luận 1"),
+                CommentItem("User 2", "2023-06-15 10:20:00", "Nội dung bình luận 2")
+            ),
             createdAt = "2023-06-15 10:20:00"
         ),
         Recipe(
@@ -170,25 +159,27 @@ fun MainAct(
             author = "Admin",
             likesQuantity = 100,
             viewCount = 1151,
-            ingredients = listOf("Matcha", "Cream", "Milk"),
-            cookingSteps = listOf("Step 1", "Step 2", "Step 3"),
-            cookingTime = "30 phút",
-            comments = listOf(
-                CommentItem(
-                    author = "User 1",
-                    time = "2024-05-13 19:00:00",
-                    content = "Nội dung bình luận 1"
-                ),
-                CommentItem(
-                    author = "User 2",
-                    time = "2025-01-04 12:30:00",
-                    content = "Nội dung bình luận 2"
-                )
+            ingredients = listOf(
+                IngredientItem(1, "Matcha", 5, "gram"),
+                IngredientItem(2, "Cream", 20, "ml"),
+                IngredientItem(3, "Milk", 100, "ml")
             ),
+            cookingSteps = listOf(
+                CookingStep(1, "Cho Matcha vào ly"),
+                CookingStep(2, "Đổ Cream lên trên"),
+                CookingStep(3, "Thêm sữa và khuấy đều")
+            ),
+            cookingTime = "30 phút",
             ration = 3,
+            isLiked = false,
+            comments = listOf(
+                CommentItem("User 1", "2024-05-13 19:00:00", "Nội dung bình luận 1"),
+                CommentItem("User 2", "2025-01-04 12:30:00", "Nội dung bình luận 2")
+            ),
             createdAt = "2023-06-15 10:20:00"
-        ),
+        )
     )
+
 
     Box(
         contentAlignment = Alignment.Center,
