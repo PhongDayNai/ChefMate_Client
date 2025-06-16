@@ -55,11 +55,11 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     // Coil (Image Loading - recommended for loading Bitmaps in Compose)
-    implementation("io.coil-kt:coil-compose:2.4.0") // Hoặc phiên bản mới nhất
+    implementation("io.coil-kt:coil-compose:2.7.0") // Hoặc phiên bản mới nhất
 
     // Lấy ảnh từ thư viện
     // AndroidX Activity library for registerForActivityResult
-    implementation("androidx.activity:activity-ktx:1.7.2")
+    implementation("androidx.activity:activity-ktx:1.10.1")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -70,7 +70,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.navigation.runtime.android)
+//    implementation(libs.androidx.navigation.runtime.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
