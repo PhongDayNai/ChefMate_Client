@@ -1,6 +1,5 @@
 package com.watb.chefmate.ui.main
 
-import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -12,7 +11,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph
 import androidx.navigation.compose.NavHost
@@ -22,7 +20,6 @@ import androidx.navigation.createGraph
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.ui.recipe.AddRecipeScreen
-import com.watb.chefmate.ui.recipe.RecipeListScreen
 import com.watb.chefmate.data.CommentItem
 import com.watb.chefmate.data.CookingStep
 import com.watb.chefmate.data.IngredientItem
@@ -91,9 +88,13 @@ fun navGraph(
         composable("mainAct") {
             MainAct(
                 navController = navController,
-                onRecipeClick = { selectedRecipe ->
+                onRecipeClick = { selectedRecipe, isHistory ->
                     recipe = selectedRecipe
-                    navController.navigate("recipeView")
+                    if (!isHistory) {
+                        navController.navigate("recipeView")
+                    } else {
+                        navController.navigate("recipeViewHistory")
+                    }
                 },
                 recipeViewModel = recipeViewModel
             )
@@ -101,11 +102,11 @@ fun navGraph(
         composable("recipeView") {
             RecipeViewScreen(navController, recipe)
         }
+        composable("recipeViewHistory") {
+            RecipeViewScreen(navController, recipe, true)
+        }
         composable("addRecipe") {
             AddRecipeScreen(navController, recipeId = -1, recipeViewModel)
-        }
-        composable("listRecipe") {
-            RecipeListScreen(navController, recipeViewModel)
         }
     }
 }

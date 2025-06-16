@@ -156,7 +156,6 @@ fun AddRecipeScreen(
                     .padding(top = 12.dp)
             )
 
-            // Recipe Name
             OutlinedTextField(
                 value = nameRecipe.value,
                 onValueChange = { nameRecipe.value = it },
@@ -173,7 +172,6 @@ fun AddRecipeScreen(
             )
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Cook Time & Ration
             Row(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -203,7 +201,6 @@ fun AddRecipeScreen(
             }
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Is Public Radio Buttons
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -230,7 +227,6 @@ fun AddRecipeScreen(
             }
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Ingredients Section
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -314,7 +310,6 @@ fun AddRecipeScreen(
             }
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Steps Section
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -331,7 +326,7 @@ fun AddRecipeScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         OutlinedTextField(
-                            value = step.content, // Index tự động tăng
+                            value = step.content,
                             onValueChange = { steps[index] = step.copy(content = it) },
                             label = { Text(text = "Bước ${index + 1}", fontSize = 12.sp) },
                             colors = OutlinedTextFieldDefaults.colors(
@@ -342,10 +337,10 @@ fun AddRecipeScreen(
                             modifier = Modifier.weight(1f)
                         )
                         Spacer(modifier = Modifier.width(5.dp))
-                        if (steps.size > 1) { // Chỉ hiển thị nút xóa nếu có hơn 1 trường
+                        if (steps.size > 1) {
                             IconButton(onClick = { steps.removeAt(index) }) {
                                 Icon(
-                                    painterResource(R.drawable.ic_minus), // Bạn cần thêm icon xóa (ic_delete.xml) vào drawable
+                                    painterResource(R.drawable.ic_minus),
                                     contentDescription = "Xóa bước",
                                     tint = Color.Red,
                                     modifier = Modifier.size(24.dp)
@@ -371,11 +366,10 @@ fun AddRecipeScreen(
             }
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Submit Button
             Button(
                 onClick = {
                     scope.launch {
-                        val parsedRation = ration.value.toIntOrNull() ?: 0 // Chuyển đổi ration sang Int
+                        val parsedRation = ration.value.toIntOrNull() ?: 0
 
                         val ingredientsToSave = ingredients.filter { it.name.isNotBlank() && it.weight.isNotBlank() }.map {
                             Pair(it.name, Pair(it.weight.toIntOrNull() ?: 0, it.unit))

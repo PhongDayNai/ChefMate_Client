@@ -21,6 +21,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
+import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.ui.theme.Header
@@ -28,7 +29,11 @@ import com.watb.chefmate.ui.theme.RecipeItem
 import com.watb.chefmate.viewmodel.RecipeViewModel
 
 @Composable
-fun RecipeListScreen(navController: NavController, viewModel: RecipeViewModel) {
+fun RecipeListScreen(
+    navController: NavController,
+    onRecipeClick: (Recipe) -> Unit,
+    viewModel: RecipeViewModel
+) {
     val recipes by viewModel.allRecipes.collectAsState(initial = emptyList())
 
     Column(
@@ -65,12 +70,12 @@ fun RecipeListScreen(navController: NavController, viewModel: RecipeViewModel) {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 8.dp),
-                contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp) // Thêm padding dưới để FAB không che mất item cuối
+                contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp)
             ) {
                 items(recipes) { recipe ->
                     RecipeItem(
                         onClick = {
-                            navController.navigate("add_edit_recipe_screen/${recipe.recipeId}")
+                            onRecipeClick(recipe)
                         },
                         recipe = recipe,
                         modifier = Modifier
@@ -90,5 +95,5 @@ fun RecipeListScreensPreview() {
             repository = RecipeRepository(AppDatabase.getDatabase(LocalContext.current).recipeDao())
         )
     )
-    RecipeListScreen(navController = rememberNavController(), viewModel)
+//    RecipeListScreen(navController = rememberNavController(), {}, viewModel)
 }
