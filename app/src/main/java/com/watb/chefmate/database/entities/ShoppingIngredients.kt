@@ -9,13 +9,13 @@ import androidx.room.Index
     primaryKeys = ["siId"],
     foreignKeys = [
         ForeignKey(
-            entity = ShoppingTimes::class,
+            entity = ShoppingTimeEntity::class,
             parentColumns = ["stId"],
             childColumns = ["stId"],
             onDelete = ForeignKey.CASCADE
         ),
         ForeignKey(
-            entity = Ingredients::class,
+            entity = IngredientEntity::class,
             parentColumns = ["ingredientId"],
             childColumns = ["ingredientId"],
             onDelete = ForeignKey.CASCADE
@@ -26,7 +26,7 @@ import androidx.room.Index
         Index(value = ["ingredientId"])
     ]
 )
-data class ShoppingIngredients(
+data class ShoppingIngredientEntity(
     val siId: Int = 0,
     val stId: Int,
     val ingredientId: Int,

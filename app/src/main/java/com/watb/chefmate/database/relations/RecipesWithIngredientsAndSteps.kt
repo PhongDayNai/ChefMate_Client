@@ -5,14 +5,14 @@ import androidx.room.Relation
 import com.watb.chefmate.database.entities.*
 
 data class RecipeWithIngredientsAndSteps(
-    @Embedded val recipes: Recipes,
+    @Embedded val recipes: RecipeEntity,
     @Relation(
         parentColumn = "recipeId",
         entityColumn = "recipeId"
     )
-    val steps: List<Steps>,
+    val steps: List<StepEntity>,
     @Relation(
-        entity = RecipesIngredients::class,
+        entity = RecipeIngredientEntity::class,
         parentColumn = "recipeId",
         entityColumn = "riId"
     )
@@ -20,10 +20,10 @@ data class RecipeWithIngredientsAndSteps(
 )
 
 data class IngredientWithRecipeIngredient(
-    @Embedded val recipesIngredients: RecipesIngredients,
+    @Embedded val recipesIngredients: RecipeIngredientEntity,
     @Relation(
         parentColumn = "ingredientId",
         entityColumn = "ingredientId"
     )
-    val ingredients: Ingredients
+    val ingredients: IngredientEntity
 )

@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 import java.util.Date
 
 @Entity(tableName = "ShoppingTimes")
-data class ShoppingTimes(
+data class ShoppingTimeEntity(
     @PrimaryKey(autoGenerate = true)
     val stId: Int = 0,
     val creationDate: Date

@@ -9,26 +9,26 @@ import kotlinx.coroutines.flow.Flow
 interface ShoppingDao {
     // --- ShoppingTimes ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertShoppingTime(shoppingTimes: ShoppingTimes): Long
+    suspend fun insertShoppingTime(shoppingTimes: ShoppingTimeEntity): Long
 
     @Delete
-    suspend fun deleteShoppingTime(shoppingTimes: ShoppingTimes)
+    suspend fun deleteShoppingTime(shoppingTimes: ShoppingTimeEntity)
 
     @Query("SELECT * FROM ShoppingTimes ORDER BY creationDate DESC")
-    fun getAllShoppingTimes(): Flow<List<ShoppingTimes>>
+    fun getAllShoppingTimes(): Flow<List<ShoppingTimeEntity>>
 
     @Query("SELECT * FROM ShoppingTimes WHERE stId = :stId")
-    suspend fun getShoppingTimeById(stId: Int): ShoppingTimes?
+    suspend fun getShoppingTimeById(stId: Int): ShoppingTimeEntity?
 
     // --- ShoppingIngredients ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertShoppingIngredient(shoppingIngredients: ShoppingIngredients)
+    suspend fun insertShoppingIngredient(shoppingIngredients: ShoppingIngredientEntity)
 
     @Update
-    suspend fun updateShoppingIngredient(shoppingIngredients: ShoppingIngredients)
+    suspend fun updateShoppingIngredient(shoppingIngredients: ShoppingIngredientEntity)
 
     @Delete
-    suspend fun deleteShoppingIngredient(shoppingIngredients: ShoppingIngredients)
+    suspend fun deleteShoppingIngredient(shoppingIngredients: ShoppingIngredientEntity)
 
     @Query("DELETE FROM ShoppingIngredients WHERE stId = :stId AND ingredientId = :ingredientId")
     suspend fun deleteShoppingIngredientByStIdAndIngredientId(stId: Int, ingredientId: Int)
@@ -54,10 +54,10 @@ interface ShoppingDao {
 
     // --- ShoppingRecipes ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertShoppingRecipe(shoppingRecipes: ShoppingRecipes)
+    suspend fun insertShoppingRecipe(shoppingRecipes: ShoppingRecipeEntity)
 
     @Delete
-    suspend fun deleteShoppingRecipe(shoppingRecipes: ShoppingRecipes)
+    suspend fun deleteShoppingRecipe(shoppingRecipes: ShoppingRecipeEntity)
 
     @Query("DELETE FROM ShoppingRecipes WHERE stId = :stId")
     suspend fun deleteAllShoppingRecipesInTime(stId: Int)
@@ -71,7 +71,7 @@ interface ShoppingDao {
         INNER JOIN ShoppingRecipes sr ON ri.recipeId = sr.recipeId
         WHERE sr.stId = :stId
     """)
-    suspend fun getRecipesIngredientsForShoppingTime(stId: Int): List<RecipesIngredients>
+    suspend fun getRecipesIngredientsForShoppingTime(stId: Int): List<RecipeIngredientEntity>
 
     // Thêm một query để lấy RecipesIngredients theo danh sách recipeIds
     @Query("""
@@ -79,5 +79,5 @@ interface ShoppingDao {
         FROM RecipesIngredients
         WHERE recipeId IN (:recipeIds)
     """)
-    suspend fun getRecipesIngredientsByRecipeIds(recipeIds: List<Int>): List<RecipesIngredients>
+    suspend fun getRecipesIngredientsByRecipeIds(recipeIds: List<Int>): List<RecipeIngredientEntity>
 }
