@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,6 +38,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -63,7 +66,6 @@ fun HomeScreen(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-//            .safeDrawingPadding()
             .fillMaxSize()
             .background(color = Color(0xFFFFFFFF))
             .padding(bottom = 42.dp)
@@ -96,6 +98,14 @@ fun HomeScreen(
                         .size(24.dp)
                 )
             },
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Search
+            ),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    navController.navigate("searchRecipe/$searchValue")
+                }
+            ),
             modifier = Modifier
                 .padding(top = 16.dp)
                 .fillMaxWidth(0.9f)
@@ -168,7 +178,6 @@ fun HomeScreen(
                 RecipeItem(
                     onClick = { selectedRecipe ->
                         onRecipeClick(selectedRecipe)
-//                        navController.navigate("recipeView")
                     },
                     recipe = recipe,
                     modifier = Modifier.fillMaxWidth(0.9f)
