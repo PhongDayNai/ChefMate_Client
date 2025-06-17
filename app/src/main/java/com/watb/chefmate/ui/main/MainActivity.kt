@@ -25,6 +25,7 @@ import com.watb.chefmate.data.CookingStep
 import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.ui.recipe.RecipeViewScreen
+import com.watb.chefmate.ui.recipe.SearchResultScreen
 import com.watb.chefmate.ui.theme.ChefMateTheme
 import com.watb.chefmate.viewmodel.RecipeViewModel
 
@@ -110,6 +111,19 @@ fun navGraph(
         }
         composable("addRecipe") {
             AddRecipeScreen(navController, recipeId = -1, recipeViewModel)
+        }
+        composable("searchRecipe/{searchValue}") { backStackEntry ->
+            val searchValue = backStackEntry.arguments?.getString("searchValue")
+            if (searchValue != null) {
+                SearchResultScreen(
+                    navController = navController,
+                    search = searchValue,
+                    onRecipeClick = { selectedRecipe ->
+                        recipe = selectedRecipe
+                        navController.navigate("recipeView")
+                    },
+                    recipeViewModel = recipeViewModel)
+            }
         }
     }
 }
