@@ -1,7 +1,7 @@
 package com.watb.chefmate.data
 
 data class Recipe(
-    val recipeId: Int,
+    val recipeId: Int? = null,
     val image: String,
     val recipeName: String,
     val userName: String,
@@ -16,6 +16,16 @@ data class Recipe(
     val createdAt: String
 )
 
+data class CreateRecipeData(
+    val recipeName: String,
+    val cookingTime: String,
+    val ration: Int,
+    val ingredients: List<IngredientItem>,
+    val cookingSteps: List<CookingStep>,
+    val userId: Int,
+    val image: String,
+)
+
 data class IngredientItem(
     val ingredientId: Int? = null,
     val ingredientName: String,
@@ -24,8 +34,8 @@ data class IngredientItem(
 )
 
 data class CookingStep(
-    val indexStep: Int,
-    val stepContent: String,
+    val indexStep: Int? = null,
+    val content: String,
 )
 
 data class CommentItem(
@@ -55,6 +65,12 @@ data class LoginData(
     val passwordHash: String,
     val followCount: Int,
     val createdAt: String
+)
+
+data class CreateRecipeResponse(
+    val success: Boolean,
+    val data: Int? = null,
+    val message: String? = null
 )
 
 data class TopTrendingResponse(

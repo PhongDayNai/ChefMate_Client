@@ -139,7 +139,7 @@ fun RecipeViewScreen(
     )
 
     LaunchedEffect(Unit) {
-        ApiClient.increaseViewCount(recipe.recipeId)
+        recipe.recipeId?.let { ApiClient.increaseViewCount(recipe.recipeId) }
     }
 
     LaunchedEffect(lazyListState) {
@@ -204,7 +204,7 @@ ${recipe.ingredients.joinToString("\n") { ingredient ->
 
 Cách thực hiện:
 ${recipe.cookingSteps.joinToString("\n") { step ->
-    "${step.indexStep}. ${step.stepContent}"
+    "${step.indexStep}. ${step.content}"
 }}
 
 Tác giả: ${recipe.userName}
@@ -324,24 +324,26 @@ Tác giả: ${recipe.userName}
                 modifier = Modifier
                     .clickable {
                         if (!isLiked) {
-                            coroutineScope.launch {
-                                val response = ApiClient.likeRecipe(recipeId = recipe.recipeId)
-                                if (response != null) {
-                                    if (response.success) {
-                                        if (response.data == true) {
-                                            isLiked = true
-                                            likeQuantity += 1
+                            recipe.recipeId?.let {
+                                coroutineScope.launch {
+                                    val response = ApiClient.likeRecipe(recipeId = recipe.recipeId)
+                                    if (response != null) {
+                                        if (response.success) {
+                                            if (response.data == true) {
+                                                isLiked = true
+                                                likeQuantity += 1
+                                            } else {
+                                                Log.e("RecipeViewScreen", "Error: ${response.message}")
+                                                Toast.makeText(context, "Bạn đã yêu thích công thức này", Toast.LENGTH_SHORT).show()
+                                            }
                                         } else {
                                             Log.e("RecipeViewScreen", "Error: ${response.message}")
                                             Toast.makeText(context, "Bạn đã yêu thích công thức này", Toast.LENGTH_SHORT).show()
                                         }
                                     } else {
-                                        Log.e("RecipeViewScreen", "Error: ${response.message}")
-                                        Toast.makeText(context, "Bạn đã yêu thích công thức này", Toast.LENGTH_SHORT).show()
+                                        Log.e("RecipeViewScreen", "Error: Response is null")
+                                        Toast.makeText(context, "Vui lòng thử lại", Toast.LENGTH_SHORT).show()
                                     }
-                                } else {
-                                    Log.e("RecipeViewScreen", "Error: Response is null")
-                                    Toast.makeText(context, "Vui lòng thử lại", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
@@ -516,32 +518,34 @@ Tác giả: ${recipe.userName}
                         comments = comments.asReversed(),
                         screenWidth = screenWidth,
                         onComment = { commentContent ->
-                            coroutineScope.launch {
-                                val response = ApiClient.commentRecipe(recipeId = recipe.recipeId, content = commentContent)
-                                if (response != null) {
-                                    if (response.success) {
-                                        if (response.data == true) {
-                                            comments.add(
-                                                CommentItem(
-                                                    commentId = -1,
-                                                    userId = 1,
-                                                    userName = "Người dùng",
-                                                    content = commentContent,
-                                                    createdAt = CommonHelper.toIso8601UTC(Date())
+                            recipe.recipeId?.let {
+                                coroutineScope.launch {
+                                    val response = ApiClient.commentRecipe(recipeId = recipe.recipeId, content = commentContent)
+                                    if (response != null) {
+                                        if (response.success) {
+                                            if (response.data == true) {
+                                                comments.add(
+                                                    CommentItem(
+                                                        commentId = -1,
+                                                        userId = 1,
+                                                        userName = "Người dùng",
+                                                        content = commentContent,
+                                                        createdAt = CommonHelper.toIso8601UTC(Date())
+                                                    )
                                                 )
-                                            )
-                                            commentQuantity += 1
+                                                commentQuantity += 1
+                                            } else {
+                                                Log.e("RecipeViewScreen", "Error: ${response.message}")
+                                                Toast.makeText(context, "Vui lòng thử lại", Toast.LENGTH_SHORT).show()
+                                            }
                                         } else {
                                             Log.e("RecipeViewScreen", "Error: ${response.message}")
                                             Toast.makeText(context, "Vui lòng thử lại", Toast.LENGTH_SHORT).show()
                                         }
                                     } else {
-                                        Log.e("RecipeViewScreen", "Error: ${response.message}")
+                                        Log.e("RecipeViewScreen", "Error: Response is null")
                                         Toast.makeText(context, "Vui lòng thử lại", Toast.LENGTH_SHORT).show()
                                     }
-                                } else {
-                                    Log.e("RecipeViewScreen", "Error: Response is null")
-                                    Toast.makeText(context, "Vui lòng thử lại", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         },
@@ -651,7 +655,7 @@ fun CookingStepItem(cookingStep: CookingStep) {
                 .padding(top = 8.dp)
         )
         Text(
-            text = cookingStep.stepContent,
+            text = cookingStep.content,
             color = Color(0xFF000000),
             fontSize = 14.sp,
             fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -891,11 +895,11 @@ fun RecipeViewPreview() {
             IngredientItem(ingredientId = 8, ingredientName = "Nước mắm", weight = 2, unit = "muỗng canh"),
         ),
         cookingSteps = listOf(
-            CookingStep(indexStep = 1, stepContent = "Nướng hành và gừng cho thơm."),
-            CookingStep(indexStep = 2, stepContent = "Luộc thịt bò, vớt bọt."),
-            CookingStep(indexStep = 3, stepContent = "Thêm hành, gừng, quế, hồi vào nồi."),
-            CookingStep(indexStep = 4, stepContent = "Nêm nếm gia vị vừa ăn."),
-            CookingStep(indexStep = 5, stepContent = "Trụng bánh phở, xếp ra tô, chan nước dùng.")
+            CookingStep(indexStep = 1, content = "Nướng hành và gừng cho thơm."),
+            CookingStep(indexStep = 2, content = "Luộc thịt bò, vớt bọt."),
+            CookingStep(indexStep = 3, content = "Thêm hành, gừng, quế, hồi vào nồi."),
+            CookingStep(indexStep = 4, content = "Nêm nếm gia vị vừa ăn."),
+            CookingStep(indexStep = 5, content = "Trụng bánh phở, xếp ra tô, chan nước dùng.")
         ),
         cookingTime = "45 phút",
         ration = 4,

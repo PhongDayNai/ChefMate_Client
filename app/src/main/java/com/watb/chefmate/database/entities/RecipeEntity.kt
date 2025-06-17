@@ -40,7 +40,7 @@ fun RecipeEntity.toRecipe(): Recipe {
     val cookingSteps = cookingStepContents.indices.map { index ->
         CookingStep(
             indexStep = index + 1,
-            stepContent = cookingStepContents[index]
+            content = cookingStepContents[index]
         )
     }
 

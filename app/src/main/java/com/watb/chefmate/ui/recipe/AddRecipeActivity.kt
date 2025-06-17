@@ -3,9 +3,9 @@ package com.watb.chefmate.ui.recipe
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,23 +17,33 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -42,11 +52,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,7 +73,11 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
+import com.watb.chefmate.api.ApiClient
+import com.watb.chefmate.data.CookingStep
+import com.watb.chefmate.data.CreateRecipeData
 import com.watb.chefmate.data.IngredientInput
+import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.StepInput
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.repository.RecipeRepository
@@ -72,12 +93,16 @@ fun AddRecipeScreen(
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-    val scope = rememberCoroutineScope()
+    val coroutineScope = rememberCoroutineScope()
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     val nameRecipe = remember { mutableStateOf("") }
     val cookTime = remember { mutableStateOf("") }
     val ration = remember { mutableStateOf("") }
     var isPublic by remember { mutableStateOf(true) }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+    val selectedUnit = remember { mutableStateOf("Phút") }
 
     val ingredients = remember {
         mutableStateListOf(IngredientInput("", "", ""))
@@ -95,6 +120,33 @@ fun AddRecipeScreen(
                 it,
                 Intent.FLAG_GRANT_READ_URI_PERMISSION
             )
+        }
+    }
+
+    val isFilled = imageUri.toString().isNotEmpty() && imageUri != null && nameRecipe.value.isNotEmpty() && cookTime.value.isNotEmpty() && ration.value.isNotEmpty() && ingredients.isNotEmpty() && steps.isNotEmpty()
+
+    val focusManager = LocalFocusManager.current
+
+    val cookTimeFocusRequester = remember { FocusRequester() }
+    val rationFocusRequester = remember { FocusRequester() }
+    val ingredientFocusRequesters = remember { mutableStateListOf<FocusRequester>() }
+    val stepFocusRequesters = remember { mutableStateListOf<FocusRequester>() }
+
+    LaunchedEffect(ingredients.size) {
+        while (ingredientFocusRequesters.size < ingredients.size * 3) {
+            ingredientFocusRequesters.add(FocusRequester())
+        }
+        while (ingredientFocusRequesters.size > ingredients.size * 3) {
+            ingredientFocusRequesters.removeAt(ingredientFocusRequesters.size - 1)
+        }
+    }
+
+    LaunchedEffect(steps.size) {
+        while (stepFocusRequesters.size < steps.size) {
+            stepFocusRequesters.add(FocusRequester())
+        }
+        while (stepFocusRequesters.size > steps.size) {
+            stepFocusRequesters.removeAt(stepFocusRequesters.size - 1)
         }
     }
 
@@ -131,7 +183,7 @@ fun AddRecipeScreen(
                 color = Color(0xFFFFFFFF),
                 fontWeight = FontWeight(600),
                 modifier = Modifier
-                    .padding(start = 16.dp)
+//                    .padding(start = 4.dp)
             )
         }
         Column(
@@ -148,15 +200,17 @@ fun AddRecipeScreen(
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             Image(
-                painter = if (imageUri != null) rememberAsyncImagePainter(model = imageUri) else painterResource(R.drawable.placeholder_image),
+                painter = if (imageUri != null) rememberAsyncImagePainter(model = imageUri) else painterResource(R.drawable.ic_upload),
                 contentDescription = null,
-                contentScale = ContentScale.Crop,
+                contentScale = if (imageUri != null) ContentScale.Crop else ContentScale.Fit,
                 modifier = Modifier
+                    .padding(top = 12.dp)
                     .fillMaxWidth(0.9f)
                     .height(180.dp)
-                    .clickable { galleryLauncher.launch(arrayOf("image/*")) }
+                    .clip(RoundedCornerShape(16.dp))
+                    .padding(if (imageUri != null) 0.dp else 40.dp)
                     .align(Alignment.CenterHorizontally)
-                    .padding(top = 12.dp)
+                    .clickable { galleryLauncher.launch(arrayOf("image/*")) }
             )
 
             OutlinedTextField(
@@ -168,6 +222,15 @@ fun AddRecipeScreen(
                     unfocusedBorderColor = Color(0xFFE0E0E0)
                 ),
                 shape = RoundedCornerShape(10.dp),
+                maxLines = 1,
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = {
+                        cookTimeFocusRequester.requestFocus()
+                    }
+                ),
                 modifier = Modifier
                     .padding(top = 12.dp)
                     .fillMaxWidth()
@@ -188,22 +251,51 @@ fun AddRecipeScreen(
                         unfocusedBorderColor = Color(0xFFE0E0E0)
                     ),
                     shape = RoundedCornerShape(10.dp),
+                    maxLines = 1,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { rationFocusRequester.requestFocus() }
+                    ),
                     modifier = Modifier
                         .padding(end = 20.dp)
                         .weight(1f)
+                        .focusRequester(cookTimeFocusRequester)
                 )
-                OutlinedTextField(
-                    value = ration.value,
-                    onValueChange = { ration.value = it},
-                    label = { Text(text = "Khẩu phần ăn") },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFFE0E0E0),
-                        unfocusedBorderColor = Color(0xFFE0E0E0)
-                    ),
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.weight(1f)
+                TimeUnitDropdown(
+                    selectedUnit = selectedUnit.value,
+                    onUnitSelected = { selectedUnit.value = it },
+                    modifier = Modifier
+                        .weight(1f)
                 )
             }
+            OutlinedTextField(
+                value = if (ration.value == "") ration.value else "${ration.value} người",
+                onValueChange = {
+                    val cleanInput = it.filter { char -> char.isDigit() }
+                    ration.value = cleanInput
+                },
+                label = { Text(text = "Khẩu phần ăn") },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFFE0E0E0),
+                    unfocusedBorderColor = Color(0xFFE0E0E0)
+                ),
+                maxLines = 1,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.clearFocus() }
+                ),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier
+                    .padding(top = 10.dp)
+                    .fillMaxWidth()
+                    .focusRequester(rationFocusRequester)
+            )
 
             Column(
                 modifier = Modifier
@@ -243,17 +335,18 @@ fun AddRecipeScreen(
                     text = "Nguyên liệu",
                     fontWeight = FontWeight(600),
                     fontSize = 16.sp,
-                    modifier = Modifier
-                        .padding(bottom = 10.dp)
                 )
 
                 ingredients.forEachIndexed { index, ingredient ->
+                    val nameIndex = index * 3
+                    val weightIndex = index * 3 + 1
+                    val unitIndex = index * 3 + 2
+
                     Card(
                         colors = CardDefaults.cardColors(
                             containerColor = Color.White
                         ),
                         shape = RoundedCornerShape(16.dp),
-//                        border = BorderStroke(1.dp, Color(0xFFE0E0E0)),
                         elevation = CardDefaults.cardElevation(
                             defaultElevation = 8.dp
                         ),
@@ -268,15 +361,31 @@ fun AddRecipeScreen(
                                     onValueChange = { ingredients[index] = ingredient.copy(name = it) },
                                     label = { Text(text = "Tên nguyên liệu", fontSize = 12.sp) },
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = Color(0xFFE0E0E0),
-                                        unfocusedBorderColor = Color(0xFFE0E0E0)
+                                        focusedBorderColor = Color.Transparent,
+                                        unfocusedBorderColor = Color.Transparent,
+                                    ),
+                                    keyboardActions = KeyboardActions(
+                                        onNext = {
+                                            ingredientFocusRequesters.getOrNull(weightIndex)?.requestFocus()
+                                        }
+                                    ),
+                                    maxLines = 1,
+                                    keyboardOptions = KeyboardOptions(
+                                        imeAction = ImeAction.Next
                                     ),
                                     shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier
+                                        .focusRequester(ingredientFocusRequesters.getOrNull(nameIndex) ?: FocusRequester())
                                 )
-                                if (ingredients.size > 1) { // Chỉ hiển thị nút xóa nếu có hơn 1 trường
-                                    IconButton(onClick = { ingredients.removeAt(index) }) {
+                                if (ingredients.size > 1) {
+                                    IconButton(
+                                        onClick = {
+                                            ingredients.removeAt(index)
+                                            focusManager.clearFocus()
+                                        }
+                                    ) {
                                         Icon(
-                                            painterResource(R.drawable.ic_minus), // Bạn cần thêm icon xóa (ic_delete.xml) vào drawable
+                                            painterResource(R.drawable.ic_minus),
                                             contentDescription = "Xóa nguyên liệu",
                                             tint = Color.Red,
                                             modifier = Modifier.size(24.dp)
@@ -284,6 +393,12 @@ fun AddRecipeScreen(
                                     }
                                 }
                             }
+                            HorizontalDivider(
+                                color = Color(0xFFE0E0E0),
+                                thickness = 1.dp,
+                                modifier = Modifier
+                                    .padding(start = 16.dp, end = 64.dp)
+                            )
                             Row {
                                 TextField(
                                     value = ingredient.weight,
@@ -294,90 +409,61 @@ fun AddRecipeScreen(
                                     },
                                     label = { Text(text = "Khối lượng", fontSize = 12.sp) },
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = Color(0xFFE0E0E0),
-                                        unfocusedBorderColor = Color(0xFFE0E0E0)
+                                        focusedBorderColor = Color.Transparent,
+                                        unfocusedBorderColor = Color.Transparent
+                                    ),
+                                    maxLines = 1,
+                                    keyboardOptions = KeyboardOptions(
+                                        keyboardType = KeyboardType.Number,
+                                        imeAction = ImeAction.Next
+                                    ),
+                                    keyboardActions = KeyboardActions(
+                                        onNext = {
+                                            ingredientFocusRequesters.getOrNull(unitIndex)?.requestFocus()
+                                        }
                                     ),
                                     shape = RoundedCornerShape(10.dp),
                                     modifier = Modifier
                                         .padding(start = 5.dp, end = 5.dp)
                                         .weight(1f)
+                                        .focusRequester(ingredientFocusRequesters.getOrNull(weightIndex) ?: FocusRequester())
                                 )
                                 TextField(
                                     value = ingredient.unit,
                                     onValueChange = { ingredients[index] = ingredient.copy(unit = it) },
                                     label = { Text(text = "Đơn vị", fontSize = 12.sp) },
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = Color(0xFFE0E0E0),
-                                        unfocusedBorderColor = Color(0xFFE0E0E0)
+                                        focusedBorderColor = Color.Transparent,
+                                        unfocusedBorderColor = Color.Transparent
                                     ),
                                     shape = RoundedCornerShape(10.dp),
-                                    modifier = Modifier.weight(1f)
+                                    maxLines = 1,
+                                    keyboardOptions = KeyboardOptions(
+                                        imeAction = ImeAction.Next
+                                    ),
+                                    keyboardActions = KeyboardActions(
+                                        onDone = { focusManager.clearFocus() }
+                                    ),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .focusRequester(ingredientFocusRequesters.getOrNull(unitIndex) ?: FocusRequester())
                                 )
                             }
                         }
                     }
-//                    Row(
-//                        verticalAlignment = Alignment.CenterVertically,
-//                        modifier = Modifier.fillMaxWidth()
-//                    ) {
-//                        OutlinedTextField(
-//                            value = ingredient.name,
-//                            onValueChange = { ingredients[index] = ingredient.copy(name = it) },
-//                            label = { Text(text = "Tên nguyên liệu", fontSize = 12.sp) },
-//                            colors = OutlinedTextFieldDefaults.colors(
-//                                focusedBorderColor = Color(0xFFE0E0E0),
-//                                unfocusedBorderColor = Color(0xFFE0E0E0)
-//                            ),
-//                            shape = RoundedCornerShape(10.dp),
-//                            modifier = Modifier
-//                                .weight(4f)
-//                        )
-//                        OutlinedTextField(
-//                            value = ingredient.weight,
-//                            onValueChange = { newValue ->
-//                                if (newValue.all { it.isDigit() } || newValue.isEmpty()) {
-//                                    ingredients[index] = ingredient.copy(weight = newValue)
-//                                }
-//                            },
-//                            label = { Text(text = "Khối lượng", fontSize = 12.sp) },
-//                            colors = OutlinedTextFieldDefaults.colors(
-//                                focusedBorderColor = Color(0xFFE0E0E0),
-//                                unfocusedBorderColor = Color(0xFFE0E0E0)
-//                            ),
-//                            shape = RoundedCornerShape(10.dp),
-//                            modifier = Modifier
-//                                .padding(start = 5.dp, end = 5.dp)
-//                                .weight(3f)
-//                        )
-//                        OutlinedTextField(
-//                            value = ingredient.unit,
-//                            onValueChange = { ingredients[index] = ingredient.copy(unit = it) },
-//                            label = { Text(text = "Đơn vị", fontSize = 12.sp) },
-//                            colors = OutlinedTextFieldDefaults.colors(
-//                                focusedBorderColor = Color(0xFFE0E0E0),
-//                                unfocusedBorderColor = Color(0xFFE0E0E0)
-//                            ),
-//                            shape = RoundedCornerShape(10.dp),
-//                            modifier = Modifier.weight(2f)
-//                        )
-//                        if (ingredients.size > 1) { // Chỉ hiển thị nút xóa nếu có hơn 1 trường
-//                            IconButton(onClick = { ingredients.removeAt(index) }) {
-//                                Icon(
-//                                    painterResource(R.drawable.ic_minus), // Bạn cần thêm icon xóa (ic_delete.xml) vào drawable
-//                                    contentDescription = "Xóa nguyên liệu",
-//                                    tint = Color.Red,
-//                                    modifier = Modifier.size(24.dp)
-//                                )
-//                            }
-//                        }
-//                    }
                 }
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .padding(top = 10.dp)
-                        .clickable { ingredients.add(IngredientInput("", "", "")) }
+                        .clickable {
+                            ingredients.add(IngredientInput("", "", ""))
+                            coroutineScope.launch {
+                                scrollState.animateScrollTo(scrollState.maxValue)
+                                ingredientFocusRequesters.getOrNull((ingredients.size - 1) * 3)?.requestFocus()
+                            }
+                        }
                 ) {
                     Icon(
                         painterResource(R.drawable.ic_add),
@@ -391,14 +477,15 @@ fun AddRecipeScreen(
 
             Column(
                 modifier = Modifier
-                    .padding(top = 20.dp).fillMaxWidth()
+                    .padding(top = 20.dp)
+                    .fillMaxWidth()
             ) {
                 Text(
                     text = "Các bước nấu",
                     fontWeight = FontWeight(600),
                     fontSize = 16.sp,
                     modifier = Modifier
-                        .padding(bottom = 20.dp)
+                        .padding(bottom = 12.dp)
                 )
 
                 steps.forEachIndexed { index, step ->
@@ -417,12 +504,31 @@ fun AddRecipeScreen(
                                 unfocusedBorderColor = Color(0xFFE0E0E0)
                             ),
                             shape = RoundedCornerShape(10.dp),
+                            maxLines = 1,
+                            keyboardOptions = KeyboardOptions(
+                                imeAction = ImeAction.Next
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onNext = {
+                                    if (index < steps.size - 1) {
+                                        stepFocusRequesters.getOrNull(index + 1)?.requestFocus()
+                                    } else {
+                                        focusManager.clearFocus()
+                                        keyboardController?.hide()
+                                    }
+                                }
+                            ),
                             modifier = Modifier
                                 .padding(end = 10.dp)
                                 .weight(1f)
                         )
                         if (steps.size > 1) {
-                            IconButton(onClick = { steps.removeAt(index) }) {
+                            IconButton(
+                                onClick = {
+                                    steps.removeAt(index)
+                                    focusManager.clearFocus()
+                                }
+                            ) {
                                 Icon(
                                     painterResource(R.drawable.ic_minus),
                                     contentDescription = "Xóa bước",
@@ -450,33 +556,86 @@ fun AddRecipeScreen(
 
             Button(
                 onClick = {
-                    scope.launch {
-                        val parsedRation = ration.value.toIntOrNull() ?: 0
+                    coroutineScope.launch {
+                        if (isFilled) {
+                            isLoading = true
+                            val parsedRation = ration.value.toIntOrNull() ?: 0
 
-                        val ingredientsToSave = ingredients.filter { it.name.isNotBlank() && it.weight.isNotBlank() }.map {
-                            Pair(it.name, Pair(it.weight.toIntOrNull() ?: 0, it.unit))
-                        }
-                        val stepsToSave = steps.filter { it.content.isNotBlank() }.map {
-                            Pair(it.index, it.content)
-                        }
+                            val ingredientsToSave = ingredients.filter { it.name.isNotBlank() && it.weight.isNotBlank() }.map {
+                                Pair(it.name, Pair(it.weight.toIntOrNull() ?: 0, it.unit))
+                            }
+                            val stepsToSave = steps.filter { it.content.isNotBlank() }.map {
+                                Pair(it.index, it.content)
+                            }
 
-                        if (recipeId == -1) {
-                            Log.d("Uri", imageUri.toString())
-                            viewModel.addRecipe(
-                                recipeName = nameRecipe.value,
-                                imageUri = imageUri?.toString() ?: "",
-                                userName = "Thanh",
-                                isPublic = isPublic,
-                                likeQuantity = 0,
-                                cookingTime = cookTime.value,
-                                ration = parsedRation,
-                                viewCount = 0,
-                                createdAt = "",
-                                ingredients = ingredientsToSave,
-                                steps = stepsToSave
-                            )
+                            if (recipeId == -1) {
+                                Log.d("Uri", imageUri.toString())
+                                if (!isPublic) {
+                                    viewModel.addRecipe(
+                                        recipeName = nameRecipe.value,
+                                        imageUri = imageUri?.toString() ?: "",
+                                        userName = "Thanh",
+                                        isPublic = isPublic,
+                                        likeQuantity = 0,
+                                        cookingTime = "${cookTime.value} ${selectedUnit.value}",
+                                        ration = parsedRation,
+                                        viewCount = 0,
+                                        createdAt = "",
+                                        ingredients = ingredientsToSave,
+                                        steps = stepsToSave
+                                    )
+                                    navController.popBackStack()
+                                } else {
+//                                val ingredientItems = remember { mutableStateListOf<IngredientItem>() }
+                                    val ingredientItems = mutableListOf<IngredientItem>()
+                                    val cookingStepItems = mutableListOf<CookingStep>()
+                                    ingredients.forEach { ingredient ->
+                                        ingredientItems.add(IngredientItem(ingredientName = ingredient.name, weight = ingredient.weight.toIntOrNull() ?: 0, unit = ingredient.unit))
+                                    }
+                                    steps.forEach { cookingStep ->
+                                        cookingStepItems.add(CookingStep(content = cookingStep.content))
+                                    }
+
+                                    val recipe = CreateRecipeData(
+                                        recipeName = nameRecipe.value,
+                                        image = imageUri?.toString() ?: "",
+                                        userId = 1,
+                                        cookingTime = "${cookTime.value} ${selectedUnit.value}",
+                                        ration = parsedRation,
+                                        ingredients = ingredientItems.toList(),
+                                        cookingSteps = cookingStepItems.toList()
+                                    )
+                                    val response = ApiClient.createRecipe(context, recipe)
+                                    if (response != null) {
+                                        if (response.success) {
+                                            viewModel.addRecipe(
+                                                recipeName = nameRecipe.value,
+                                                imageUri = imageUri?.toString() ?: "",
+                                                userName = "Thanh",
+                                                isPublic = isPublic,
+                                                likeQuantity = 0,
+                                                cookingTime = "${cookTime.value} ${selectedUnit.value}",
+                                                ration = parsedRation,
+                                                viewCount = 0,
+                                                createdAt = "",
+                                                ingredients = ingredientsToSave,
+                                                steps = stepsToSave
+                                            )
+                                            navController.popBackStack()
+                                        } else {
+                                            Log.e("AddRecipeScreen", "Error: ${response.message}")
+                                            Toast.makeText(context, response.message, Toast.LENGTH_SHORT).show()
+                                        }
+                                    } else {
+                                        Log.e("AddRecipeScreen", "Error: Response is null")
+                                        Toast.makeText(context, "Có lỗi xảy ra. Vui lòng thử lại!", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                            isLoading = false
+                        } else {
+                            Toast.makeText(context, "Vui lòng điền đầy đủ thông tin", Toast.LENGTH_SHORT).show()
                         }
-                        navController.popBackStack() // Quay lại màn hình danh sách công thức sau khi thêm/sửa
                     }
                 },
                 shape = RoundedCornerShape(12.dp),
@@ -487,16 +646,79 @@ fun AddRecipeScreen(
                 modifier = Modifier
                     .padding(top = 20.dp, bottom = 60.dp)
                     .fillMaxWidth()
-                    .padding(bottom = 20.dp) // Thêm padding dưới cùng cho nút
+                    .padding(bottom = 20.dp)
             ) {
                 Text(
                     text = "Đăng công thức"
                 )
             }
         }
+        if (isLoading) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+            ) {
+                CircularProgressIndicator(
+                    color = Color(0xFFFB923C),
+                    strokeWidth = 4.dp,
+                    modifier = Modifier
+                        .size(100.dp)
+                )
+            }
+        }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimeUnitDropdown(selectedUnit: String, onUnitSelected: (String) -> Unit, modifier: Modifier = Modifier) {
+    val expanded = remember { mutableStateOf(false) }
+    val options = listOf("Giờ", "Phút")
+
+    ExposedDropdownMenuBox(
+        expanded = expanded.value,
+        onExpandedChange = { expanded.value = !expanded.value },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = selectedUnit,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Đơn vị") },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(
+                    expanded = expanded.value
+                )
+            },
+            shape = RoundedCornerShape(10.dp),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(0xFFFFFFFF),
+                unfocusedContainerColor = Color(0xFFFFFFFF),
+                focusedIndicatorColor = Color(0xFFE0E0E0),
+                unfocusedIndicatorColor = Color(0xFFE0E0E0)
+            ),
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded.value,
+            onDismissRequest = { expanded.value = false }
+        ) {
+            options.forEach { unit ->
+                DropdownMenuItem(
+                    text = { Text(unit) },
+                    onClick = {
+                        onUnitSelected(unit)
+                        expanded.value = false
+                    }
+                )
+            }
+        }
+    }
+}
 
 @Preview
 @Composable
