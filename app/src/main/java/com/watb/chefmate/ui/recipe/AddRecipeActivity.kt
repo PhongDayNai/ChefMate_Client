@@ -390,6 +390,7 @@ fun AddRecipeScreen(
                                         ingredientFocusRequesters.getOrNull(weightIndex)?.requestFocus()
                                     },
                                     modifier = Modifier
+                                        .weight(1f)
                                         .focusRequester(ingredientFocusRequesters.getOrNull(nameIndex) ?: FocusRequester())
                                 )
                                 if (ingredients.size > 1) {
