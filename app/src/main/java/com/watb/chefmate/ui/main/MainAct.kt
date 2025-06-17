@@ -44,6 +44,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,11 +52,8 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
-import com.watb.chefmate.api.ApiClient
-import com.watb.chefmate.data.CommentItem
-import com.watb.chefmate.data.CookingStep
-import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
+import com.watb.chefmate.ui.account.ProfileScreen
 import com.watb.chefmate.ui.home.HomeScreen
 import com.watb.chefmate.ui.recipe.RecipeListScreen
 import com.watb.chefmate.viewmodel.RecipeViewModel
@@ -120,7 +118,7 @@ fun MainAct(
                             },
                             recipeViewModel
                         )
-//                        2 -> ProfileScreen()
+                        2 -> ProfileScreen(navController)
                     }
                 }
             }
@@ -252,6 +250,7 @@ fun BottomNavigationBar(
                             fontSize = 16.sp,
                             fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
                             color = Color(0xFFFFFFFF),
+                            textAlign = TextAlign.End,
                             modifier = Modifier
                                 .padding(end = 12.dp)
                         )
@@ -280,6 +279,7 @@ fun BottomNavigationBar(
                             fontSize = 16.sp,
                             fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
                             color = Color(0xFFFFFFFF),
+                            textAlign = TextAlign.End,
                             modifier = Modifier
                                 .padding(end = 12.dp)
                         )
