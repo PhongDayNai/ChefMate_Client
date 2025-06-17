@@ -24,6 +24,8 @@ class RecipeRepository(
         return recipeDao.getRecipeById(recipeId)
     }
 
+    suspend fun getRecipesByIds(ids: List<Int>) = recipeDao.getRecipesByIds(ids)
+
     suspend fun deleteRecipeById(recipeId: Int) {
         recipeDao.deleteRecipeById(recipeId)
     }

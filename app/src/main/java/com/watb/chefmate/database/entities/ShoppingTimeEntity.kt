@@ -8,6 +8,11 @@ import java.util.Date
 data class ShoppingTimeEntity(
     @PrimaryKey(autoGenerate = true)
     val stId: Int = 0,
-    val creationDate: Date
+    val recipeNames: String,
+    val ingredientNames: String,
+    val ingredientWeights: String,
+    val ingredientUnits: String,
+    val buyingStatuses: String,
+    val createdDate: Date
 )
 

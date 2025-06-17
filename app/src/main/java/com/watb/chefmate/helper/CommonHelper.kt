@@ -62,4 +62,10 @@ object CommonHelper {
             .split("\\s+".toRegex())
             .joinToString("_")
     }
+
+    fun String.parseIngredientName(): String {
+        return this.trim()
+            .lowercase()
+            .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+    }
 }

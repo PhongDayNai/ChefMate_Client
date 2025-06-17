@@ -25,6 +25,9 @@ interface RecipeDao {
 
     @Query("DELETE FROM recipes WHERE recipeId = :recipeId")
     suspend fun deleteRecipeById(recipeId: Int)
+
+    @Query("SELECT * FROM Recipes WHERE recipeId IN (:ids)")
+    fun getRecipesByIds(ids: List<Int>): Flow<List<RecipeEntity>>
 }
 
 @Dao
