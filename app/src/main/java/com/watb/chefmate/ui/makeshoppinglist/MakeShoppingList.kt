@@ -19,7 +19,7 @@ fun MakeShoppingListScreen() {
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFFFFFFF))
-            .safeDrawingPadding()
+//            .safeDrawingPadding()
     ) {
         Header(
             "Lập danh sách mua sắm",

@@ -63,14 +63,16 @@ fun HomeScreen(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .safeDrawingPadding()
+//            .safeDrawingPadding()
             .fillMaxSize()
             .background(color = Color(0xFFFFFFFF))
             .padding(bottom = 42.dp)
     ) {
         Header("Nấu ngon") {
             IconButton(
-                onClick = {}
+                onClick = {},
+                modifier = Modifier
+                    .size(24.dp)
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_bell),

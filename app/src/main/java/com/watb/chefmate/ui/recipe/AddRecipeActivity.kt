@@ -153,9 +153,9 @@ fun AddRecipeScreen(
 
     ConstraintLayout(
         modifier = Modifier
-            .safeDrawingPadding()
             .fillMaxSize()
             .background(Color(0xFFFB923C))
+            .safeDrawingPadding()
     ) {
         val (headerRef, contentRef) = createRefs()
         Row(
@@ -170,12 +170,16 @@ fun AddRecipeScreen(
             IconButton(
                 onClick = {
                     navController.popBackStack()
-                }
+                },
+                modifier = Modifier
+                    .size(24.dp)
             ) {
                 Icon(
                     painterResource(R.drawable.ic_back),
                     contentDescription = "back",
-                    tint = Color(0xFFFFFFFF)
+                    tint = Color(0xFFFFFFFF),
+                    modifier = Modifier
+                        .size(24.dp)
                 )
             }
             Text(
@@ -184,7 +188,7 @@ fun AddRecipeScreen(
                 color = Color(0xFFFFFFFF),
                 fontWeight = FontWeight(600),
                 modifier = Modifier
-//                    .padding(start = 4.dp)
+                    .padding(start = 4.dp)
             )
         }
         Column(
