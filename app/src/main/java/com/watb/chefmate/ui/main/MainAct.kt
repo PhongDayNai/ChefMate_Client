@@ -276,6 +276,9 @@ fun BottomNavigationBar(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .padding(top = 24.dp)
+                            .clickable {
+                                navController.navigate("make_shopping_list_screen")
+                            }
                     ) {
                         Text(
                             text = "Lập danh sách\nmua sắm",

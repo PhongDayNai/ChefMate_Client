@@ -1,21 +1,111 @@
 package com.watb.chefmate.ui.makeshoppinglist
 
+import android.net.Uri
+import android.util.Log
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import coil.compose.rememberAsyncImagePainter
+import com.google.gson.Gson
 import com.watb.chefmate.R
+import com.watb.chefmate.data.IngredientItem
+import com.watb.chefmate.data.Recipe
+import com.watb.chefmate.database.AppDatabase
+import com.watb.chefmate.database.entities.ShoppingTimeEntity
+import com.watb.chefmate.repository.RecipeRepository
+import com.watb.chefmate.repository.ShoppingTimeRepository
+import com.watb.chefmate.ui.recipe.bottomDashedBorder
 import com.watb.chefmate.ui.theme.Header
+import com.watb.chefmate.ui.theme.SearchTextField
+import com.watb.chefmate.viewmodel.RecipeViewModel
+import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
+import kotlinx.coroutines.launch
+import java.util.Date
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MakeShoppingListScreen() {
+fun MakeShoppingListScreen(
+    navController: NavController,
+    recipeViewModel: RecipeViewModel
+) {
+    val shoppingTimeViewModel: ShoppingTimeViewModel = viewModel(
+        factory = ShoppingTimeViewModel.Factory(
+            ShoppingTimeRepository(AppDatabase.getDatabase(LocalContext.current).shoppingTimeDao())
+        )
+    )
+    val sheetState = rememberModalBottomSheetState()
+    var isShowManually by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val selectedStates = remember { mutableStateMapOf<Int, Boolean>() }
+    val allRecipes by recipeViewModel.allRecipes.collectAsState(initial = emptyList())
+    val selectedRecipes = allRecipes.filter { selectedStates[it.recipeId] == true }
+
+    val manualIngredients = remember { mutableStateListOf<IngredientItem>() }
+
+    var manualName by remember { mutableStateOf("") }
+    var manualWeight by remember { mutableStateOf("") }
+    var manualUnit by remember { mutableStateOf("") }
+
+
     Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFFFFFFF))
@@ -31,11 +121,329 @@ fun MakeShoppingListScreen() {
                 )
             }
         )
+        SearchTextField(
+            value = "",
+            onValueChange = {},
+            placeholder = "Tìm công thức đã lưu",
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(R.drawable.ic_search),
+                    contentDescription = "search",
+                    tint = Color(0xFFFF9800)
+                )
+            },
+            trailingIcon = {
+                Icon(
+                    painter = painterResource(R.drawable.ic_filter),
+                    contentDescription = "search",
+                    tint = Color(0xFFFF9800)
+                )
+            },
+            modifier = Modifier
+                .padding(top = 20.dp, bottom = 20.dp)
+                .fillMaxWidth(0.85f)
+        )
+        Text(
+            text = "Thêm nguyên liệu qua công thức",
+            fontSize = 15.sp,
+            fontWeight = FontWeight(600),
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .safeDrawingPadding()
+                .background(Color(0xFFFFFFFF))
+        ) {
+            if (allRecipes.isEmpty()) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Chưa có công thức nào để lựa chọn.", style = MaterialTheme.typography.bodyLarge)
+                    Text("Thêm công thức mới từ màn hình chính.", style = MaterialTheme.typography.bodyMedium)
+                }
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxSize(0.5f)
+                ) {
+                    items(allRecipes.size) { index ->
+                        val isSelected = selectedStates[allRecipes[index].recipeId] ?: false
+                        Log.d("MakeShoppingList", "Recipe: ${allRecipes[index]}")
+                        RecipeSelectedItem(
+                            recipe = allRecipes[index],
+                            isSelected = isSelected,
+                            onToggleSelect = { checked ->
+                                allRecipes[index].recipeId?.let {
+                                    selectedStates[allRecipes[index].recipeId!!] = checked
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }
+        Card(
+            shape = RoundedCornerShape(15.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFFFFFFFF)
+            ),
+            border = BorderStroke(1.dp, Color(0xFFD6D6D6)),
+            modifier = Modifier
+                .padding(top = 10.dp)
+                .fillMaxWidth(0.9f)
+                .height(160.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Thêm nguyên liệu thủ công",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight(600),
+                        modifier = Modifier
+                            .padding(top = 10.dp, start = 10.dp)
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(
+                        onClick = {
+                            isShowManually = !isShowManually
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_addingredient),
+                            contentDescription = "add manually",
+                        )
+                    }
+                }
+                LazyColumn {
+                    items(manualIngredients.size) { index ->
+                        Row(
+                            Modifier
+                                .padding(8.dp)
+                                .fillMaxWidth()
+                                .bottomDashedBorder()
+                        ) {
+                            Text(
+                                text = manualIngredients[index].ingredientName,
+                                modifier = Modifier
+                                    .padding(end = 4.dp)
+                            )
+                            Text(
+                                text = "${manualIngredients[index].weight} ${manualIngredients[index].unit}"
+                            )
+                        }
+                    }
+                }
+
+            }
+            if (isShowManually) {
+                ModalBottomSheet(
+                    onDismissRequest = {
+                        coroutineScope.launch {
+                            sheetState.hide()
+                            isShowManually = false
+                        }
+                    },
+                    sheetState = sheetState
+                ) {
+                    AddManuallyScreen(
+                        name = manualName,
+                        onNameChange = { manualName = it },
+                        weight = manualWeight,
+                        onWeightChange = { manualWeight = it },
+                        unit = manualUnit,
+                        onUnitChange = { manualUnit = it },
+                        onDone = {
+                            // Tạo IngredientItem mới
+                            val newItem = IngredientItem(
+                                ingredientName = manualName,
+                                weight = manualWeight.toIntOrNull() ?: 0,
+                                unit = manualUnit
+                            )
+                            manualIngredients.add(newItem)
+
+                            // Reset dữ liệu tạm
+                            manualName = ""
+                            manualWeight = ""
+                            manualUnit = ""
+
+                            // Đóng sheet
+                            coroutineScope.launch {
+                                sheetState.hide()
+                                isShowManually = false
+                            }
+                        }
+                    )
+                }
+            }
+        }
+        Row(
+            modifier = Modifier
+                .padding(top = 10.dp)
+                .fillMaxWidth(0.9f)
+        ) {
+            Spacer(modifier = Modifier.weight(1f))
+            Button(
+                onClick = {
+                    val consolidatedIngredients = consolidateIngredients(selectedRecipes).values.toMutableList()
+                    consolidatedIngredients.addAll(manualIngredients)
+
+                    val ingredientNames = consolidatedIngredients.joinToString(";;;") { it.ingredientName }
+                    val ingredientWeights = consolidatedIngredients.joinToString(";;;") { it.weight.toString() }
+                    val ingredientUnits = consolidatedIngredients.joinToString(";;;") { it.unit }
+                    val buyingStatuses = consolidatedIngredients.joinToString(";;;") { "waiting" }
+
+                    val shoppingTime = ShoppingTimeEntity(
+                        recipeNames = selectedRecipes.joinToString(";;;") { it.recipeName },
+                        ingredientNames = ingredientNames,
+                        ingredientWeights = ingredientWeights,
+                        ingredientUnits = ingredientUnits,
+                        buyingStatuses = buyingStatuses,
+                        createdDate = Date()
+                    )
+
+                    shoppingTimeViewModel.insertShoppingTime(shoppingTime) { id ->
+                        // Navigate sang màn hình tổng hợp nguyên liệu, ví dụ:
+                        navController.navigate("consolidated_ingredients_screen/$id")
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFF97518)
+                ),
+                shape = RoundedCornerShape(10.dp),
+            ) {
+                Text(
+                    text = "Hoàn thành"
+                )
+            }
+        }
     }
 }
+@Composable
+fun RecipeSelectedItem(
+    recipe: Recipe,
+    isSelected: Boolean,
+    onToggleSelect: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFFAFAFA)
+        ),
+        modifier = modifier
+            .padding(top = 10.dp, end = 5.dp, bottom = 10.dp)
+            .size(150.dp, 100.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .weight(2f)
+                    .fillMaxHeight()
+                    .padding(top = 6.dp, end = 8.dp)
+            ) {
+                Checkbox(
+                    checked = isSelected,
+                    onCheckedChange = onToggleSelect,
+                    modifier = Modifier
+                        .padding(top = 4.dp, bottom = 4.dp)
+                        .size(16.dp)
+                )
+                Text(
+                    text = recipe.recipeName,
+                    color = Color(0xFF231F20),
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                    fontWeight = FontWeight(700),
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = recipe.userName, // Đã đổi userName thành author trong Recipe
+                    color = Color(0xFFFB923C),
+                    fontSize = 10.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                    fontWeight = FontWeight(400),
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .background(color = Color(0xFFFFEDD5), RoundedCornerShape(4.dp))
+                        .padding(4.dp)
+                )
+            }
+            val painter = if (recipe.image == "") {
+                painterResource(R.drawable.placeholder_image)
+            } else {
+                rememberAsyncImagePainter(recipe.image)
+            }
+            Image(
+                painter = painter,
+                contentDescription = "",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .weight(3f)
+                    .fillMaxHeight()
+            )
+        }
+    }
+}
+
+fun consolidateIngredients(recipes: List<Recipe>): Map<String, IngredientItem> {
+    val consolidated = mutableMapOf<String, IngredientItem>()
+
+    recipes.forEach { recipe ->
+        recipe.ingredients.forEach { ingredient ->
+            val key = "${ingredient.ingredientName}-${ingredient.unit}"
+            val current = consolidated[key]
+            if (current == null) {
+                consolidated[key] = ingredient
+            } else {
+                consolidated[key] = current.copy(weight = current.weight + ingredient.weight)
+            }
+        }
+    }
+    return consolidated
+}
+
 
 @Preview
 @Composable
 fun MakeShoppingListScreenPreview() {
-    MakeShoppingListScreen()
+//    val navController = rememberNavController()
+//    MakeShoppingListScreen(navController)
+//    val recipe = Recipe(
+//        1,
+//        "",
+//        "soup",
+//        "Thanh",
+//        13,
+//        15,
+//        emptyList(),
+//        emptyList(),
+//        "12m",
+//        1,
+//        false,
+//        emptyList(),
+//        ""
+//    )
+//    RecipeSelectedItem(recipe, true, {})
 }
