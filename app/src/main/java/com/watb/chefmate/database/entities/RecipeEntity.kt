@@ -59,3 +59,9 @@ fun RecipeEntity.toRecipe(): Recipe {
         createdAt = createdAt
     )
 }
+
+@Entity(tableName = "Ingredients")
+data class IngredientEntity(
+    @PrimaryKey(autoGenerate = true) val ingredientId: Int = 0,
+    val ingredientName: String
+)
