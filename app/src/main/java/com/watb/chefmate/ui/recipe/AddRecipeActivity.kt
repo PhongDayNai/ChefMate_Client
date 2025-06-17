@@ -30,6 +30,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -69,9 +70,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
 import com.watb.chefmate.api.ApiClient
@@ -81,8 +80,7 @@ import com.watb.chefmate.data.CreateRecipeData
 import com.watb.chefmate.data.IngredientInput
 import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.StepInput
-import com.watb.chefmate.database.AppDatabase
-import com.watb.chefmate.repository.RecipeRepository
+import com.watb.chefmate.database.entities.IngredientEntity
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import kotlinx.coroutines.launch
 import kotlin.text.toIntOrNull
@@ -92,7 +90,7 @@ import kotlin.text.toIntOrNull
 fun AddRecipeScreen(
     navController: NavController,
     recipeId: Int = -1,
-    viewModel: RecipeViewModel
+    recipeViewModel: RecipeViewModel
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
@@ -363,24 +361,34 @@ fun AddRecipeScreen(
                     ) {
                         Column {
                             Row {
-                                TextField(
-                                    value = ingredient.name,
-                                    onValueChange = { ingredients[index] = ingredient.copy(name = it) },
-                                    label = { Text(text = "Tên nguyên liệu", fontSize = 12.sp) },
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = Color.Transparent,
-                                        unfocusedBorderColor = Color.Transparent,
-                                    ),
-                                    keyboardActions = KeyboardActions(
-                                        onNext = {
-                                            ingredientFocusRequesters.getOrNull(weightIndex)?.requestFocus()
-                                        }
-                                    ),
-                                    maxLines = 1,
-                                    keyboardOptions = KeyboardOptions(
-                                        imeAction = ImeAction.Next
-                                    ),
-                                    shape = RoundedCornerShape(10.dp),
+//                                TextField(
+//                                    value = ingredient.name,
+//                                    onValueChange = { ingredients[index] = ingredient.copy(name = it) },
+//                                    label = { Text(text = "Tên nguyên liệu", fontSize = 12.sp) },
+//                                    colors = OutlinedTextFieldDefaults.colors(
+//                                        focusedBorderColor = Color.Transparent,
+//                                        unfocusedBorderColor = Color.Transparent,
+//                                    ),
+//                                    keyboardActions = KeyboardActions(
+//                                        onNext = {
+//                                            ingredientFocusRequesters.getOrNull(weightIndex)?.requestFocus()
+//                                        }
+//                                    ),
+//                                    maxLines = 1,
+//                                    keyboardOptions = KeyboardOptions(
+//                                        imeAction = ImeAction.Next
+//                                    ),
+//                                    shape = RoundedCornerShape(10.dp),
+//                                    modifier = Modifier
+//                                        .focusRequester(ingredientFocusRequesters.getOrNull(nameIndex) ?: FocusRequester())
+//                                )
+                                IngredientDropdown(
+                                    selectedIngredient = ingredient.name,
+                                    onIngredientSelected = { ingredients[index] = ingredient.copy(name = it) },
+                                    recipeViewModel = recipeViewModel,
+                                    onNext = {
+                                        ingredientFocusRequesters.getOrNull(weightIndex)?.requestFocus()
+                                    },
                                     modifier = Modifier
                                         .focusRequester(ingredientFocusRequesters.getOrNull(nameIndex) ?: FocusRequester())
                                 )
@@ -578,7 +586,7 @@ fun AddRecipeScreen(
                             if (recipeId == -1) {
                                 Log.d("Uri", imageUri.toString())
                                 if (!isPublic) {
-                                    viewModel.addRecipe(
+                                    recipeViewModel.addRecipe(
                                         recipeName = nameRecipe.value,
                                         imageUri = imageUri?.toString() ?: "",
                                         userName = "Thanh",
@@ -614,7 +622,7 @@ fun AddRecipeScreen(
                                     val response = ApiClient.createRecipe(context, recipe)
                                     if (response != null) {
                                         if (response.success) {
-                                            viewModel.addRecipe(
+                                            recipeViewModel.addRecipe(
                                                 recipeName = nameRecipe.value,
                                                 imageUri = imageUri?.toString() ?: "",
                                                 userName = "Thanh",
@@ -705,7 +713,7 @@ fun TimeUnitDropdown(selectedUnit: String, onUnitSelected: (String) -> Unit, mod
                 unfocusedIndicatorColor = Color(0xFFE0E0E0)
             ),
             modifier = Modifier
-                .menuAnchor()
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true)
                 .fillMaxWidth()
         )
 
@@ -726,15 +734,112 @@ fun TimeUnitDropdown(selectedUnit: String, onUnitSelected: (String) -> Unit, mod
     }
 }
 
+@SuppressLint("MemberExtensionConflict")
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun IngredientDropdown(
+    selectedIngredient: String,
+    onIngredientSelected: (String) -> Unit,
+    recipeViewModel: RecipeViewModel,
+    onNext: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val expanded = remember { mutableStateOf(false) }
+    val ingredients = remember { mutableStateListOf<IngredientEntity>() }
+    val ingredientsSearch = remember { mutableStateListOf<IngredientEntity>() }
+
+    LaunchedEffect(Unit) {
+        recipeViewModel.getAllIngredients().collect { list ->
+            list?.let {
+                ingredients.clear()
+                ingredients.addAll(it)
+                ingredientsSearch.clear()
+                ingredientsSearch.addAll(it)
+            }
+        }
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded.value,
+        onExpandedChange = {
+            if (ingredientsSearch.isNotEmpty()) {
+                expanded.value = true
+            } else {
+                expanded.value = ingredients.isNotEmpty()
+            }
+        },
+        modifier = modifier
+    ) {
+        TextField(
+            value = selectedIngredient,
+            onValueChange = { newValue ->
+                onIngredientSelected(newValue)
+
+                ingredientsSearch.clear()
+                ingredientsSearch.addAll(
+                    ingredients.filter {
+                        it.ingredientName.contains(newValue, ignoreCase = true)
+                    }
+                )
+
+                expanded.value = true
+            },
+            label = { Text(text = "Tên nguyên liệu", fontSize = 12.sp) },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color.Transparent,
+                unfocusedBorderColor = Color.Transparent,
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { onNext() }
+            ),
+            maxLines = 1,
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Next
+            ),
+            shape = RoundedCornerShape(10.dp),
+            modifier = Modifier
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true)
+                .fillMaxWidth()
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded.value,
+            onDismissRequest = { expanded.value = false }
+        ) {
+            if (ingredientsSearch.isEmpty()) {
+                ingredients.forEach { ingredient ->
+                    DropdownMenuItem(
+                        text = { Text(ingredient.ingredientName) },
+                        onClick = {
+                            onIngredientSelected(ingredient.ingredientName)
+                            expanded.value = false
+                        }
+                    )
+                }
+            } else {
+                ingredientsSearch.forEach { ingredient ->
+                    DropdownMenuItem(
+                        text = { Text(ingredient.ingredientName) },
+                        onClick = {
+                            onIngredientSelected(ingredient.ingredientName)
+                            expanded.value = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Preview
 @Composable
 fun AddRecipeScreensPreview() {
-    val navController = rememberNavController()
-    val viewModel: RecipeViewModel = viewModel(
-        factory = RecipeViewModel.Factory(
-            repository = RecipeRepository(AppDatabase.getDatabase(LocalContext.current).recipeDao())
-        )
-    )
-    AddRecipeScreen(navController, viewModel = viewModel)
+//    val navController = rememberNavController()
+//    val viewModel: RecipeViewModel = viewModel(
+//        factory = RecipeViewModel.Factory(
+//            repository = RecipeRepository(AppDatabase.getDatabase(LocalContext.current).recipeDao())
+//        )
+//    )
+//    AddRecipeScreen(navController, viewModel = viewModel)
 }
 
