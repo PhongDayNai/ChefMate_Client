@@ -2,7 +2,6 @@ package com.watb.chefmate.repository
 
 import com.watb.chefmate.database.dao.*
 import com.watb.chefmate.database.entities.*
-import com.watb.chefmate.database.relations.*
 import kotlinx.coroutines.flow.Flow
 import java.util.Date
 
@@ -70,6 +69,10 @@ class RecipeRepository(private val recipeDao: RecipeDao) {
     suspend fun deleteRecipeById(recipeId: Int) {
         recipeDao.deleteRecipeById(recipeId)
     }
+
+    suspend fun getRecipesByIds(ids: List<Int>) = recipeDao.getRecipesByIds(ids)
+
+
 
     // Removed all IngredientEntity and StepEntity related repository methods
     // Removed getRecipeWithIngredientsAndSteps
