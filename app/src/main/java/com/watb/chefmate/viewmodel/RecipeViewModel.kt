@@ -13,9 +13,11 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.watb.chefmate.api.ApiClient
 import com.watb.chefmate.data.Recipe
+import com.watb.chefmate.database.entities.IngredientEntity
 import com.watb.chefmate.database.entities.toRecipe
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
@@ -54,6 +56,26 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         }
     }
 
+    fun getAllIngredientsFromServer() {
+        viewModelScope.launch {
+            val response = ApiClient.getAllIngredients()
+            response?.data?.let {
+                val localIngredients: Flow<List<IngredientEntity>?> = getAllIngredients()
+                if (localIngredients.first() != null) {
+                    if (response.data.size != localIngredients.first()!!.size) {
+                        deleteAllIngredients()
+                        it.forEach { ingredient ->
+                            insertIngredient(ingredient)
+                        }
+                    }
+                } else {
+                    it.forEach { ingredient ->
+                        insertIngredient(ingredient)
+                    }
+                }
+            }
+        }
+    }
 
     @SuppressLint("MemberExtensionConflict")
     fun addRecipe(
@@ -149,6 +171,30 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         val gson = Gson()
         val type = object : TypeToken<List<Pair<Int, String>>>() {}.type
         return gson.fromJson(jsonString, type) ?: emptyList()
+    }
+
+    fun insertIngredient(ingredient: IngredientEntity) {
+        viewModelScope.launch {
+            repository.insertIngredient(ingredient)
+        }
+    }
+
+    fun getAllIngredients(): Flow<List<IngredientEntity>?> {
+        return repository.getAllIngredients()
+    }
+
+    fun getIngredientByName(name: String): Flow<IngredientEntity?> {
+        return repository.getIngredientByName(name)
+    }
+
+    fun getIngredientById(ingredientId: Int): Flow<IngredientEntity?> {
+        return repository.getIngredientById(ingredientId)
+    }
+
+    fun deleteAllIngredients() {
+        viewModelScope.launch {
+            repository.deleteAllIngredients()
+        }
     }
 
     class Factory(private val repository: RecipeRepository) : ViewModelProvider.Factory {
