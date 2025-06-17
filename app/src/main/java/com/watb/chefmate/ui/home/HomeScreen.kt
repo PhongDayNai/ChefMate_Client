@@ -126,7 +126,7 @@ fun HomeScreen(
                             .padding(top = 12.dp)
                             .fillMaxWidth(0.85f)
                     ) {
-                        TopSearchItem(
+                        SearchTypeItem(
                             onClick = {},
                             text = recipesTypeLeft[index],
                             image = image,
@@ -134,7 +134,7 @@ fun HomeScreen(
                                 .padding(end = 16.dp)
                                 .weight(1f)
                         )
-                        TopSearchItem(
+                        SearchTypeItem(
                             onClick = {},
                             text = recipesTypeRight[index],
                             image = imageRight[index],
@@ -178,7 +178,7 @@ fun HomeScreen(
 }
 
 @Composable
-fun TopSearchItem(onClick: () -> Unit, text: String, @DrawableRes image: Int, modifier: Modifier = Modifier) {
+fun SearchTypeItem(onClick: () -> Unit, text: String, @DrawableRes image: Int, modifier: Modifier = Modifier) {
     Card(
         onClick = onClick,
         colors = CardDefaults.cardColors(
@@ -228,6 +228,6 @@ fun HomeScreenPreview() {
 //            .background(color = Color(0xFFFFFFFF))
 //    ) {
 //
-//        TopSearchItem({}, "Công thức đồ uống", "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg")
+//        SearchTypeItem({}, "Công thức đồ uống", "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg")
 //    }
 }

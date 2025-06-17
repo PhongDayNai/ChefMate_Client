@@ -21,7 +21,7 @@ data class CreateRecipeData(
     val cookingTime: String,
     val ration: Int,
     val ingredients: List<IngredientItem>,
-    val cookingSteps: List<CookingStep>,
+    val cookingSteps: List<CookingStepAddRecipeData>,
     val userId: Int,
     val image: String,
 )
@@ -35,6 +35,10 @@ data class IngredientItem(
 
 data class CookingStep(
     val indexStep: Int? = null,
+    val stepContent: String,
+)
+
+data class CookingStepAddRecipeData(
     val content: String,
 )
 
