@@ -13,8 +13,6 @@ import com.watb.chefmate.database.converter.DateConverter
     entities = [
         RecipeEntity::class,
         ShoppingTimeEntity::class,
-        ShoppingRecipeEntity::class,
-        ShoppingIngredientEntity::class
     ],
     version = 1,
     exportSchema = false
@@ -23,7 +21,7 @@ import com.watb.chefmate.database.converter.DateConverter
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun recipeDao(): RecipeDao
-    abstract fun shoppingDao(): ShoppingDao
+    abstract fun shoppingTimeDao(): ShoppingTimeDao
 
     companion object {
         @Volatile
