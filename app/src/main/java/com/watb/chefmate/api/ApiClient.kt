@@ -1,5 +1,6 @@
 package com.watb.chefmate.api
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
@@ -8,6 +9,7 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.core.net.toUri
 import com.google.gson.Gson
+import com.watb.chefmate.data.AllIngredientsResponse
 import com.watb.chefmate.data.CommentRequest
 import com.watb.chefmate.data.CreateRecipeData
 import com.watb.chefmate.data.CreateRecipeResponse
@@ -15,7 +17,6 @@ import com.watb.chefmate.data.IncreaseRequest
 import com.watb.chefmate.data.InteractionResponse
 import com.watb.chefmate.data.LikeRequest
 import com.watb.chefmate.data.LoginResponse
-import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.data.RegisterRequest
 import com.watb.chefmate.data.RecipeListResponse
 import com.watb.chefmate.data.SearchRecipeRequest
@@ -40,6 +41,7 @@ object ApiClient {
 
     private val gson = Gson()
 
+    @SuppressLint("MemberExtensionConflict")
     suspend fun register(phone: String, password: String, fullName: String): LoginResponse? {
         val registerRequest = RegisterRequest(fullName, phone, password)
         val json = gson.toJson(registerRequest)
@@ -70,6 +72,7 @@ object ApiClient {
         }
     }
 
+    @SuppressLint("MemberExtensionConflict")
     suspend fun getTopTrending(): RecipeListResponse? {
         val request = Request.Builder()
             .url(ApiConstant.TOP_TRENDING_URL)
@@ -97,6 +100,7 @@ object ApiClient {
         }
     }
 
+    @SuppressLint("MemberExtensionConflict")
     suspend fun searchRecipe(recipeName: String, userId: Int? = null): RecipeListResponse? {
         val searchRequest = SearchRecipeRequest(recipeName, userId)
         val json = gson.toJson(searchRequest)
@@ -127,6 +131,7 @@ object ApiClient {
         }
     }
 
+    @SuppressLint("MemberExtensionConflict")
     suspend fun createRecipe(context: Context, recipe: CreateRecipeData): CreateRecipeResponse? {
         val bitmap = if (Build.VERSION.SDK_INT < 28) {
             MediaStore.Images.Media.getBitmap(context.contentResolver, recipe.image.toUri())
@@ -181,6 +186,34 @@ object ApiClient {
         }
     }
 
+    @SuppressLint("MemberExtensionConflict")
+    suspend fun getAllIngredients(): AllIngredientsResponse? {
+        val request = Request.Builder()
+            .url(ApiConstant.GET_ALL_INGREDIENTS_URL)
+            .get()
+            .build()
+
+        return withContext(Dispatchers.IO) {
+            try {
+                client.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val responseBody = response.body?.string()
+                        responseBody?.let {
+                            gson.fromJson(it, AllIngredientsResponse::class.java)
+                            }
+                    } else {
+                        Log.e("ApiClient", "Error: ${response.code}")
+                        null
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        }
+    }
+
+    @SuppressLint("MemberExtensionConflict")
     suspend fun likeRecipe(userId: Int = 1, recipeId: Int): InteractionResponse? {
         val likeRequest = LikeRequest(userId, recipeId)
         val json = gson.toJson(likeRequest)
@@ -211,6 +244,7 @@ object ApiClient {
         }
     }
 
+    @SuppressLint("MemberExtensionConflict")
     suspend fun commentRecipe(userId: Int = 1, recipeId: Int, content: String): InteractionResponse? {
         val commentRequest = CommentRequest(userId, recipeId, content)
         val json = gson.toJson(commentRequest)
@@ -241,6 +275,7 @@ object ApiClient {
         }
     }
 
+    @SuppressLint("MemberExtensionConflict")
     suspend fun increaseViewCount(recipeId: Int): InteractionResponse? {
         val increaseRequest = IncreaseRequest(recipeId)
         val json = gson.toJson(increaseRequest)

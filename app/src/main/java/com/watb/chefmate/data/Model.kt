@@ -1,5 +1,7 @@
 package com.watb.chefmate.data
 
+import com.watb.chefmate.database.entities.IngredientEntity
+
 data class Recipe(
     val recipeId: Int? = null,
     val image: String,
@@ -87,6 +89,17 @@ data class RecipeListResponse(
     val data: List<Recipe>? = null,
     val message: String? = null
 )
+
+data class AllIngredientsResponse(
+    val success: Boolean,
+    val data: List<IngredientEntity>? = null,
+    val message: String? = null
+)
+
+//data class IngredientData(
+//    val ingredientId: Int,
+//    val ingredientName: String
+//)
 
 data class LikeRequest(
     val userId: Int,
