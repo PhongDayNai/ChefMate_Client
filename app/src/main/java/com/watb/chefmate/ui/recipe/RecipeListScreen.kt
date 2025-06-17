@@ -78,10 +78,10 @@ fun RecipeListScreen(
 @Preview(showBackground = true)
 @Composable
 fun RecipeListScreensPreview() {
-    val viewModel: RecipeViewModel = viewModel(
-        factory = RecipeViewModel.Factory(
-            repository = RecipeRepository(AppDatabase.getDatabase(LocalContext.current).recipeDao())
-        )
-    )
+//    val viewModel: RecipeViewModel = viewModel(
+//        factory = RecipeViewModel.Factory(
+//            repository = RecipeRepository(AppDatabase.getDatabase(LocalContext.current).recipeDao())
+//        )
+//    )
 //    RecipeListScreen(navController = rememberNavController(), {}, viewModel)
 }

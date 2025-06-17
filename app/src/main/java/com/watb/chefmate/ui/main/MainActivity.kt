@@ -60,7 +60,7 @@ class MainActivity : ComponentActivity() {
 fun MainScreen() {
     val context = LocalContext.current
     val appDatabase = AppDatabase.getDatabase(context)
-    val repository = RecipeRepository(appDatabase.recipeDao())
+    val repository = RecipeRepository(appDatabase.recipeDao(), appDatabase.ingredientDao())
     val navController = rememberNavController()
 
     NavHost(navController = navController, graph = navGraph(navController, repository))

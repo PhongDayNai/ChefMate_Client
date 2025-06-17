@@ -12,17 +12,19 @@ import com.watb.chefmate.database.converter.DateConverter
 @Database(
     entities = [
         RecipeEntity::class,
+        IngredientEntity::class,
         ShoppingTimeEntity::class,
         ShoppingRecipeEntity::class,
         ShoppingIngredientEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(DateConverter::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun recipeDao(): RecipeDao
+    abstract fun ingredientDao(): IngredientDao
     abstract fun shoppingDao(): ShoppingDao
 
     companion object {
@@ -31,11 +33,13 @@ abstract class AppDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    "chefmate_database"
-                )
+                val instance = Room
+                    .databaseBuilder(
+                        context.applicationContext,
+                        AppDatabase::class.java,
+                        "chefmate_database"
+                    )
+                    .fallbackToDestructiveMigration(true)
                     .build()
                 INSTANCE = instance
                 instance

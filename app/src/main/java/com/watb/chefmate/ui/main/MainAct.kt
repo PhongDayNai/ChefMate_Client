@@ -75,6 +75,9 @@ fun MainAct(
 
     LaunchedEffect(Unit) {
         recipeViewModel.getTopTrending()
+        launch {
+            recipeViewModel.getAllIngredientsFromServer()
+        }
     }
 
     Box(
