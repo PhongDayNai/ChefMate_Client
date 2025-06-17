@@ -75,6 +75,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
 import com.watb.chefmate.api.ApiClient
 import com.watb.chefmate.data.CookingStep
+import com.watb.chefmate.data.CookingStepAddRecipeData
 import com.watb.chefmate.data.CreateRecipeData
 import com.watb.chefmate.data.IngredientInput
 import com.watb.chefmate.data.IngredientItem
@@ -588,12 +589,12 @@ fun AddRecipeScreen(
                                 } else {
 //                                val ingredientItems = remember { mutableStateListOf<IngredientItem>() }
                                     val ingredientItems = mutableListOf<IngredientItem>()
-                                    val cookingStepItems = mutableListOf<CookingStep>()
+                                    val cookingStepItems = mutableListOf<CookingStepAddRecipeData>()
                                     ingredients.forEach { ingredient ->
                                         ingredientItems.add(IngredientItem(ingredientName = ingredient.name, weight = ingredient.weight.toIntOrNull() ?: 0, unit = ingredient.unit))
                                     }
                                     steps.forEach { cookingStep ->
-                                        cookingStepItems.add(CookingStep(content = cookingStep.content))
+                                        cookingStepItems.add(CookingStepAddRecipeData(content = cookingStep.content))
                                     }
 
                                     val recipe = CreateRecipeData(

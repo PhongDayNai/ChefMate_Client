@@ -204,7 +204,7 @@ ${recipe.ingredients.joinToString("\n") { ingredient ->
 
 Cách thực hiện:
 ${recipe.cookingSteps.joinToString("\n") { step ->
-    "${step.indexStep}. ${step.content}"
+    "${step.indexStep}. ${step.stepContent}"
 }}
 
 Tác giả: ${recipe.userName}
@@ -420,15 +420,6 @@ Tác giả: ${recipe.userName}
                     .padding(start = 4.dp)
             )
         }
-//        Text(
-//            text = "Yêu thích",
-//            color = Color(0xFFEF4444),
-//            fontSize = 16.sp,
-//            fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
-//            modifier = Modifier
-//                .padding(top = 8.dp, start = screenWidth.dp * 0.05f)
-//                .align(Alignment.Start)
-//        )
         Box(
             modifier = Modifier
                 .padding(top = 16.dp)
@@ -655,7 +646,7 @@ fun CookingStepItem(cookingStep: CookingStep) {
                 .padding(top = 8.dp)
         )
         Text(
-            text = cookingStep.content,
+            text = cookingStep.stepContent,
             color = Color(0xFF000000),
             fontSize = 14.sp,
             fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -895,11 +886,11 @@ fun RecipeViewPreview() {
             IngredientItem(ingredientId = 8, ingredientName = "Nước mắm", weight = 2, unit = "muỗng canh"),
         ),
         cookingSteps = listOf(
-            CookingStep(indexStep = 1, content = "Nướng hành và gừng cho thơm."),
-            CookingStep(indexStep = 2, content = "Luộc thịt bò, vớt bọt."),
-            CookingStep(indexStep = 3, content = "Thêm hành, gừng, quế, hồi vào nồi."),
-            CookingStep(indexStep = 4, content = "Nêm nếm gia vị vừa ăn."),
-            CookingStep(indexStep = 5, content = "Trụng bánh phở, xếp ra tô, chan nước dùng.")
+            CookingStep(indexStep = 1, stepContent = "Nướng hành và gừng cho thơm."),
+            CookingStep(indexStep = 2, stepContent = "Luộc thịt bò, vớt bọt."),
+            CookingStep(indexStep = 3, stepContent = "Thêm hành, gừng, quế, hồi vào nồi."),
+            CookingStep(indexStep = 4, stepContent = "Nêm nếm gia vị vừa ăn."),
+            CookingStep(indexStep = 5, stepContent = "Trụng bánh phở, xếp ra tô, chan nước dùng.")
         ),
         cookingTime = "45 phút",
         ration = 4,
