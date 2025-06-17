@@ -17,7 +17,8 @@ import com.watb.chefmate.data.LikeRequest
 import com.watb.chefmate.data.LoginResponse
 import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.data.RegisterRequest
-import com.watb.chefmate.data.TopTrendingResponse
+import com.watb.chefmate.data.RecipeListResponse
+import com.watb.chefmate.data.SearchRecipeRequest
 import com.watb.chefmate.helper.CommonHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -69,7 +70,7 @@ object ApiClient {
         }
     }
 
-    suspend fun getTopTrending(): TopTrendingResponse? {
+    suspend fun getTopTrending(): RecipeListResponse? {
         val request = Request.Builder()
             .url(ApiConstant.TOP_TRENDING_URL)
             .get()
@@ -82,7 +83,37 @@ object ApiClient {
                         val responseBody = response.body?.string()
                         Log.d("ApiClient", "Response Body: $responseBody")
                         responseBody?.let {
-                            gson.fromJson(it, TopTrendingResponse::class.java)
+                            gson.fromJson(it, RecipeListResponse::class.java)
+                        }
+                    } else {
+                        Log.e("ApiClient", "Error: ${response.code}")
+                        null
+                    }
+                }
+            } catch (e: TimeoutException) {
+                e.printStackTrace()
+                null
+            }
+        }
+    }
+
+    suspend fun searchRecipe(recipeName: String, userId: Int? = null): RecipeListResponse? {
+        val searchRequest = SearchRecipeRequest(recipeName, userId)
+        val json = gson.toJson(searchRequest)
+
+        val requestBody = json.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
+        val request = Request.Builder()
+            .url(ApiConstant.SEARCH_URL)
+            .post(requestBody)
+            .build()
+
+        return withContext(Dispatchers.IO) {
+            try {
+                client.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val responseBody = response.body?.string()
+                        responseBody?.let {
+                            gson.fromJson(it, RecipeListResponse::class.java)
                         }
                     } else {
                         Log.e("ApiClient", "Error: ${response.code}")

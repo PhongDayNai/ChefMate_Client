@@ -77,7 +77,12 @@ data class CreateRecipeResponse(
     val message: String? = null
 )
 
-data class TopTrendingResponse(
+data class SearchRecipeRequest(
+    val recipeName: String,
+    val userId: Int? = null
+)
+
+data class RecipeListResponse(
     val success: Boolean,
     val data: List<Recipe>? = null,
     val message: String? = null
