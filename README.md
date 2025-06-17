@@ -22,6 +22,35 @@
 |  | Lấy danh sách công thức Top Trending |  |
 |  | Lấy danh sách nguyên liệu sẵn có |  |
 
+### a. User
+
+- [ ]  Đăng nhập
+- [ ]  Đăng ký
+- [ ]  Đổi mật khẩu
+- [ ]  Đăng xuất
+- [ ]  Chỉnh sửa thông tin cá nhân
+
+### b. Recipe
+
+- [x]  Hiển thị công thức nấu ăn
+- [x]  Tìm kiếm công thức
+- [ ]  Thêm vào “Công thức cùa tôi”
+- [x]  Lập danh sách mua sắm
+- [ ]  Quản lý danh sách mua sắm
+- [x]  Tạo công thức mới
+- [ ]  Chỉnh sửa công thức trong “Công thức của tôi”
+- [ ]  Xóa khỏi “Công thức của tôi”
+- [ ]  Lịch sử xem công thức
+- [ ]  Lịch sử mua sắm
+- [x]  Lấy danh sách Top Trending
+- [x]  Lấy danh sách nguyên liệu sẵn có
+
+### c. Interaction
+
+- [x]  Yêu thích
+- [x]  Bình luận
+- [x]  Chia sẻ
+
 ## 2. Cơ sở dữ liệu
 
 - Bảng Recipes
