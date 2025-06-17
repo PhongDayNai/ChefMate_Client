@@ -139,7 +139,18 @@ fun RecipeViewScreen(
     )
 
     LaunchedEffect(Unit) {
-        recipe.recipeId?.let { ApiClient.increaseViewCount(recipe.recipeId) }
+        recipe.recipeId?.let {
+            val response = ApiClient.increaseViewCount(recipe.recipeId)
+            if (response != null) {
+                if (response.success) {
+                    if (response.data == true) {
+                        viewQuantity += 1
+                    } else {
+                        Log.e("RecipeViewScreen", "Error: ${response.message}")
+                    }
+                }
+            }
+        }
     }
 
     LaunchedEffect(lazyListState) {
@@ -161,7 +172,9 @@ fun RecipeViewScreen(
         Header(
             leadingIcon = {
                 IconButton(
-                    onClick = { navController.popBackStack() }
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier
+                        .size(24.dp)
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_back),
@@ -181,14 +194,16 @@ fun RecipeViewScreen(
                             } else {
                                 Toast.makeText(context, "Đã lưu", Toast.LENGTH_SHORT).show()
                             }
-                        }
+                        },
+                        modifier = Modifier
+                            .size(24.dp)
                     ) {
                         Icon(
                             painter = if (!isHistory) painterResource(markPainter) else painterResource(R.drawable.ic_mark_filled),
                             contentDescription = "Mark",
                             tint = Color(0xFFFFFFFF),
                             modifier = Modifier
-                                .size(24.dp)
+                                .size(20.dp)
                         )
                     }
                     IconButton(
@@ -207,6 +222,8 @@ ${recipe.cookingSteps.joinToString("\n") { step ->
     "${step.indexStep}. ${step.stepContent}"
 }}
 
+${if (recipe.image.startsWith("/")) "${ApiConstant.MAIN_URL}${recipe.image}" else ""}
+
 Tác giả: ${recipe.userName}
                             """
                             val intent = Intent(Intent.ACTION_SEND).apply {
@@ -220,14 +237,17 @@ Tác giả: ${recipe.userName}
                                 e.printStackTrace()
                                 Toast.makeText(context, "Vui lòng thử lại", Toast.LENGTH_SHORT).show()
                             }
-                        }
+                        },
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .size(24.dp)
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_share),
                             contentDescription = "Share",
                             tint = Color(0xFFFFFFFF),
                             modifier = Modifier
-                                .size(24.dp)
+                                .size(20.dp)
                         )
                     }
                 }
