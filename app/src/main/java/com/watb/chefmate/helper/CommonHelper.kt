@@ -102,4 +102,11 @@ object CommonHelper {
         sdf.timeZone = TimeZone.getTimeZone("UTC")
         return sdf.format(date)
     }
+
+    fun String.parseIngredientName(): String {
+        return this.trim()
+            .lowercase()
+            .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+    }
+
 }
