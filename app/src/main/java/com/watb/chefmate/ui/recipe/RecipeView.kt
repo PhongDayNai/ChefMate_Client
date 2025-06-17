@@ -156,7 +156,7 @@ fun RecipeViewScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(color = Color(0xFFFFFFFF))
-            .safeDrawingPadding()
+//            .safeDrawingPadding()
     ) {
         Header(
             leadingIcon = {

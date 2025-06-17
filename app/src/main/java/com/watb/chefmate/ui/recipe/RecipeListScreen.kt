@@ -37,7 +37,7 @@ fun RecipeListScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFFFFFFF))
-            .safeDrawingPadding()
+//            .safeDrawingPadding()
     ) {
         Header(text = "Kho công thức")
         if (recipes.isEmpty()) {
