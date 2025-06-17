@@ -1,5 +1,6 @@
 package com.watb.chefmate.ui.recipe
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
@@ -74,7 +75,7 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
 import com.watb.chefmate.api.ApiClient
-import com.watb.chefmate.data.CookingStep
+import com.watb.chefmate.data.AppConstant
 import com.watb.chefmate.data.CookingStepAddRecipeData
 import com.watb.chefmate.data.CreateRecipeData
 import com.watb.chefmate.data.IngredientInput
@@ -86,6 +87,7 @@ import com.watb.chefmate.viewmodel.RecipeViewModel
 import kotlinx.coroutines.launch
 import kotlin.text.toIntOrNull
 
+@SuppressLint("MemberExtensionConflict")
 @Composable
 fun AddRecipeScreen(
     navController: NavController,
@@ -154,7 +156,7 @@ fun AddRecipeScreen(
     ConstraintLayout(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFB923C))
+            .background(brush = AppConstant.backgroundGradient)
             .safeDrawingPadding()
     ) {
         val (headerRef, contentRef) = createRefs()
@@ -199,7 +201,7 @@ fun AddRecipeScreen(
                 )
                 .fillMaxSize()
                 .constrainAs(contentRef) {
-                    top.linkTo(parent.top, margin = 80.dp)
+                    top.linkTo(headerRef.bottom, margin = 8.dp)
                 }
                 .verticalScroll(scrollState)
                 .padding(horizontal = 20.dp, vertical = 12.dp)
@@ -591,7 +593,6 @@ fun AddRecipeScreen(
                                     )
                                     navController.popBackStack()
                                 } else {
-//                                val ingredientItems = remember { mutableStateListOf<IngredientItem>() }
                                     val ingredientItems = mutableListOf<IngredientItem>()
                                     val cookingStepItems = mutableListOf<CookingStepAddRecipeData>()
                                     ingredients.forEach { ingredient ->
