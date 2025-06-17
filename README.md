@@ -26,29 +26,72 @@
 
 - Bảng Recipes
 
-| Tên cột | Kiểu dữ liệu | Khóa/Ràng buộc | Mô tả |
-| --- | --- | --- | --- |
-| `recipeId`  | `INT` | `PRIMARY KEY`  | Mã định danh duy nhất |
-|  |  | `IDENTITY(1, 1)`  | Tự động tăng từ 1 |
-| `recipeName` | `NVARCHAR(100)` | `NOT NULL` | Tên của công thức |
-| `image`  | `NVARCHAR(1000)`  | `NOT NULL`  | URL hình ảnh |
+
+    | Tên cột | Kiểu dữ liệu | Khóa/Ràng buộc | Mô tả |
+    | --- | --- | --- | --- |
+    | `recipeId`  | `INT` | `PRIMARY KEY`  | Mã định danh duy nhất |
+    |  |  | `IDENTITY(1, 1)`  | Tự động tăng từ 1 |
+    | `recipeName` | `NVARCHAR(100)` | `NOT NULL` | Tên của công thức |
+    | `image`  | `NVARCHAR(1000)`  | `NOT NULL`  | URL hình ảnh |
+    | `userId` | `INT` | `FOREIGN KEY REFERENCES Users(userId)` | liên kết đến bảng Users |
+    | `isPublic` | `BOOLEAN` | `NOT NULL` |  |
+    | `likeQuantity` | `INT` | `NOT NULL` | lượt yêu thích |
+    | `cookingTime` | `NVARCHAR(20)` | `NOT NULL` | thời gian nấu |
+    | `ration` | `INT` | `NOT NULL` | khẩu phần ăn |
+    | `viewCount` | `INT` | `NOT NULL` | lượt xem |
+    | createAt | DATE | NOT NULL | ngày tạo công thức |
 - Bảng Ingredients
 
-| Tên cột | Kiểu dữ liệu | Khóa/Ràng buộc | Mô tả |
-| --- | --- | --- | --- |
-| `ingredientId`  | `INT`  | `PRIMARY KEY`  | Mã định danh duy nhất |
-|  |  | `IDENTITY(1, 1)`  | Tự động tăng từ 1 |
-| `ingredientName`  | `NVARCHAR(100)`  | `NOT NULL`  | Tên của nguyên liệu |
+
+    | Tên cột | Kiểu dữ liệu | Khóa/Ràng buộc | Mô tả |
+    | --- | --- | --- | --- |
+    | `ingredientId`  | `INT`  | `PRIMARY KEY`  | Mã định danh duy nhất |
+    |  |  | `IDENTITY(1, 1)`  | Tự động tăng từ 1 |
+    | `ingredientName`  | `NVARCHAR(100)`  | `NOT NULL`  | Tên của nguyên liệu |
 - Bảng RecipesIngredients
 
-| Tên cột | Kiểu dữ liệu | Khóa/Ràng buộc | Mô tả |
-| --- | --- | --- | --- |
-| `riId`  | `INT`  | `PRIMARY KEY`  | Mã định danh duy nhất |
-|  |  | `IDENTITY(1, 1)`  | Tự động tăng từ 1 |
-| `recipeId`  | `INT`  | `FOREIGN KEY REFERENCES Recipes(recipeId)` | Liên kết dến bảng `Recipes` |
-| `ingredientId`  | `INT`  | `FOREIGN KEY REFERENCES Ingredients(ingredientId)`  | Liên kết đến bảng `Ingredients` |
-| `weight`  | `INT`  | `NOT NULL`  | Số lượng/Khối lượng của nguyên liệu |
-| `unit`  | `NVARCHAR(20)`  | `NOT NULL`  | Đơn vị tính |
+
+    | Tên cột | Kiểu dữ liệu | Khóa/Ràng buộc | Mô tả |
+    | --- | --- | --- | --- |
+    | `riId`  | `INT`  | `PRIMARY KEY`  | Mã định danh duy nhất |
+    |  |  | `IDENTITY(1, 1)`  | Tự động tăng từ 1 |
+    | `recipeId`  | `INT`  | `FOREIGN KEY REFERENCES Recipes(recipeId)` | Liên kết dến bảng `Recipes` |
+    | `ingredientId`  | `INT`  | `FOREIGN KEY REFERENCES Ingredients(ingredientId)`  | Liên kết đến bảng `Ingredients` |
+    | `weight`  | `INT`  | `NOT NULL`  | Số lượng/Khối lượng của nguyên liệu |
+    | `unit`  | `NVARCHAR(20)`  | `NOT NULL`  | Đơn vị tính |
 - Bảng ShoppingTimes
+
+
+    | Tên cột | Kiểu dữ liệu | Khóa/Ràng buộc | Mô tả |
+    | --- | --- | --- | --- |
+    | `stId` | `INT` | `PRIMARY KEY` | Mã định danh duy nhất |
+    | `shoppingDate` | `DATE` | `NOT NULL` | Ngày mua sắm |
 - Bảng ShoppingRecipes
+
+
+    | Tên cột | Kiểu dữ liệu | Khóa/Ràng buộc | Mô tả |
+    | --- | --- | --- | --- |
+    | `srId`  | `INT` | `PRIMARY KEY` | Mã định danh duy nhất |
+    | `stId` | `INT` | `FOREIGN KEY REFERENCES ShoppingTimes(stId)` | liên kết đến bảng ShoppingTimes |
+    | `recipeId` | `INT` | `FOREIGN KEY REFERENCES Recipes(recipeId)` | liên kết đến bảng Recipes |
 - Bảng ShoppingIngredients
+
+
+    | Tên cột | Kiểu dữ liệu | Khóa/Ràng buộc | Mô tả |
+    | --- | --- | --- | --- |
+    | `siId` | `INT` | `PRIMARY KEY` | Mã định danh duy nhất |
+    | `stId` | `INT` | `FOREIGN KEY REFERENCES ShoppingTimes(stId)` | liên kết đến bảng ShoppingTimes |
+    | `ingredientId` | `INT` | `FOREIGN KEY REFERENCES Ingredients(ingredientId)`  | liên kết đến bảng Ingredients |
+    | `weight` | `DOUBLE` | **`NOT NULL`** | Khối lượng |
+    | `unit` | `NVARCHAR(10)` | `NOT NULL` | đơn vị |
+    | `isBought` | `BOOLEAN` | `NOT NULL` | trạng thái đã mua |
+- Bảng Steps
+
+
+    | Tên cột | Kiểu dữ liệu | Khóa/Ràng buộc | Mô tả |
+    | --- | --- | --- | --- |
+    | `stepId` | `INT` | `PRIMARY KEY` | Mã định danh duy nhất |
+    | `recipeId` | `INT` | `FOREIGN KEY REFERENCES Recipes(recipeId)` | liên kết đến bảng Recipes |
+    | `index` | `INT` | `NOT NULL` | STT bước |
+    | `content` | `NVARCHAR(500)` | `NOT NULL` | chi tiết bước |
+- Comments
