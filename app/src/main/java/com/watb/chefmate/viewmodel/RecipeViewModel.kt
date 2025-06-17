@@ -1,6 +1,7 @@
 package com.watb.chefmate.viewmodel
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -18,6 +19,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 
 class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
     private val _topTrending = MutableStateFlow<List<Recipe>>(emptyList())
     val topTrending: StateFlow<List<Recipe>> = _topTrending
 
@@ -37,6 +41,19 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
             }
         }
     }
+
+    fun searchRecipe(recipeName: String, userId: Int? = null) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _searchResult.value = emptyList()
+            val response = ApiClient.searchRecipe(recipeName, userId)
+            response?.data?.let {
+                _searchResult.value = it
+            }
+            _isLoading.value = false
+        }
+    }
+
 
     @SuppressLint("MemberExtensionConflict")
     fun addRecipe(
@@ -142,5 +159,9 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }
+    }
+
+    companion object {
+        private const val TAG = "RecipeViewModel"
     }
 }
