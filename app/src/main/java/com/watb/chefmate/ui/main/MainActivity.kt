@@ -13,10 +13,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.createGraph
+import androidx.navigation.navArgument
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.ui.recipe.AddRecipeScreen
@@ -24,6 +26,8 @@ import com.watb.chefmate.data.CommentItem
 import com.watb.chefmate.data.CookingStep
 import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
+import com.watb.chefmate.ui.makeshoppinglist.ConsolidatedIngredientsScreen
+import com.watb.chefmate.ui.makeshoppinglist.MakeShoppingListScreen
 import com.watb.chefmate.ui.recipe.RecipeViewScreen
 import com.watb.chefmate.ui.theme.ChefMateTheme
 import com.watb.chefmate.viewmodel.RecipeViewModel
@@ -110,6 +114,16 @@ fun navGraph(
         }
         composable("addRecipe") {
             AddRecipeScreen(navController, recipeId = -1, recipeViewModel)
+        }
+        composable("make_shopping_list_screen") {
+            MakeShoppingListScreen(navController)
+        }
+        composable(
+            route = "consolidated_ingredients_screen/{shoppingTimeId}",
+            arguments = listOf(navArgument("shoppingTimeId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val shoppingTimeId = backStackEntry.arguments?.getInt("shoppingTimeId") ?: 0
+            ConsolidatedIngredientsScreen(navController, shoppingTimeId)
         }
     }
 }
