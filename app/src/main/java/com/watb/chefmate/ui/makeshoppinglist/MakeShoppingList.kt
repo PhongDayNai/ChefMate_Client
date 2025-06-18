@@ -68,6 +68,7 @@ import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.database.entities.ShoppingTimeEntity
+import com.watb.chefmate.helper.CommonHelper
 import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.recipe.bottomDashedBorder
@@ -314,7 +315,7 @@ fun MakeShoppingListScreen(
                         ingredientWeights = ingredientWeights,
                         ingredientUnits = ingredientUnits,
                         buyingStatuses = buyingStatuses,
-                        createdDate = Date()
+                        createdDate = CommonHelper.toIso8601UTC(Date())
                     )
 
                     shoppingTimeViewModel.insertShoppingTime(shoppingTime) { id ->
