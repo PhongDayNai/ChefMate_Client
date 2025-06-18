@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -30,10 +31,12 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.watb.chefmate.R
 import com.watb.chefmate.helper.CommonHelper.parseIngredientName
+import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.ui.recipe.bottomDashedBorder
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.ui.theme.SearchTextField
 import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun ConsolidatedIngredientsScreen(
@@ -41,6 +44,8 @@ fun ConsolidatedIngredientsScreen(
     shoppingTimeId: Int,
     shoppingTimeViewModel: ShoppingTimeViewModel
 ) {
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
     var showAddIngredient by remember { mutableStateOf(false) }
 
     var editIndex by remember { mutableStateOf<Int?>(null) }
@@ -263,7 +268,14 @@ fun ConsolidatedIngredientsScreen(
             }
             Spacer(modifier = Modifier.weight(1f))
             Button(
-                onClick = {},
+                onClick = {
+                    coroutineScope.launch {
+                        DataStoreHelper.finishShopping(context)
+                    }
+                    navController.navigate("mainAct") {
+                        popUpTo("mainAct") { inclusive = true }
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFF97518),
                 ),
