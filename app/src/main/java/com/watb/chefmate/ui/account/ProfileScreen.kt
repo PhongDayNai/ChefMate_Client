@@ -1,5 +1,6 @@
 package com.watb.chefmate.ui.account
 
+import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -22,15 +24,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,11 +44,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -57,13 +65,16 @@ import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
 import com.watb.chefmate.data.AppConstant
 import com.watb.chefmate.helper.CommonHelper
+import com.watb.chefmate.ui.theme.SecondaryTextButtonTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(navController: NavController) {
+    var isShownLogoutBottomSheet by remember { mutableStateOf(false) }
     var isRating by remember { mutableStateOf(false) }
 
     Column(
-//        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
@@ -87,12 +98,11 @@ fun ProfileScreen(navController: NavController) {
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .size(36.dp)
-//                    .background(color = Color(0xFF5DC09E), shape = CircleShape)
                     .background(color = Color(0x3FFFFFFF), shape = CircleShape)
                     .border(width = 1.dp, color = Color(0xFF85D0B6), shape = CircleShape)
             ) {
                 IconButton(
-                    onClick = { /*TODO*/ }
+                    onClick = { isShownLogoutBottomSheet = true }
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_logout),
@@ -149,6 +159,13 @@ fun ProfileScreen(navController: NavController) {
                     isRating = true
                 }
             }
+        }
+        if (isShownLogoutBottomSheet) {
+            LogoutBottomSheet(
+                navController = navController,
+                onLogout = { isShownLogoutBottomSheet = false },
+                onDismiss = { isShownLogoutBottomSheet = false }
+            )
         }
         if (isRating) {
             RatingDialog(onDismiss = { isRating = false })
@@ -427,7 +444,6 @@ fun ProfileInformationCard(
 @Composable
 fun RatingDialog(onDismiss: () -> Unit) {
     var numberOfStar by remember { mutableStateOf(0) }
-    val interactionSource = remember { MutableInteractionSource() }
     val isSubmitEnabled by remember { derivedStateOf { numberOfStar > 0 } }
     val context = LocalContext.current
 
@@ -544,6 +560,93 @@ fun RatingDialog(onDismiss: () -> Unit) {
                         end.linkTo(parent.end)
                     }
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LogoutBottomSheet(
+    navController: NavController,
+    onLogout: () -> Unit,
+    onDismiss: () -> Unit = {}
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Color.White,
+        contentColor = Color.Black
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+            ) {
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_circle_x),
+                        contentDescription = null,
+                        tint = Color(0xFF5A5A60),
+                        modifier = Modifier
+                            .size(18.dp)
+                    )
+                }
+            }
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(120.dp)
+                    .background(color = Color(0xFFD7EDED), shape = CircleShape)
+                    .border(width = 1.dp, color = Color(0xFFB2D8D8), shape = CircleShape)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.img_account_logout),
+                    contentDescription = "Account Logout",
+                    modifier = Modifier
+                        .size(70.dp)
+                )
+            }
+            Text(
+                text = "Đăng xuất tài khoản",
+                color = Color(0xFF1B1B1D),
+                fontSize = 20.sp,
+                fontWeight = FontWeight(600),
+                fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                modifier = Modifier
+                    .padding(top = 16.dp)
+            )
+            Text(
+                text = "Bạn có chắc muốn đăng xuất không?",
+                color = Color(0xFF5A5A60),
+                textAlign = TextAlign.Center,
+                fontSize = 14.sp,
+                fontWeight = FontWeight(400),
+                fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                modifier = Modifier
+                    .padding(top = 12.dp)
+                    .fillMaxWidth(0.75f)
+            )
+            SecondaryTextButtonTheme(
+                onClick = {
+                    onLogout()
+                    onDismiss()
+                },
+                text = "Đăng xuất",
+                modifier = Modifier
+                    .padding(top = 40.dp)
+                    .fillMaxWidth(0.9f)
+            )
+            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }
