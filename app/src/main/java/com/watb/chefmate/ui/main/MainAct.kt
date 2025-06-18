@@ -1,5 +1,6 @@
 package com.watb.chefmate.ui.main
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -41,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -49,14 +51,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
 import com.watb.chefmate.data.Recipe
+import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.ui.account.ProfileScreen
 import com.watb.chefmate.ui.home.HomeScreen
 import com.watb.chefmate.ui.recipe.RecipeListScreen
 import com.watb.chefmate.viewmodel.RecipeViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
@@ -65,6 +70,7 @@ fun MainAct(
     onRecipeClick: (Recipe, Boolean) -> Unit,
     recipeViewModel: RecipeViewModel
 ) {
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(
         initialPage = 0,
@@ -89,12 +95,15 @@ fun MainAct(
             bottomBar = {
                 BottomNavigationBar(
                     selectedIndex = pagerState.currentPage,
-                    navController = navController
-                ) {
-                    coroutineScope.launch {
-                        pagerState.animateScrollToPage(it)
+                    navController = navController,
+                    context = context,
+                    coroutineScope = coroutineScope,
+                    onTabSelected = {
+                        coroutineScope.launch {
+                            pagerState.animateScrollToPage(it)
+                        }
                     }
-                }
+                )
             }
         ) { _ ->
             HorizontalPager(
@@ -135,6 +144,8 @@ fun BottomNavigationBar(
     selectedIndex: Int,
     modifier: Modifier = Modifier,
     onTabSelected: (Int) -> Unit,
+    context: Context,
+    coroutineScope: CoroutineScope
 ) {
     var isShowOptions by remember { mutableStateOf(false) }
     val animateOptionsBackground by animateFloatAsState(
@@ -277,7 +288,14 @@ fun BottomNavigationBar(
                         modifier = Modifier
                             .padding(top = 24.dp)
                             .clickable {
-                                navController.navigate("make_shopping_list_screen")
+                                coroutineScope.launch {
+                                    if (DataStoreHelper.isFinishedShopping(context)) {
+                                        navController.navigate("make_shopping_list_screen")
+                                    } else {
+                                        val shoppingId = DataStoreHelper.getLastShoppingId(context)
+                                        navController.navigate("consolidated_ingredients_screen/$shoppingId")
+                                    }
+                                }
                             }
                     ) {
                         Text(
@@ -333,6 +351,8 @@ fun BottomNavigationBar(
 @Preview
 @Composable
 fun Preview() {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     ConstraintLayout(
         modifier = Modifier
             .fillMaxSize()
@@ -345,7 +365,9 @@ fun Preview() {
             modifier = Modifier
                 .constrainAs(createRef()) {
                     bottom.linkTo(parent.bottom)
-                }
+                },
+            context = context,
+            coroutineScope = coroutineScope
         )
     }
 }
