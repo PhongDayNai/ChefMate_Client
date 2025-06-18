@@ -61,6 +61,8 @@ dependencies {
     // AndroidX Activity library for registerForActivityResult
     implementation("androidx.activity:activity-ktx:1.10.1")
 
+    implementation(libs.androidx.datastore.core.android)
+    implementation("androidx.datastore:datastore-preferences:1.1.7")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
