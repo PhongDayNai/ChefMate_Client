@@ -17,4 +17,8 @@ class ShoppingTimeRepository(private val shoppingTimeDao: ShoppingTimeDao) {
     suspend fun getShoppingTimeById(id: Int): ShoppingTimeEntity {
         return shoppingTimeDao.getShoppingTimeById(id)
     }
+
+    suspend fun updateShoppingTimeById(id: Int, ingredientNames: String, ingredientWeights: String, ingredientUnits: String, buyingStatuses: String) {
+        shoppingTimeDao.updateShoppingTimeById(id, ingredientNames, ingredientWeights, ingredientUnits, buyingStatuses)
+    }
 }
