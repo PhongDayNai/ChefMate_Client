@@ -18,4 +18,7 @@ interface ShoppingTimeDao {
 
     @Query("SELECT * FROM ShoppingTimes WHERE stId = :id")
     suspend fun getShoppingTimeById(id: Int): ShoppingTimeEntity
+
+    @Query("UPDATE ShoppingTimes SET ingredientNames = :ingredientNames, ingredientWeights = :ingredientWeights, ingredientUnits = :ingredientUnits, buyingStatuses = :buyingStatuses WHERE stId = :id")
+    suspend fun updateShoppingTimeById(id: Int, ingredientNames: String, ingredientWeights: String, ingredientUnits: String, buyingStatuses: String)
 }
