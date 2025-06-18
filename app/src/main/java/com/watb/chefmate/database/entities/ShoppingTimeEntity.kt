@@ -13,6 +13,5 @@ data class ShoppingTimeEntity(
     val ingredientWeights: String,
     val ingredientUnits: String,
     val buyingStatuses: String,
-    val createdDate: Date
+    val createdDate: String
 )
-
