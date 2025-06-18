@@ -40,4 +40,10 @@ object DataStoreHelper {
         val preferences = context.dataStore.data.first()
         return preferences[LAST_SHOPPING_ID] ?: 0
     }
+
+    suspend fun finishShopping(context: Context) {
+        context.dataStore.edit { preferences ->
+            preferences[IS_FINISHED_SHOPPING] = true
+        }
+    }
 }
