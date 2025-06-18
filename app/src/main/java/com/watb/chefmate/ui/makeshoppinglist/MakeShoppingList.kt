@@ -69,6 +69,7 @@ import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.database.entities.ShoppingTimeEntity
 import com.watb.chefmate.helper.CommonHelper
+import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.recipe.bottomDashedBorder
@@ -319,8 +320,10 @@ fun MakeShoppingListScreen(
                     )
 
                     shoppingTimeViewModel.insertShoppingTime(shoppingTime) { id ->
-                        // Navigate sang màn hình tổng hợp nguyên liệu, ví dụ:
-                        navController.navigate("consolidated_ingredients_screen/$id")
+                        coroutineScope.launch {
+                            DataStoreHelper.updateLastShopping(context = context, id.toInt())
+                            navController.navigate("consolidated_ingredients_screen/$id")
+                        }
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
