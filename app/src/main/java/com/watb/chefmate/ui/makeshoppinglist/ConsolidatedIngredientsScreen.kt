@@ -5,93 +5,83 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxColors
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.watb.chefmate.R
-import com.watb.chefmate.database.AppDatabase
-import com.watb.chefmate.database.entities.ShoppingTimeEntity
 import com.watb.chefmate.helper.CommonHelper.parseIngredientName
-import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.recipe.bottomDashedBorder
 import com.watb.chefmate.ui.theme.Header
+import com.watb.chefmate.ui.theme.SearchTextField
 import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
 
 @Composable
 fun ConsolidatedIngredientsScreen(
     navController: NavController,
     shoppingTimeId: Int,
-    shoppingTimeViewModel: ShoppingTimeViewModel = viewModel(
-        factory = ShoppingTimeViewModel.Factory(
-            ShoppingTimeRepository(AppDatabase.getDatabase(LocalContext.current).shoppingTimeDao())
-        )
-    )
+    shoppingTimeViewModel: ShoppingTimeViewModel
 ) {
+    var showAddIngredient by remember { mutableStateOf(false) }
+
     var editIndex by remember { mutableStateOf<Int?>(null) }
     var editName by remember { mutableStateOf("") }
     var editWeight by remember { mutableStateOf("") }
     var editUnit by remember { mutableStateOf("") }
 
-    val scope = rememberCoroutineScope()
-    var shoppingTime by remember { mutableStateOf<ShoppingTimeEntity?>(null) }
+    var addName by remember { mutableStateOf("") }
+    var addWeight by remember { mutableStateOf("") }
+    var addUnit by remember { mutableStateOf("") }
 
-    // ✅ State cho list status
-    var ingredientStatus by remember { mutableStateOf<List<String>>(emptyList()) }
+    val ingredientStatus by shoppingTimeViewModel.shoppingIngredientStatuses.collectAsState()
+    val ingredientNames by shoppingTimeViewModel.shoppingIngredientNames.collectAsState()
+    val ingredientWeights by shoppingTimeViewModel.shoppingIngredientWeights.collectAsState()
+    val ingredientUnits by shoppingTimeViewModel.shoppingIngredientUnits.collectAsState()
 
     LaunchedEffect(shoppingTimeId) {
-        shoppingTime = shoppingTimeViewModel.getShoppingTimeById(shoppingTimeId)
-        ingredientStatus = shoppingTime?.buyingStatuses?.split(";;;") ?: emptyList()
-    }
-
-    fun updateStatus(index: Int, newStatus: String) {
-        ingredientStatus = ingredientStatus.toMutableList().apply {
-            this[index] = newStatus
-        }
+        shoppingTimeViewModel.getShoppingTimeById(shoppingTimeId)
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFFFFFFF))
-            .safeDrawingPadding()
     ) {
         Header(
             text = "Danh sách mua sắm",
             leadingIcon = {
-                Icon(
-                    painter = painterResource(R.drawable.ic_back),
-                    contentDescription = "back",
-                    tint = Color.White
-                )
+                IconButton(
+                    onClick = { navController.navigate("mainAct") }
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_back),
+                        contentDescription = "back",
+                        tint = Color.White
+                    )
+                }
             }
         )
 
-        if (shoppingTime == null) {
+        if (ingredientNames.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -99,14 +89,11 @@ fun ConsolidatedIngredientsScreen(
                 Text("Đang tải dữ liệu...", fontSize = 16.sp)
             }
         } else {
-            val ingredientNames = shoppingTime!!.ingredientNames.split(";;;")
-            val ingredientWeights = shoppingTime!!.ingredientWeights.split(";;;")
-            val ingredientUnits = shoppingTime!!.ingredientUnits.split(";;;")
-
-            // ✅ Sắp xếp: normal -> bought -> couldNotBuy
-            val orderedIndices = ingredientNames.indices.sortedWith(compareBy(
-                { statusOrder(ingredientStatus.getOrNull(it) ?: "") }
-            ))
+            val orderedIndices = ingredientNames.indices.sortedWith(compareBy {
+                statusOrder(
+                    ingredientStatus.getOrNull(it) ?: ""
+                )
+            })
 
             LazyColumn(
                 modifier = Modifier
@@ -128,11 +115,43 @@ fun ConsolidatedIngredientsScreen(
                         status = status,
                         onCheckedChange = {
                             val newStatus = if (status == "bought") "waiting" else "bought"
-                            updateStatus(index, newStatus)
+
+                            val newNames = ingredientNames.toMutableList()
+                            val newWeights = ingredientWeights.toMutableList()
+                            val newUnits = ingredientUnits.toMutableList()
+                            val newStatuses = ingredientStatus.toMutableList()
+                            newStatuses[index] = newStatus
+                            val newIngredientNamesString = newNames.joinToString(";;;")
+                            val newIngredientWeightsString = newWeights.joinToString(";;;")
+                            val newIngredientUnitsString = newUnits.joinToString(";;;")
+                            val newIngredientStatusesString = newStatuses.joinToString(";;;")
+                            shoppingTimeViewModel.updateShoppingTimeById(
+                                shoppingTimeId,
+                                newIngredientNamesString,
+                                newIngredientWeightsString,
+                                newIngredientUnitsString,
+                                newIngredientStatusesString
+                            )
                         },
                         onCouldNotBuyClick = {
                             val newStatus = if (status == "couldNotBuy") "waiting" else "couldNotBuy"
-                            updateStatus(index, newStatus)
+
+                            val newNames = ingredientNames.toMutableList()
+                            val newWeights = ingredientWeights.toMutableList()
+                            val newUnits = ingredientUnits.toMutableList()
+                            val newStatuses = ingredientStatus.toMutableList()
+                            newStatuses[index] = newStatus
+                            val newIngredientNamesString = newNames.joinToString(";;;")
+                            val newIngredientWeightsString = newWeights.joinToString(";;;")
+                            val newIngredientUnitsString = newUnits.joinToString(";;;")
+                            val newIngredientStatusesString = newStatuses.joinToString(";;;")
+                            shoppingTimeViewModel.updateShoppingTimeById(
+                                shoppingTimeId,
+                                newIngredientNamesString,
+                                newIngredientWeightsString,
+                                newIngredientUnitsString,
+                                newIngredientStatusesString
+                            )
                         },
                         onEditClick = {
                             editIndex = index
@@ -145,6 +164,7 @@ fun ConsolidatedIngredientsScreen(
             }
             if (editIndex != null) {
                 CustomEditIngredientDialog(
+                    title = "Chỉnh sửa nguyên liệu",
                     name = editName,
                     onNameChange = { editName = it },
                     weight = editWeight,
@@ -152,34 +172,84 @@ fun ConsolidatedIngredientsScreen(
                     unit = editUnit,
                     onUnitChange = { editUnit = it },
                     onConfirm = {
-                        // Lưu chỉnh sửa
                         val idx = editIndex!!
                         val newNames = ingredientNames.toMutableList()
                         val newWeights = ingredientWeights.toMutableList()
                         val newUnits = ingredientUnits.toMutableList()
+                        val newStatuses = ingredientStatus.toMutableList()
 
                         newNames[idx] = editName
                         newWeights[idx] = editWeight
                         newUnits[idx] = editUnit
 
-                        shoppingTime = shoppingTime!!.copy(
-                            ingredientNames = newNames.joinToString(";;;"),
-                            ingredientWeights = newWeights.joinToString(";;;"),
-                            ingredientUnits = newUnits.joinToString(";;;")
+                        val newIngredientNamesString = newNames.joinToString(";;;")
+                        val newIngredientWeightsString = newWeights.joinToString(";;;")
+                        val newIngredientUnitsString = newUnits.joinToString(";;;")
+                        val newIngredientStatusesString = newStatuses.joinToString(";;;")
+                        shoppingTimeViewModel.updateShoppingTimeById(
+                            shoppingTimeId,
+                            newIngredientNamesString,
+                            newIngredientWeightsString,
+                            newIngredientUnitsString,
+                            newIngredientStatusesString
                         )
 
                         editIndex = null
                     },
                     onDismiss = {
                         editIndex = null
-                    }
+                    },
+                    buttonText = "Cập nhật"
                 )
             }
+            if (showAddIngredient) {
+                CustomEditIngredientDialog(
+                    title = "Thêm mới nguyên liệu",
+                    name = addName,
+                    onNameChange = { addName = it },
+                    weight = addWeight,
+                    onWeightChange = { addWeight = it },
+                    unit = addUnit,
+                    onUnitChange = { addUnit = it },
+                    onConfirm = {
+                        val newNames = ingredientNames.toMutableList()
+                        val newWeights = ingredientWeights.toMutableList()
+                        val newUnits = ingredientUnits.toMutableList()
+                        val newStatuses = ingredientStatus.toMutableList()
 
+                        newNames.add(newNames.size, addName)
+                        newWeights.add(newWeights.size, addWeight)
+                        newUnits.add(newUnits.size, addUnit)
+                        newStatuses.add(newStatuses.size, "waiting")
+
+                        val newIngredientNamesString = newNames.joinToString(";;;")
+                        val newIngredientWeightsString = newWeights.joinToString(";;;")
+                        val newIngredientUnitsString = newUnits.joinToString(";;;")
+                        val newIngredientStatusesString = newStatuses.joinToString(";;;")
+                        shoppingTimeViewModel.updateShoppingTimeById(
+                            shoppingTimeId,
+                            newIngredientNamesString,
+                            newIngredientWeightsString,
+                            newIngredientUnitsString,
+                            newIngredientStatusesString
+                        )
+
+                        addName = ""
+                        addWeight = ""
+                        addUnit = ""
+
+                        showAddIngredient = false
+                    },
+                    onDismiss = { showAddIngredient = false },
+                    buttonText = "Thêm mới"
+                )
+            }
         }
         Row {
             Button(
-                onClick = {},
+                onClick = {
+                    showAddIngredient = true
+                },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFA1A1A1),
                 ),
@@ -258,7 +328,8 @@ fun IngredientItem(
         Spacer(modifier = Modifier.weight(1f))
 
         IconButton(
-            onClick = { onEditClick() }
+            onClick = { onEditClick() },
+            enabled = status == "waiting"
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_editingredirnt),
@@ -270,7 +341,8 @@ fun IngredientItem(
         }
 
         IconButton(
-            onClick = { onCouldNotBuyClick() }
+            onClick = { onCouldNotBuyClick() },
+            enabled = status != "bought"
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_couldn_tbuy),
@@ -285,6 +357,7 @@ fun IngredientItem(
 
 @Composable
 fun CustomEditIngredientDialog(
+    title: String,
     name: String,
     onNameChange: (String) -> Unit,
     weight: String,
@@ -292,75 +365,115 @@ fun CustomEditIngredientDialog(
     unit: String,
     onUnitChange: (String) -> Unit,
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    buttonText: String
 ) {
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         Card(
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(0.dp),
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .wrapContentHeight(),
             colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
             Column {
-                // 👉 Title sát viền & màu nền riêng
-                Box(
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color(0xFFF97518))
-                        .padding(16.dp)
+                        .padding(12.dp)
                 ) {
                     Text(
-                        text = "Sửa nguyên liệu",
+                        text = title,
                         color = Color.White,
                         fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .padding(start = 8.dp)
                     )
+                    Spacer( modifier = Modifier.weight(1f))
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .size(24.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_cancel),
+                            contentDescription = "cancel",
+                            tint = Color(0xFFFFFFFF),
+                            modifier = Modifier
+                                .size(20.dp)
+                        )
+                    }
                 }
 
-                // 👉 Nội dung nhập
                 Column(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(8.dp)
                 ) {
-                    OutlinedTextField(
+                    Text(
+                        text = "Tên nguyên liệu",
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .padding(top = 6.dp)
+                    )
+                    SearchTextField(
                         value = name,
                         onValueChange = onNameChange,
-                        label = { Text("Tên") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .padding(top = 12.dp)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = weight,
-                        onValueChange = onWeightChange,
-                        label = { Text("Khối lượng") },
-                        modifier = Modifier.fillMaxWidth()
+                    Text(
+                        text = "Định lượng",
+                        fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = unit,
-                        onValueChange = onUnitChange,
-                        label = { Text("Đơn vị") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Row(
+                        modifier = Modifier
+                            .padding(top = 12.dp)
+                    ) {
+                        SearchTextField(
+                            value = weight,
+                            onValueChange = onWeightChange,
+                            modifier = Modifier
+                                .padding(end = 4.dp)
+                                .weight(1f)
+                        )
+                        SearchTextField(
+                            value = unit,
+                            onValueChange = onUnitChange,
+                            modifier = Modifier
+                                .padding(start = 4.dp)
+                                .weight(1f)
+                        )
+                    }
                 }
-
-                // 👉 Hàng nút confirm / cancel
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(8.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Hủy")
-                    }
+                    Spacer(modifier = Modifier.weight(1f))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Button(onClick = onConfirm) {
-                        Text("Lưu")
+                    Button(
+                        onClick = onConfirm,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFF97518)
+                        )
+                    ) {
+                        Text(text = buttonText)
                     }
                 }
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun CustomEditIngredientDialogPreview() {
+    CustomEditIngredientDialog("","", {},"", {},"", {},{}, {}, "")
 }
 
