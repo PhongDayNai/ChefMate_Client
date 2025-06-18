@@ -26,12 +26,14 @@ import com.watb.chefmate.data.CommentItem
 import com.watb.chefmate.data.CookingStep
 import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
+import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.makeshoppinglist.ConsolidatedIngredientsScreen
 import com.watb.chefmate.ui.makeshoppinglist.MakeShoppingListScreen
 import com.watb.chefmate.ui.recipe.RecipeViewScreen
 import com.watb.chefmate.ui.recipe.SearchResultScreen
 import com.watb.chefmate.ui.theme.ChefMateTheme
 import com.watb.chefmate.viewmodel.RecipeViewModel
+import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,15 +66,17 @@ class MainActivity : ComponentActivity() {
 fun MainScreen() {
     val context = LocalContext.current
     val appDatabase = AppDatabase.getDatabase(context)
-    val repository = RecipeRepository(appDatabase.recipeDao(), appDatabase.ingredientDao())
+    val recipeRepository = RecipeRepository(appDatabase.recipeDao(), appDatabase.ingredientDao())
+    val shoppingTimeRepository = ShoppingTimeRepository(appDatabase.shoppingTimeDao())
     val navController = rememberNavController()
 
-    NavHost(navController = navController, graph = navGraph(navController, repository))
+    NavHost(navController = navController, graph = navGraph(navController, recipeRepository, shoppingTimeRepository))
 }
 
 fun navGraph(
     navController: NavController,
-    repository: RecipeRepository
+    recipeRepository: RecipeRepository,
+    shoppingTimeRepository: ShoppingTimeRepository
 ): NavGraph {
     var recipe = Recipe(
         recipeId = -1,
@@ -88,7 +92,8 @@ fun navGraph(
         ration = 0,
         createdAt = "2023-06-15 10:20:00"
     )
-    val recipeViewModel = RecipeViewModel(repository)
+    val recipeViewModel = RecipeViewModel(recipeRepository)
+    val shoppingTimeViewModel = ShoppingTimeViewModel(shoppingTimeRepository)
     return navController.createGraph("splash") {
         composable("splash") {
             SplashScreen(navController)
@@ -137,7 +142,7 @@ fun navGraph(
             arguments = listOf(navArgument("shoppingTimeId") { type = NavType.IntType })
         ) { backStackEntry ->
             val shoppingTimeId = backStackEntry.arguments?.getInt("shoppingTimeId") ?: 0
-            ConsolidatedIngredientsScreen(navController, shoppingTimeId)
+            ConsolidatedIngredientsScreen(navController, shoppingTimeId, shoppingTimeViewModel)
         }
     }
 }
