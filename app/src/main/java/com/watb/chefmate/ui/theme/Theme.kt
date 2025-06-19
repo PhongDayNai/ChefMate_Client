@@ -58,6 +58,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
@@ -149,6 +150,7 @@ fun SearchTextField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String = "",
+    placeholderSize: TextUnit = 16.sp,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
@@ -178,7 +180,7 @@ fun SearchTextField(
                 Text(
                     text = placeholder,
                     color = Color(0xFFADAEBC),
-                    fontSize = 16.sp,
+                    fontSize = placeholderSize,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                     fontWeight = FontWeight(400),
                     modifier = Modifier
@@ -190,11 +192,10 @@ fun SearchTextField(
                 onValueChange = onValueChange,
                 textStyle = TextStyle(
                     color = Color(0xFF000000),
-                    fontSize = 16.sp
+                    fontSize = placeholderSize
                 ),
                 keyboardOptions = keyboardOptions,
                 keyboardActions = keyboardActions,
-                cursorBrush = SolidColor(Color.White),
                 maxLines = 1,
                 decorationBox = { innerTextField ->
                     Row(

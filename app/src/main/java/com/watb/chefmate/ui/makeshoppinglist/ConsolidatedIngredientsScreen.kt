@@ -1,5 +1,6 @@
 package com.watb.chefmate.ui.makeshoppinglist
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,9 +30,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
+import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.helper.CommonHelper.parseIngredientName
 import com.watb.chefmate.helper.DataStoreHelper
+import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.recipe.bottomDashedBorder
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.ui.theme.SearchTextField
@@ -255,15 +259,17 @@ fun ConsolidatedIngredientsScreen(
                 onClick = {
                     showAddIngredient = true
                 },
+                border = _root_ide_package_.androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF000000)),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFA1A1A1),
+                    containerColor = Color(0xFFDCC8C8),
                 ),
                 shape = RoundedCornerShape(10.dp),
                 modifier = Modifier
                     .padding(30.dp)
             ) {
                 Text(
-                    text = "Bổ sung"
+                    text = "Bổ sung",
+                    color = Color(0xFF000000)
                 )
             }
             Spacer(modifier = Modifier.weight(1f))
@@ -432,6 +438,8 @@ fun CustomEditIngredientDialog(
                     SearchTextField(
                         value = name,
                         onValueChange = onNameChange,
+                        placeholder = "Tên nguyên liệu",
+                        placeholderSize = 12.sp,
                         modifier = Modifier
                             .padding(top = 12.dp)
                     )
@@ -447,6 +455,8 @@ fun CustomEditIngredientDialog(
                         SearchTextField(
                             value = weight,
                             onValueChange = onWeightChange,
+                            placeholder = "Khối lượng",
+                            placeholderSize = 12.sp,
                             modifier = Modifier
                                 .padding(end = 4.dp)
                                 .weight(1f)
@@ -454,6 +464,8 @@ fun CustomEditIngredientDialog(
                         SearchTextField(
                             value = unit,
                             onValueChange = onUnitChange,
+                            placeholder = "Đơn vị",
+                            placeholderSize = 12.sp,
                             modifier = Modifier
                                 .padding(start = 4.dp)
                                 .weight(1f)
@@ -483,9 +495,19 @@ fun CustomEditIngredientDialog(
     }
 }
 
+@SuppressLint("ViewModelConstructorInComposable")
 @Preview
 @Composable
 fun CustomEditIngredientDialogPreview() {
-    CustomEditIngredientDialog("","", {},"", {},"", {},{}, {}, "")
+    val context = LocalContext.current
+    val appDatabase = AppDatabase.getDatabase(context)
+    val shoppingTimeRepository = ShoppingTimeRepository(appDatabase.shoppingTimeDao())
+    val shoppingTimeViewModel = ShoppingTimeViewModel(shoppingTimeRepository)
+    val navController = rememberNavController()
+    ConsolidatedIngredientsScreen(
+        navController = navController,
+        shoppingTimeId = 1,
+        shoppingTimeViewModel = shoppingTimeViewModel
+    )
 }
 
