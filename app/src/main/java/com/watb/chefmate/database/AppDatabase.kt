@@ -15,7 +15,7 @@ import com.watb.chefmate.database.converter.DateConverter
         IngredientEntity::class,
         ShoppingTimeEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(DateConverter::class)
