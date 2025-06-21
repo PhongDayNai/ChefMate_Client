@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -91,7 +92,7 @@ fun MakeShoppingListScreen(
             ShoppingTimeRepository(AppDatabase.getDatabase(LocalContext.current).shoppingTimeDao())
         )
     )
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var isShowManually by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -111,7 +112,6 @@ fun MakeShoppingListScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFFFFFFF))
-//            .safeDrawingPadding()
     ) {
         Header(
             "Lập danh sách mua sắm",
@@ -224,6 +224,10 @@ fun MakeShoppingListScreen(
                     IconButton(
                         onClick = {
                             isShowManually = !isShowManually
+                            coroutineScope.launch {
+                                sheetState.show()
+                                sheetState.expand()
+                            }
                         }
                     ) {
                         Icon(
@@ -251,7 +255,6 @@ fun MakeShoppingListScreen(
                         }
                     }
                 }
-
             }
             if (isShowManually) {
                 ModalBottomSheet(
@@ -259,8 +262,13 @@ fun MakeShoppingListScreen(
                         coroutineScope.launch {
                             sheetState.hide()
                             isShowManually = false
+                            manualName = ""
+                            manualWeight = ""
+                            manualUnit = ""
                         }
                     },
+                    modifier = Modifier
+                        .imePadding(),
                     sheetState = sheetState
                 ) {
                     AddManuallyScreen(
@@ -271,7 +279,6 @@ fun MakeShoppingListScreen(
                         unit = manualUnit,
                         onUnitChange = { manualUnit = it },
                         onDone = {
-                            // Tạo IngredientItem mới
                             val newItem = IngredientItem(
                                 ingredientName = manualName,
                                 weight = manualWeight.toIntOrNull() ?: 0,
@@ -279,12 +286,10 @@ fun MakeShoppingListScreen(
                             )
                             manualIngredients.add(newItem)
 
-                            // Reset dữ liệu tạm
                             manualName = ""
                             manualWeight = ""
                             manualUnit = ""
 
-                            // Đóng sheet
                             coroutineScope.launch {
                                 sheetState.hide()
                                 isShowManually = false
