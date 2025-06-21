@@ -132,3 +132,9 @@ data class StepInput(
     val index: Int,
     var content: String
 )
+
+enum class StatusShopping (val value: String){
+    WAITING("waiting"),
+    BOUGHT("bought"),
+    COULD_NOT_BUY("couldNotBuy")
+}
