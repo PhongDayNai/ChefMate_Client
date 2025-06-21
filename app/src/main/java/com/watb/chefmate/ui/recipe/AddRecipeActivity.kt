@@ -361,27 +361,6 @@ fun AddRecipeScreen(
                     ) {
                         Column {
                             Row {
-//                                TextField(
-//                                    value = ingredient.name,
-//                                    onValueChange = { ingredients[index] = ingredient.copy(name = it) },
-//                                    label = { Text(text = "Tên nguyên liệu", fontSize = 12.sp) },
-//                                    colors = OutlinedTextFieldDefaults.colors(
-//                                        focusedBorderColor = Color.Transparent,
-//                                        unfocusedBorderColor = Color.Transparent,
-//                                    ),
-//                                    keyboardActions = KeyboardActions(
-//                                        onNext = {
-//                                            ingredientFocusRequesters.getOrNull(weightIndex)?.requestFocus()
-//                                        }
-//                                    ),
-//                                    maxLines = 1,
-//                                    keyboardOptions = KeyboardOptions(
-//                                        imeAction = ImeAction.Next
-//                                    ),
-//                                    shape = RoundedCornerShape(10.dp),
-//                                    modifier = Modifier
-//                                        .focusRequester(ingredientFocusRequesters.getOrNull(nameIndex) ?: FocusRequester())
-//                                )
                                 IngredientDropdown(
                                     selectedIngredient = ingredient.name,
                                     onIngredientSelected = { ingredients[index] = ingredient.copy(name = it) },
