@@ -67,6 +67,11 @@ data class RegisterRequest(
     val password: String
 )
 
+data class LoginRequest(
+    val phone: String,
+    val password: String
+)
+
 data class LoginResponse(
     val success: Boolean,
     val data: LoginData? = null,
@@ -77,8 +82,10 @@ data class LoginData(
     val userId: Int,
     val fullName: String,
     val phone: String,
+    val email: String,
     val passwordHash: String,
     val followCount: Int,
+    val recipeCount: Int,
     val createdAt: String
 )
 
