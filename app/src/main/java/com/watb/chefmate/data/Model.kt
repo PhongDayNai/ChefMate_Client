@@ -11,7 +11,7 @@ data class Recipe(
     val ration: Int,
     val viewCount: Int,
     val likeQuantity: Int,
-    val userId: Int,
+    val userId: Int? = null,
     val createdAt: String,
     val userName: String,
     val cookingSteps: List<CookingStep>,
@@ -98,6 +98,11 @@ data class SearchRecipeRequest(
     val userId: Int? = null
 )
 
+data class SearchRecipeByTagRequest(
+    val tagName: String,
+    val userId: Int? = null
+)
+
 data class RecipeListResponse(
     val success: Boolean,
     val data: List<Recipe>? = null,
@@ -107,6 +112,12 @@ data class RecipeListResponse(
 data class AllIngredientsResponse(
     val success: Boolean,
     val data: List<IngredientEntity>? = null,
+    val message: String? = null
+)
+
+data class AllTagsResponse(
+    val success: Boolean,
+    val data: List<TagEntity>? = null,
     val message: String? = null
 )
 
