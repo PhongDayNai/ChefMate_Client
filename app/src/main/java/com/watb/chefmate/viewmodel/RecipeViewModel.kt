@@ -123,8 +123,8 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         ration: Int,
         viewCount: Int,
         createdAt: String,
-        ingredients: List<Pair<String, Pair<Int, String>>>, // (name, (weight, unit))
-        steps: List<Pair<Int, String>>, // (index, content)
+        ingredients: List<Pair<String, Pair<Int, String>>>,
+        steps: List<Pair<Int, String>>,
         tags: List<String>
     ) {
         viewModelScope.launch {
@@ -204,10 +204,16 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         }
     }
 
-
-    fun getRecipeById(recipeId: Int): Flow<RecipeEntity?> {
-        return repository.getRecipeById(recipeId)
+    fun deleteRecipeById(recipeId: Int) {
+        viewModelScope.launch {
+            repository.deleteRecipeById(recipeId)
+        }
     }
+
+    fun getRecipeById(recipeId: Int): Flow<Recipe?> {
+        return repository.getRecipeById(recipeId).map { it?.toRecipe() }
+    }
+
 
     fun parseIngredientsJson(jsonString: String): List<Pair<String, Pair<Int, String>>> {
         val gson = Gson()

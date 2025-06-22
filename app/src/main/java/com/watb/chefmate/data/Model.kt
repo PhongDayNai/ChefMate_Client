@@ -162,3 +162,9 @@ enum class SearchType(val value: String) {
     NAME("name"),
     TAG("tag")
 }
+
+enum class StatusShopping (val value: String){
+    WAITING("waiting"),
+    BOUGHT("bought"),
+    COULD_NOT_BUY("couldNotBuy")
+}

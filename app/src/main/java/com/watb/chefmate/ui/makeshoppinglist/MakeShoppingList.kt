@@ -9,12 +9,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -34,6 +36,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -42,6 +45,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCompositionContext
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -91,13 +95,19 @@ fun MakeShoppingListScreen(
             ShoppingTimeRepository(AppDatabase.getDatabase(LocalContext.current).shoppingTimeDao())
         )
     )
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var isShowManually by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val selectedStates = remember { mutableStateMapOf<Int, Boolean>() }
+
     val allRecipes by recipeViewModel.allRecipes.collectAsState(initial = emptyList())
     val selectedRecipes = allRecipes.filter { selectedStates[it.recipeId] == true }
+
+    var searchQuery by remember { mutableStateOf("") }
+    val filteredRecipes = allRecipes.filter {
+        it.recipeName.contains(searchQuery, ignoreCase = true)
+    }
 
     val manualIngredients = remember { mutableStateListOf<IngredientItem>() }
 
@@ -111,21 +121,24 @@ fun MakeShoppingListScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFFFFFFF))
-//            .safeDrawingPadding()
     ) {
         Header(
             "Lập danh sách mua sắm",
             leadingIcon = {
-                Icon(
-                    painter = painterResource(R.drawable.ic_back),
-                    contentDescription = "back",
-                    tint = Color(0xFFFFFFFF)
-                )
+                IconButton(
+                    onClick = { navController.navigate("mainAct")}
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_back),
+                        contentDescription = "back",
+                        tint = Color(0xFFFFFFFF)
+                    )
+                }
             }
         )
         SearchTextField(
-            value = "",
-            onValueChange = {},
+            value = searchQuery,
+            onValueChange = { searchQuery = it},
             placeholder = "Tìm công thức đã lưu",
             leadingIcon = {
                 Icon(
@@ -135,11 +148,14 @@ fun MakeShoppingListScreen(
                 )
             },
             trailingIcon = {
-                Icon(
-                    painter = painterResource(R.drawable.ic_filter),
-                    contentDescription = "search",
-                    tint = Color(0xFFFF9800)
-                )
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { searchQuery = "" }) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_cancel),
+                            contentDescription = "Clear search"
+                        )
+                    }
+                }
             },
             modifier = Modifier
                 .padding(top = 20.dp, bottom = 20.dp)
@@ -167,7 +183,7 @@ fun MakeShoppingListScreen(
                     Text("Chưa có công thức nào để lựa chọn.", style = MaterialTheme.typography.bodyLarge)
                     Text("Thêm công thức mới từ màn hình chính.", style = MaterialTheme.typography.bodyMedium)
                 }
-            } else {
+            } else if (allRecipes.isNotEmpty() && searchQuery.isEmpty()) {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
                     verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -188,6 +204,40 @@ fun MakeShoppingListScreen(
                                 }
                             }
                         )
+                    }
+                }
+            } else if (searchQuery.isNotEmpty() && filteredRecipes.isNotEmpty()) {
+                if (filteredRecipes.isEmpty()) {
+                    Text(
+                        text = "Không tìm thấy công thức nào.",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 20.dp),
+                        color = Color.Gray,
+                        fontSize = 16.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        contentPadding = PaddingValues(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        items(filteredRecipes.size) { index ->
+                            val recipe = filteredRecipes[index]
+                            val isSelected = selectedRecipes.contains(recipe)
+                            RecipeSelectedItem(
+                                recipe = recipe,
+                                isSelected = isSelected,
+                                onToggleSelect = { checked ->
+                                    allRecipes[index].recipeId?.let {
+                                        selectedStates[allRecipes[index].recipeId!!] = checked
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -224,6 +274,10 @@ fun MakeShoppingListScreen(
                     IconButton(
                         onClick = {
                             isShowManually = !isShowManually
+                            coroutineScope.launch {
+                                sheetState.show()
+                                sheetState.expand()
+                            }
                         }
                     ) {
                         Icon(
@@ -251,7 +305,6 @@ fun MakeShoppingListScreen(
                         }
                     }
                 }
-
             }
             if (isShowManually) {
                 ModalBottomSheet(
@@ -259,8 +312,13 @@ fun MakeShoppingListScreen(
                         coroutineScope.launch {
                             sheetState.hide()
                             isShowManually = false
+                            manualName = ""
+                            manualWeight = ""
+                            manualUnit = ""
                         }
                     },
+                    modifier = Modifier
+                        .imePadding(),
                     sheetState = sheetState
                 ) {
                     AddManuallyScreen(
@@ -271,7 +329,6 @@ fun MakeShoppingListScreen(
                         unit = manualUnit,
                         onUnitChange = { manualUnit = it },
                         onDone = {
-                            // Tạo IngredientItem mới
                             val newItem = IngredientItem(
                                 ingredientName = manualName,
                                 weight = manualWeight.toIntOrNull() ?: 0,
@@ -279,12 +336,10 @@ fun MakeShoppingListScreen(
                             )
                             manualIngredients.add(newItem)
 
-                            // Reset dữ liệu tạm
                             manualName = ""
                             manualWeight = ""
                             manualUnit = ""
 
-                            // Đóng sheet
                             coroutineScope.launch {
                                 sheetState.hide()
                                 isShowManually = false
