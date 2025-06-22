@@ -1,21 +1,29 @@
 package com.watb.chefmate.data
 
 import com.watb.chefmate.database.entities.IngredientEntity
+import com.watb.chefmate.database.entities.TagEntity
 
 data class Recipe(
     val recipeId: Int? = null,
-    val image: String,
     val recipeName: String,
-    val userName: String,
-    val likeQuantity: Int,
-    val viewCount: Int,
-    val ingredients: List<IngredientItem>,
-    val cookingSteps: List<CookingStep>,
+    val image: String,
     val cookingTime: String,
     val ration: Int,
-    val isLiked: Boolean = false,
+    val viewCount: Int,
+    val likeQuantity: Int,
+    val userId: Int,
+    val createdAt: String,
+    val userName: String,
+    val cookingSteps: List<CookingStep>,
+    val ingredients: List<IngredientItem>,
     val comments: List<CommentItem>,
-    val createdAt: String
+    val tags: List<TagEntity>,
+    val isLiked: Boolean = false,
+)
+
+data class Tag(
+    val tagId: Int,
+    val tagName: String
 )
 
 data class CreateRecipeData(
@@ -26,6 +34,11 @@ data class CreateRecipeData(
     val cookingSteps: List<CookingStepAddRecipeData>,
     val userId: Int,
     val image: String,
+    val tags: List<TagData>
+)
+
+data class TagData(
+    val tagName: String
 )
 
 data class IngredientItem(
@@ -55,6 +68,7 @@ data class CommentItem(
 data class RegisterRequest(
     val fullName: String,
     val phone: String,
+    val email: String,
     val password: String
 )
 
