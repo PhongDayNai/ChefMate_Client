@@ -147,7 +147,7 @@ fun Header(
 }
 
 @Composable
-fun SearchTextField(
+fun CustomTextField(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String = "",
@@ -487,7 +487,7 @@ fun Preview() {
                 )
             }
         }
-        SearchTextField(
+        CustomTextField(
             value = searchValue,
             onValueChange = { searchValue = it },
             placeholder = "Tìm kiếm món ăn",

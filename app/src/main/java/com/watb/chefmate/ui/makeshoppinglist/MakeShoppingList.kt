@@ -78,7 +78,7 @@ import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.recipe.bottomDashedBorder
 import com.watb.chefmate.ui.theme.Header
-import com.watb.chefmate.ui.theme.SearchTextField
+import com.watb.chefmate.ui.theme.CustomTextField
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
 import kotlinx.coroutines.launch
@@ -136,7 +136,7 @@ fun MakeShoppingListScreen(
                 }
             }
         )
-        SearchTextField(
+        CustomTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it},
             placeholder = "Tìm công thức đã lưu",
@@ -165,6 +165,7 @@ fun MakeShoppingListScreen(
             text = "Thêm nguyên liệu qua công thức",
             fontSize = 15.sp,
             fontWeight = FontWeight(600),
+            fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
             modifier = Modifier
                 .fillMaxWidth(0.85f)
         )
@@ -267,6 +268,7 @@ fun MakeShoppingListScreen(
                         text = "Thêm nguyên liệu thủ công",
                         fontSize = 15.sp,
                         fontWeight = FontWeight(600),
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
                         modifier = Modifier
                             .padding(top = 10.dp, start = 10.dp)
                     )

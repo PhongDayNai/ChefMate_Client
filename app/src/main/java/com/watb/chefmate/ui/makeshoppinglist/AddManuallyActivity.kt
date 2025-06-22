@@ -31,9 +31,10 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -41,6 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
+import com.watb.chefmate.R
 import kotlinx.coroutines.launch
 
 @Composable
@@ -84,7 +86,8 @@ fun AddManuallyScreen(
             Text(
                 text = "Nhập tên nguyên liệu",
                 fontSize = 18.sp,
-                fontWeight = FontWeight(600)
+                fontWeight = FontWeight(600),
+                fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
             )
             Spacer(modifier = Modifier.height(10.dp))
             TextField(
@@ -129,7 +132,8 @@ fun AddManuallyScreen(
             Text(
                 text = "Nhập định lượng",
                 fontSize = 18.sp,
-                fontWeight = FontWeight(600)
+                fontWeight = FontWeight(600),
+                fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
             )
             Spacer(modifier = Modifier.height(10.dp))
             Row(
