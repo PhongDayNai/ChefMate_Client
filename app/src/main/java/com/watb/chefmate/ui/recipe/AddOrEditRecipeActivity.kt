@@ -70,6 +70,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.core.net.toUri
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
@@ -84,11 +85,14 @@ import com.watb.chefmate.data.TagData
 import com.watb.chefmate.database.entities.IngredientEntity
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.text.toIntOrNull
 
 @SuppressLint("MemberExtensionConflict")
 @Composable
-fun AddRecipeScreen(
+fun AddOrEditRecipeScreen(
     navController: NavController,
     recipeId: Int = -1,
     recipeViewModel: RecipeViewModel
@@ -105,6 +109,8 @@ fun AddRecipeScreen(
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var isLoading by remember { mutableStateOf(false) }
     val selectedUnit = remember { mutableStateOf("Phút") }
+    val userName = remember { mutableStateOf("") }
+    val tagsInput = remember { mutableStateOf("") }
 
     val ingredients = remember {
         mutableStateListOf(IngredientInput("", "", ""))
@@ -125,6 +131,45 @@ fun AddRecipeScreen(
                 it,
                 Intent.FLAG_GRANT_READ_URI_PERMISSION
             )
+        }
+    }
+
+    LaunchedEffect(recipeId) {
+        if (recipeId != -1) {
+            recipeViewModel.getRecipeById(recipeId).collect { recipe ->
+                recipe?.let {
+                    nameRecipe.value = it.recipeName
+                    imageUri = it.image.toUri()
+                    cookTime.value = it.cookingTime
+                    ration.value = it.ration.toString()
+                    isPublic = false
+                    userName.value = it.userName
+
+                    ingredients.clear()
+                    it.ingredients.forEach { ingredientItem ->
+                        ingredients.add(
+                            IngredientInput(
+                                name = ingredientItem.ingredientName,
+                                weight = ingredientItem.weight.toString(),
+                                unit = ingredientItem.unit
+                            )
+                        )
+                    }
+
+                    steps.clear()
+                    it.cookingSteps.forEach { cookingStep ->
+                        cookingStep.indexStep?.let {
+                            steps.add(
+                                StepInput(
+                                    index = cookingStep.indexStep,
+                                    content = cookingStep.stepContent
+                                )
+                            )
+                        }
+                    }
+                    tagsInput.value = it.tags.joinToString(", ") { tag -> tag.tagName }
+                }
+            }
         }
     }
 
@@ -187,7 +232,7 @@ fun AddRecipeScreen(
                 )
             }
             Text(
-                text = "Thêm công thức",
+                text =  if (recipeId == -1) "Thêm công thức" else "Sửa công thức",
                 fontSize = 20.sp,
                 color = Color(0xFFFFFFFF),
                 fontWeight = FontWeight(600),
@@ -226,6 +271,30 @@ fun AddRecipeScreen(
                 value = nameRecipe.value,
                 onValueChange = { nameRecipe.value = it },
                 label = { Text(text = "Tên công thức") },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFFE0E0E0),
+                    unfocusedBorderColor = Color(0xFFE0E0E0)
+                ),
+                shape = RoundedCornerShape(10.dp),
+                maxLines = 1,
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = {
+                        cookTimeFocusRequester.requestFocus()
+                    }
+                ),
+                modifier = Modifier
+                    .padding(top = 12.dp)
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+            )
+
+            OutlinedTextField(
+                value = tagsInput.value,
+                onValueChange = { tagsInput.value = it },
+                label = { Text(text = "Thể loại") },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(0xFFE0E0E0),
                     unfocusedBorderColor = Color(0xFFE0E0E0)
@@ -566,6 +635,10 @@ fun AddRecipeScreen(
                             val stepsToSave = steps.filter { it.content.isNotBlank() }.map {
                                 Pair(it.index, it.content)
                             }
+                            val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(
+                                Date()
+                            )
+                            val tagsToSave = tagsInput.value.split(",").map { it.trim() }.filter { it.isNotBlank() }
 
                             if (recipeId == -1) {
                                 Log.d("Uri", imageUri.toString())
@@ -582,7 +655,7 @@ fun AddRecipeScreen(
                                         createdAt = "",
                                         ingredients = ingredientsToSave,
                                         steps = stepsToSave,
-                                        tags = tags
+                                        tags = tagsToSave
                                     )
                                     navController.popBackStack()
                                 } else {
@@ -614,7 +687,7 @@ fun AddRecipeScreen(
                                         if (response.success) {
                                             recipeViewModel.addRecipe(
                                                 recipeName = nameRecipe.value,
-                                                imageUri = imageUri?.toString() ?: "",
+                                                imageUri = imageUri.toString(),
                                                 userName = "Thanh",
                                                 isPublic = isPublic,
                                                 likeQuantity = 0,
@@ -624,7 +697,7 @@ fun AddRecipeScreen(
                                                 createdAt = "",
                                                 ingredients = ingredientsToSave,
                                                 steps = stepsToSave,
-                                                tags = tags
+                                                tags = tagsToSave
                                             )
                                             navController.popBackStack()
                                         } else {
@@ -636,6 +709,23 @@ fun AddRecipeScreen(
                                         Toast.makeText(context, "Có lỗi xảy ra. Vui lòng thử lại!", Toast.LENGTH_SHORT).show()
                                     }
                                 }
+                            } else {
+                                recipeViewModel.updateRecipe(
+                                    recipeId = recipeId,
+                                    recipeName = nameRecipe.value,
+                                    imageUri = imageUri.toString(),
+                                    userName = userName.value,
+                                    isPublic = false,
+                                    likeQuantity = 0,
+                                    cookingTime = cookTime.value,
+                                    ration = parsedRation,
+                                    viewCount = 0,
+                                    createdAt = currentDate,
+                                    ingredients = ingredientsToSave,
+                                    steps = stepsToSave,
+                                    tags = tagsToSave
+                                )
+                                navController.popBackStack()
                             }
                             isLoading = false
                         } else {
@@ -654,7 +744,7 @@ fun AddRecipeScreen(
                     .padding(bottom = 20.dp)
             ) {
                 Text(
-                    text = "Đăng công thức"
+                    text = if (recipeId == -1) "Đăng công thức" else "Cập nhật công thức"
                 )
             }
         }
