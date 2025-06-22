@@ -813,7 +813,7 @@ fun AddOrEditRecipeScreen(
                                     userName = userName.value,
                                     isPublic = false,
                                     likeQuantity = 0,
-                                    cookingTime = cookTime.value,
+                                    cookingTime = "${cookTime.value} ${selectedUnit.value}",
                                     ration = parsedRation,
                                     viewCount = 0,
                                     createdAt = currentDate,
