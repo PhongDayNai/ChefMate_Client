@@ -157,3 +157,8 @@ data class StepInput(
     val index: Int,
     var content: String
 )
+
+enum class SearchType(val value: String) {
+    NAME("name"),
+    TAG("tag")
+}

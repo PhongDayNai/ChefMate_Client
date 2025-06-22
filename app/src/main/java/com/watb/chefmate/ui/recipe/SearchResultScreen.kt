@@ -1,7 +1,15 @@
 package com.watb.chefmate.ui.recipe
 
+import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +22,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,20 +40,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.watb.chefmate.R
 import com.watb.chefmate.data.Recipe
+import com.watb.chefmate.data.SearchType
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.ui.theme.RecipeItem
 import com.watb.chefmate.ui.theme.SearchTextField
 import com.watb.chefmate.viewmodel.RecipeViewModel
 
+@SuppressLint("MemberExtensionConflict")
 @Composable
 fun SearchResultScreen(
     navController: NavController,
+    searchTypeValue: String,
     search: String,
     onRecipeClick: (Recipe) -> Unit,
     recipeViewModel: RecipeViewModel
@@ -51,20 +67,18 @@ fun SearchResultScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
     val isLoading by recipeViewModel.isLoading.collectAsState()
     val searchResultRecipes by recipeViewModel.searchResult.collectAsState()
+
+    var searchType by remember { mutableStateOf(searchTypeValue) }
     var searchValue by remember { mutableStateOf(search) }
 
     val scrollState = rememberScrollState()
-
-    LaunchedEffect(Unit) {
-        recipeViewModel.searchRecipe(search)
-    }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
             .background(color = Color(0xFFFFFFFF))
-            .padding(bottom = 42.dp)
+            .padding(bottom = 12.dp)
     ) {
         Header(
             "Nấu ngon",
@@ -102,7 +116,11 @@ fun SearchResultScreen(
             ),
             keyboardActions = KeyboardActions(
                 onSearch = {
-                    recipeViewModel.searchRecipe(recipeName = searchValue, userId = null)
+                    if (searchType == SearchType.NAME.value) {
+                        recipeViewModel.searchRecipe(searchValue, userId = null)
+                    } else {
+                        recipeViewModel.searchRecipeByTag(searchValue, userId = null)
+                    }
                     keyboardController?.hide()
                 }
             ),
@@ -110,6 +128,75 @@ fun SearchResultScreen(
                 .padding(top = 16.dp)
                 .fillMaxWidth(0.9f)
         )
+        AnimatedVisibility(
+            visible = searchValue.isNotEmpty(),
+            enter = fadeIn() + slideInVertically() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+            modifier = Modifier
+                .padding(top = 8.dp)
+                .fillMaxWidth(0.9f)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .height(36.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    text = "Tìm kiếm theo: ",
+                    color = Color(0xFF000000),
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                    modifier = Modifier
+                )
+                Card(
+                    onClick = {
+                        searchType = SearchType.NAME.value
+                    },
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFFFFFFF)
+                    ),
+                    elevation = CardDefaults.elevatedCardElevation(
+                        defaultElevation = if (searchType == SearchType.NAME.value) 4.dp else 0.dp,
+                        pressedElevation = 8.dp
+                    ),
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                ) {
+                    Text(
+                        text = "Tên món",
+                        color = Color(0xFF000000),
+                        fontSize = 14.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+                Card(
+                    onClick = {
+                        searchType = SearchType.TAG.value
+                    },
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFFFFFFF)
+                    ),
+                    elevation = CardDefaults.elevatedCardElevation(
+                        defaultElevation = if (searchType == SearchType.TAG.value) 4.dp else 0.dp,
+                        pressedElevation = 8.dp
+                    ),
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                ) {
+                    Text(
+                        text = "Thể loại",
+                        color = Color(0xFF000000),
+                        fontSize = 14.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+        }
         if (!isLoading) {
             if (searchResultRecipes.isEmpty()) {
                 Text(
@@ -122,7 +209,12 @@ fun SearchResultScreen(
                 )
                 Button(
                     onClick = {
-                        recipeViewModel.searchRecipe(recipeName = searchValue, userId = null)
+                        if (searchType == SearchType.NAME.value) {
+                            recipeViewModel.searchRecipe(searchValue, userId = null)
+                        } else {
+                            recipeViewModel.searchRecipeByTag(searchValue, userId = null)
+                        }
+                        keyboardController?.hide()
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFFF9800)

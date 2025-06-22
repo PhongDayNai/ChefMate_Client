@@ -1,7 +1,6 @@
 package com.watb.chefmate.viewmodel
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -31,6 +30,9 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
     private val _searchResult = MutableStateFlow<List<Recipe>>(emptyList())
     val searchResult: StateFlow<List<Recipe>> = _searchResult
 
+    private val _lastSearchValue = MutableStateFlow<String>("")
+    val lastSearchValue: StateFlow<String> = _lastSearchValue
+
     val allRecipes: Flow<List<Recipe>> =
         repository.getAllRecipes().map { list ->
             list.map { it.toRecipe() }
@@ -50,6 +52,18 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
             _isLoading.value = true
             _searchResult.value = emptyList()
             val response = ApiClient.searchRecipe(recipeName, userId)
+            response?.data?.let {
+                _searchResult.value = it
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun searchRecipeByTag(tag: String, userId: Int? = null) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _searchResult.value = emptyList()
+            val response = ApiClient.searchRecipeByTag(tag, userId)
             response?.data?.let {
                 _searchResult.value = it
             }

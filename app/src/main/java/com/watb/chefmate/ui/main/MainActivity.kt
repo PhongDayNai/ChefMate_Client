@@ -1,10 +1,6 @@
 package com.watb.chefmate.ui.main
 
-import android.os.Build
 import android.os.Bundle
-import android.view.View
-import android.view.WindowInsets
-import android.view.WindowInsetsController
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -31,7 +27,6 @@ import com.watb.chefmate.data.CommentItem
 import com.watb.chefmate.data.CookingStep
 import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
-import com.watb.chefmate.data.Tag
 import com.watb.chefmate.database.entities.TagEntity
 import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.makeshoppinglist.ConsolidatedIngredientsScreen
@@ -137,17 +132,22 @@ fun navGraph(
         composable("addRecipe") {
             AddRecipeScreen(navController, recipeId = -1, recipeViewModel)
         }
-        composable("searchRecipe/{searchValue}") { backStackEntry ->
+        composable("searchRecipe/{searchType}/{searchValue}") { backStackEntry ->
+            val searchType = backStackEntry.arguments?.getString("searchType")
             val searchValue = backStackEntry.arguments?.getString("searchValue")
             if (searchValue != null) {
-                SearchResultScreen(
-                    navController = navController,
-                    search = searchValue,
-                    onRecipeClick = { selectedRecipe ->
-                        recipe = selectedRecipe
-                        navController.navigate("recipeView")
-                    },
-                    recipeViewModel = recipeViewModel)
+                if (searchType != null) {
+                    SearchResultScreen(
+                        navController = navController,
+                        searchTypeValue = searchType,
+                        search = searchValue,
+                        onRecipeClick = { selectedRecipe ->
+                            recipe = selectedRecipe
+                            navController.navigate("recipeView")
+                        },
+                        recipeViewModel = recipeViewModel
+                    )
+                }
             }
         }
         composable("make_shopping_list_screen") {

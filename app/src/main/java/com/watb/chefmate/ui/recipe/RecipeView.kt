@@ -84,7 +84,6 @@ import com.watb.chefmate.data.CommentItem
 import com.watb.chefmate.data.CookingStep
 import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
-import com.watb.chefmate.data.Tag
 import com.watb.chefmate.database.entities.TagEntity
 import com.watb.chefmate.helper.CommonHelper
 import kotlinx.coroutines.FlowPreview
@@ -171,13 +170,7 @@ fun RecipeViewScreen(
         Header(
             leadingIcon = {
                 IconButton(
-                    onClick = {
-                        navController.navigate("mainAct") {
-                            popUpTo("mainAct") {
-                                inclusive = true
-                            }
-                        }
-                    },
+                    onClick = { navController.popBackStack() },
                     modifier = Modifier
                         .size(24.dp)
                 ) {
@@ -451,7 +444,7 @@ Tác giả: ${recipe.userName}
                 .fillMaxWidth(0.9f)
         ) {
             Text(
-                text = "Nhóm: ",
+                text = "Thể loại: ",
                 color = Color(0xFF555555),
                 fontSize = 14.sp,
                 fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
