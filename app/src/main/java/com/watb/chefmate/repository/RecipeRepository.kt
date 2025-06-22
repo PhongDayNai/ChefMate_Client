@@ -6,7 +6,8 @@ import kotlinx.coroutines.flow.Flow
 
 class RecipeRepository(
     private val recipeDao: RecipeDao,
-    private val ingredientDao: IngredientDao
+    private val ingredientDao: IngredientDao,
+    private val tagDao: TagDao
 ) {
     fun getAllRecipes(): Flow<List<RecipeEntity>> {
         return recipeDao.getAllRecipes()
@@ -48,5 +49,25 @@ class RecipeRepository(
 
     suspend fun deleteAllIngredients() {
         ingredientDao.deleteAllIngredients()
+    }
+
+    suspend fun insertTag(tag: TagEntity) {
+        return tagDao.insertTag(tag)
+    }
+
+    fun getAllTags(): Flow<List<TagEntity>?> {
+        return tagDao.getAllTags()
+    }
+
+    fun getTagByName(name: String): Flow<TagEntity?> {
+        return tagDao.getTagByName(name)
+    }
+
+    fun getTagById(tagId: Int): Flow<TagEntity?> {
+        return tagDao.getTagById(tagId)
+    }
+
+    suspend fun deleteAllTags() {
+        tagDao.deleteAllTags()
     }
 }

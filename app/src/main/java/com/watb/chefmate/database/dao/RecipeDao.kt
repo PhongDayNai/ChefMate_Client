@@ -7,6 +7,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.watb.chefmate.database.entities.IngredientEntity
 import com.watb.chefmate.database.entities.RecipeEntity
+import com.watb.chefmate.database.entities.TagEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -46,4 +47,22 @@ interface IngredientDao {
 
     @Query("DELETE FROM ingredients")
     suspend fun deleteAllIngredients()
+}
+
+@Dao
+interface TagDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTag(tag: TagEntity)
+
+    @Query("SELECT * FROM tags")
+    fun getAllTags(): Flow<List<TagEntity>?>
+
+    @Query("SELECT * FROM tags WHERE tagName LIKE '%' + :name + '%'")
+    fun getTagByName(name: String): Flow<TagEntity?>
+
+    @Query("SELECT * FROM tags WHERE tagId = :tagId")
+    fun getTagById(tagId: Int): Flow<TagEntity?>
+
+    @Query("DELETE FROM tags")
+    suspend fun deleteAllTags()
 }
