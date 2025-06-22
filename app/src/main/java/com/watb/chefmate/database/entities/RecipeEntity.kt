@@ -5,7 +5,6 @@ import androidx.room.PrimaryKey
 import com.watb.chefmate.data.CookingStep
 import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
-import com.watb.chefmate.data.Tag
 
 @Entity(tableName = "Recipes")
 data class RecipeEntity(

@@ -21,11 +21,6 @@ data class Recipe(
     val isLiked: Boolean = false,
 )
 
-data class Tag(
-    val tagId: Int,
-    val tagName: String
-)
-
 data class CreateRecipeData(
     val recipeName: String,
     val cookingTime: String,
@@ -120,11 +115,6 @@ data class AllTagsResponse(
     val data: List<TagEntity>? = null,
     val message: String? = null
 )
-
-//data class IngredientData(
-//    val ingredientId: Int,
-//    val ingredientName: String
-//)
 
 data class LikeRequest(
     val userId: Int,
