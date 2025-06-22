@@ -21,16 +21,15 @@ import androidx.navigation.createGraph
 import androidx.navigation.navArgument
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.repository.RecipeRepository
-import com.watb.chefmate.ui.recipe.AddRecipeScreen
 import com.watb.chefmate.data.CommentItem
 import com.watb.chefmate.data.CookingStep
 import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
-import com.watb.chefmate.data.Tag
 import com.watb.chefmate.database.entities.TagEntity
 import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.makeshoppinglist.ConsolidatedIngredientsScreen
 import com.watb.chefmate.ui.makeshoppinglist.MakeShoppingListScreen
+import com.watb.chefmate.ui.recipe.AddOrEditRecipeScreen
 import com.watb.chefmate.ui.recipe.RecipeViewScreen
 import com.watb.chefmate.ui.recipe.SearchResultScreen
 import com.watb.chefmate.ui.theme.ChefMateTheme
@@ -122,8 +121,15 @@ fun navGraph(
         composable("recipeViewHistory") {
             RecipeViewScreen(navController, recipe, true)
         }
-        composable("addRecipe") {
-            AddRecipeScreen(navController, recipeId = -1, recipeViewModel)
+        composable(
+            route = "add_edit_recipe/{recipeId}",
+            arguments = listOf(navArgument("recipeId") {
+                type = NavType.IntType
+                defaultValue = -1
+            })
+        ) { backStackEntry ->
+            val recipeId = backStackEntry.arguments?.getInt("recipeId") ?: 0
+            AddOrEditRecipeScreen(navController = navController, recipeId = recipeId, recipeViewModel = recipeViewModel)
         }
         composable("searchRecipe/{searchValue}") { backStackEntry ->
             val searchValue = backStackEntry.arguments?.getString("searchValue")
