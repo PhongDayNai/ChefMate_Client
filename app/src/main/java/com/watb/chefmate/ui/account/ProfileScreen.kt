@@ -1,12 +1,12 @@
 package com.watb.chefmate.ui.account
 
-import android.content.Context
+import android.annotation.SuppressLint
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +32,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,7 +45,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
@@ -67,8 +67,6 @@ import com.watb.chefmate.data.AppConstant
 import com.watb.chefmate.helper.CommonHelper
 import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.ui.theme.SecondaryTextButtonTheme
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
@@ -76,8 +74,22 @@ fun ProfileScreen(navController: NavController) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
+    var userName by remember { mutableStateOf("") }
+    var phoneNumber by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var followCount by remember { mutableStateOf(0) }
+    var recipeCount by remember { mutableStateOf(0) }
+
     var isShownLogoutBottomSheet by remember { mutableStateOf(false) }
     var isRating by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        userName = DataStoreHelper.getUsername(context)
+        phoneNumber = DataStoreHelper.getPhoneNumber(context)
+        email = DataStoreHelper.getEmail(context)
+        followCount = DataStoreHelper.getFollowCount(context)
+        recipeCount = DataStoreHelper.getRecipeCount(context)
+    }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -120,11 +132,11 @@ fun ProfileScreen(navController: NavController) {
             }
         }
         ProfileInformationCard(
-            userName = "Dương Hùng Phong",
-            phoneNumber = "0855576569",
-            email = "dhphong266@gmail.com",
-            followCount = 1520,
-            recipeCount = 10,
+            userName = userName,
+            phoneNumber = phoneNumber,
+            email = email,
+            followCount = followCount,
+            recipeCount = recipeCount,
             modifier = Modifier
                 .fillMaxWidth(0.9f)
         )
@@ -189,84 +201,6 @@ fun ProfileScreen(navController: NavController) {
 }
 
 @Composable
-fun Settings(
-    navController: NavController,
-    modifier: Modifier = Modifier,
-    onRating: () -> Unit
-) {
-    val icons = listOf(
-        R.drawable.ic_shopping_history,
-        R.drawable.ic_privacy_policy,
-        R.drawable.ic_terms_of_use,
-        R.drawable.ic_help_and_report,
-        R.drawable.ic_rate,
-    )
-    val labels = listOf(
-        "Lịch sử mua sắm",
-        "Chính sách bảo mật",
-        "Điều khoản sử dụng",
-        "Hỗ trợ và báo cáo",
-        "Đánh giá"
-    )
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-            .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(10.dp))
-            .border(
-                width = 1.dp,
-                color = Color(0xFFE1E1E3).copy(alpha = 0.6f),
-                shape = RoundedCornerShape(10.dp)
-            )
-    ) {
-        labels.forEachIndexed { index, label ->
-            if (index > 0) {
-                HorizontalDivider(
-                    thickness = 1.dp,
-                    color = Color(0xFFE1E1E3).copy(alpha = 0.6f),
-                    modifier = Modifier.fillMaxWidth(0.9f)
-                )
-            }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .padding(vertical = 12.dp)
-                    .fillMaxWidth(0.9f)
-                    .clickable {
-                        when (index) {
-                            4 -> onRating()
-//                            else -> navController.navigate(labels[index])
-                        }
-                    }
-            ) {
-                Icon(
-                    painter = painterResource(id = icons[index]),
-                    contentDescription = null,
-                    tint = Color(0xFF5A5A60),
-                    modifier = Modifier
-                        .padding(end = 8.dp)
-                        .size(14.dp)
-                )
-                Text(
-                    text = label,
-                    color = Color(0xFF1B1B1D),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight(400),
-                    fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_arrow_right),
-                    contentDescription = null,
-                    tint = Color(0xFF5A5A60),
-                    modifier = Modifier
-                )
-            }
-        }
-    }
-}
-
-@Composable
 fun ProfileInformationCard(
     userName: String,
     phoneNumber: String,
@@ -275,6 +209,8 @@ fun ProfileInformationCard(
     recipeCount: Int,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+
     Card(
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFFFFFFF)
@@ -299,10 +235,9 @@ fun ProfileInformationCard(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-//                        .fillMaxWidth()
                 ) {
                     Image(
-                        painter = painterResource(R.drawable.img_chef_avatar),
+                        painter = painterResource(R.drawable.img_common_avatar),
                         contentDescription = "Avatar",
                         modifier = Modifier
                             .size(60.dp)
@@ -314,7 +249,7 @@ fun ProfileInformationCard(
                             .padding(start = 8.dp)
                     ) {
                         Text(
-                            text = userName,
+                            text = if (userName != "") userName else "Đang cập nhật...",
                             fontSize = 18.sp,
                             fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
                             color = Color(0xFF000000)
@@ -336,7 +271,7 @@ fun ProfileInformationCard(
                                 tint = Color(0xFF5A5A60),
                             )
                             Text(
-                                text = "+84 ${phoneNumber.drop(1)}",
+                                text = if (phoneNumber != "") "+84 ${phoneNumber.drop(1)}" else "Đang cập nhật...",
                                 fontSize = 14.sp,
                                 fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
                                 color = Color(0xFF5A5A60),
@@ -355,7 +290,7 @@ fun ProfileInformationCard(
                                 tint = Color(0xFF5A5A60),
                             )
                             Text(
-                                text = email,
+                                text = if (email != "") email else "Đang cập nhật...",
                                 fontSize = 14.sp,
                                 fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
                                 color = Color(0xFF5A5A60),
@@ -432,7 +367,11 @@ fun ProfileInformationCard(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .padding(top = 2.dp)
-                            .clickable { /*TODO*/ }
+                            .clickable {
+                                if (recipeCount == 0) {
+                                    Toast.makeText(context, "Bạn chưa có công thức nào", Toast.LENGTH_SHORT).show()
+                                }
+                            }
                     ) {
                         Text(
                             text = "Xem tất cả công thức",
@@ -456,6 +395,84 @@ fun ProfileInformationCard(
     }
 }
 
+@Composable
+fun Settings(
+    navController: NavController,
+    modifier: Modifier = Modifier,
+    onRating: () -> Unit
+) {
+    val icons = listOf(
+        R.drawable.ic_shopping_history,
+        R.drawable.ic_privacy_policy,
+        R.drawable.ic_terms_of_use,
+        R.drawable.ic_help_and_report,
+        R.drawable.ic_rate,
+    )
+    val labels = listOf(
+        "Lịch sử mua sắm",
+        "Chính sách bảo mật",
+        "Điều khoản sử dụng",
+        "Hỗ trợ và báo cáo",
+        "Đánh giá"
+    )
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(10.dp))
+            .border(
+                width = 1.dp,
+                color = Color(0xFFE1E1E3).copy(alpha = 0.6f),
+                shape = RoundedCornerShape(10.dp)
+            )
+    ) {
+        labels.forEachIndexed { index, label ->
+            if (index > 0) {
+                HorizontalDivider(
+                    thickness = 1.dp,
+                    color = Color(0xFFE1E1E3).copy(alpha = 0.6f),
+                    modifier = Modifier.fillMaxWidth(0.9f)
+                )
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(vertical = 12.dp)
+                    .fillMaxWidth(0.9f)
+                    .clickable {
+                        when (index) {
+                            4 -> onRating()
+                        }
+                    }
+            ) {
+                Icon(
+                    painter = painterResource(id = icons[index]),
+                    contentDescription = null,
+                    tint = Color(0xFF5A5A60),
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .size(14.dp)
+                )
+                Text(
+                    text = label,
+                    color = Color(0xFF1B1B1D),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight(400),
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_arrow_right),
+                    contentDescription = null,
+                    tint = Color(0xFF5A5A60),
+                    modifier = Modifier
+                )
+            }
+        }
+    }
+}
+
+@SuppressLint("MemberExtensionConflict")
 @Composable
 fun RatingDialog(onDismiss: () -> Unit) {
     var numberOfStar by remember { mutableStateOf(0) }
@@ -514,14 +531,13 @@ fun RatingDialog(onDismiss: () -> Unit) {
                     }
                 }
                 Row {
-                    val submitInteractionSource = remember { MutableInteractionSource() }
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .weight(1f)
                             .padding(top = 8.dp)
                             .clickable {
-                                val packageName = "com.plantidentification.chainz"
+                                val packageName = "com.watb.chefmate"
                                 val playStoreUri = "market://details?id=$packageName".toUri()
                                 val intent = Intent(Intent.ACTION_VIEW, playStoreUri).apply {
                                     setPackage("com.android.vending")
@@ -531,8 +547,7 @@ fun RatingDialog(onDismiss: () -> Unit) {
                                     onDismiss()
                                 } catch (e: Exception) {
                                     e.printStackTrace()
-                                    val webUri =
-                                        "https://play.google.com/store/apps/details?id=$packageName".toUri()
+                                    val webUri = "https://play.google.com/store/apps/details?id=$packageName".toUri()
                                     context.startActivity(Intent(Intent.ACTION_VIEW, webUri))
                                     onDismiss()
                                 }
