@@ -253,7 +253,7 @@ fun BottomNavigationBar(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .clickable {
-                                navController.navigate("addRecipe")
+                                navController.navigate("add_edit_recipe/-1")
                             }
                     ) {
                         Text(

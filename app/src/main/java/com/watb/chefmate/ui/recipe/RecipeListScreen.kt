@@ -37,7 +37,6 @@ fun RecipeListScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFFFFFFF))
-//            .safeDrawingPadding()
     ) {
         Header(text = "Kho công thức")
         if (recipes.isEmpty()) {
@@ -65,7 +64,16 @@ fun RecipeListScreen(
                         onClick = {
                             onRecipeClick(recipe)
                         },
+                        onEdit = {
+                            navController.navigate("add_edit_recipe/${recipe.recipeId}")
+                        },
+                        onDelete = {
+                            recipe.recipeId?.let {
+                                viewModel.deleteRecipeById(recipe.recipeId)
+                            }
+                        },
                         recipe = recipe,
+                        isStorage = true,
                         modifier = Modifier
                     )
                     Spacer(modifier = Modifier.height(8.dp))

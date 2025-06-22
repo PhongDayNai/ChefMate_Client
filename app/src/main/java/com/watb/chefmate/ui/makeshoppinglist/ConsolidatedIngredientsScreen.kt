@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
+import com.watb.chefmate.data.StatusShopping
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.helper.CommonHelper.parseIngredientName
 import com.watb.chefmate.helper.DataStoreHelper
@@ -95,7 +96,7 @@ fun ConsolidatedIngredientsScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Đang tải dữ liệu...", fontSize = 16.sp)
+                Text("Chưa có nguyên liệu nào trong danh sách mua sắm.", fontSize = 16.sp)
             }
         } else {
             val orderedIndices = ingredientNames.indices.sortedWith(compareBy {
@@ -123,7 +124,7 @@ fun ConsolidatedIngredientsScreen(
                         unit = unit,
                         status = status,
                         onCheckedChange = {
-                            val newStatus = if (status == "bought") "waiting" else "bought"
+                            val newStatus = if (status == StatusShopping.BOUGHT.value) StatusShopping.WAITING.value else StatusShopping.BOUGHT.value
 
                             val newNames = ingredientNames.toMutableList()
                             val newWeights = ingredientWeights.toMutableList()
@@ -143,7 +144,7 @@ fun ConsolidatedIngredientsScreen(
                             )
                         },
                         onCouldNotBuyClick = {
-                            val newStatus = if (status == "couldNotBuy") "waiting" else "couldNotBuy"
+                            val newStatus = if (status == StatusShopping.COULD_NOT_BUY.value) StatusShopping.WAITING.value else StatusShopping.COULD_NOT_BUY.value
 
                             val newNames = ingredientNames.toMutableList()
                             val newWeights = ingredientWeights.toMutableList()
@@ -229,7 +230,7 @@ fun ConsolidatedIngredientsScreen(
                         newNames.add(newNames.size, addName)
                         newWeights.add(newWeights.size, addWeight)
                         newUnits.add(newUnits.size, addUnit)
-                        newStatuses.add(newStatuses.size, "waiting")
+                        newStatuses.add(newStatuses.size, StatusShopping.WAITING.value)
 
                         val newIngredientNamesString = newNames.joinToString(";;;")
                         val newIngredientWeightsString = newWeights.joinToString(";;;")
@@ -298,9 +299,9 @@ fun ConsolidatedIngredientsScreen(
 }
 
 fun statusOrder(status: String): Int = when (status) {
-    "waiting" -> 0
-    "bought" -> 1
-    "couldNotBuy" -> 2
+    StatusShopping.WAITING.value -> 0
+    StatusShopping.BOUGHT.value -> 1
+    StatusShopping.COULD_NOT_BUY.value -> 2
     else -> 0
 }
 
@@ -322,9 +323,9 @@ fun IngredientItem(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Checkbox(
-            checked = status == "bought",
+            checked = status == StatusShopping.BOUGHT.value,
             onCheckedChange = { onCheckedChange() },
-            enabled = status != "couldNotBuy",
+            enabled = status != StatusShopping.COULD_NOT_BUY.value,
             colors = CheckboxDefaults.colors(
                 checkedColor = Color(0xFFFFFFFF),
                 uncheckedColor = Color(0xFF4E4E4E),
@@ -339,15 +340,15 @@ fun IngredientItem(
             fontSize = 16.sp,
             fontFamily = FontFamily(Font(R.font.roboto_medium)),
             fontWeight = FontWeight.Medium,
-            color = if (status == "couldNotBuy") Color.Gray else Color.Black,
-            textDecoration = if (status == "couldNotBuy") TextDecoration.LineThrough else TextDecoration.None,
+            color = if (status == StatusShopping.COULD_NOT_BUY.value) Color.Gray else Color.Black,
+            textDecoration = if (status == StatusShopping.COULD_NOT_BUY.value) TextDecoration.LineThrough else TextDecoration.None,
         )
 
         Spacer(modifier = Modifier.weight(1f))
 
         IconButton(
             onClick = { onEditClick() },
-            enabled = status == "waiting"
+            enabled = status == StatusShopping.WAITING.value
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_editingredirnt),
@@ -360,7 +361,7 @@ fun IngredientItem(
 
         IconButton(
             onClick = { onCouldNotBuyClick() },
-            enabled = status != "bought"
+            enabled = status != StatusShopping.BOUGHT.value
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_couldn_tbuy),
