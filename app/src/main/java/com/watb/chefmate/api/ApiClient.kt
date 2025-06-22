@@ -10,6 +10,7 @@ import android.util.Log
 import androidx.core.net.toUri
 import com.google.gson.Gson
 import com.watb.chefmate.data.AllIngredientsResponse
+import com.watb.chefmate.data.AllTagsResponse
 import com.watb.chefmate.data.CommentRequest
 import com.watb.chefmate.data.CreateRecipeData
 import com.watb.chefmate.data.CreateRecipeResponse
@@ -19,6 +20,7 @@ import com.watb.chefmate.data.LikeRequest
 import com.watb.chefmate.data.LoginResponse
 import com.watb.chefmate.data.RegisterRequest
 import com.watb.chefmate.data.RecipeListResponse
+import com.watb.chefmate.data.SearchRecipeByTagRequest
 import com.watb.chefmate.data.SearchRecipeRequest
 import com.watb.chefmate.helper.CommonHelper
 import kotlinx.coroutines.Dispatchers
@@ -151,6 +153,43 @@ object ApiClient {
     }
 
     @SuppressLint("MemberExtensionConflict")
+    suspend fun searchRecipeByTag(tagName: String, userId: Int? = null): RecipeListResponse? {
+        val searchRequest = SearchRecipeByTagRequest(tagName, userId)
+        val json = gson.toJson(searchRequest)
+
+        val requestBody = json.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
+        val request = Request.Builder()
+            .url(ApiConstant.SEARCH_BY_TAG_URL)
+            .post(requestBody)
+            .build()
+
+        return withContext(Dispatchers.IO) {
+            try {
+                client.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val responseBody = response.body?.string()
+                        responseBody?.let {
+                            gson.fromJson(it, RecipeListResponse::class.java)
+                        }
+                    } else {
+                        Log.e("ApiClient", "Error: ${response.code}")
+                        null
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            } catch (e: TimeoutException) {
+                e.printStackTrace()
+                null
+            } catch (e: SocketTimeoutException) {
+                e.printStackTrace()
+                null
+            }
+        }
+    }
+
+    @SuppressLint("MemberExtensionConflict")
     suspend fun createRecipe(context: Context, recipe: CreateRecipeData): CreateRecipeResponse? {
         val bitmap = if (Build.VERSION.SDK_INT < 28) {
             MediaStore.Images.Media.getBitmap(context.contentResolver, recipe.image.toUri())
@@ -243,6 +282,41 @@ object ApiClient {
             }
         }
     }
+
+    @SuppressLint("MemberExtensionConflict")
+    suspend fun getAllTags(): AllTagsResponse? {
+        val request = Request.Builder()
+            .url(ApiConstant.GET_ALL_TAGS_URL)
+            .get()
+            .build()
+
+        return withContext(Dispatchers.IO) {
+            try {
+                client.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val responseBody = response.body?.string()
+                        responseBody?.let {
+                            gson.fromJson(it, AllTagsResponse::class.java)
+                        }
+                    } else {
+                        Log.e("ApiClient", "Error: ${response.code}")
+                        null
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            } catch (e: TimeoutException) {
+                e.printStackTrace()
+                null
+            } catch (e: SocketTimeoutException) {
+                e.printStackTrace()
+                null
+            }
+        }
+    }
+
+
 
     @SuppressLint("MemberExtensionConflict")
     suspend fun likeRecipe(userId: Int = 1, recipeId: Int): InteractionResponse? {
