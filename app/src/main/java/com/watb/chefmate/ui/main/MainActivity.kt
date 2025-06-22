@@ -8,7 +8,12 @@ import android.view.WindowInsetsController
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
@@ -47,20 +52,20 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.insetsController?.let { controller ->
-                controller.hide(WindowInsets.Type.systemBars())
-                controller.systemBarsBehavior =
-                    WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            }
-        } else {
-            @Suppress("DEPRECATION")
-            window.decorView.systemUiVisibility = (
-                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                            or View.SYSTEM_UI_FLAG_FULLSCREEN
-                            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    )
-        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+//            window.insetsController?.let { controller ->
+//                controller.hide(WindowInsets.Type.systemBars())
+//                controller.systemBarsBehavior =
+//                    WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+//            }
+//        } else {
+//            @Suppress("DEPRECATION")
+//            window.decorView.systemUiVisibility = (
+//                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+//                            or View.SYSTEM_UI_FLAG_FULLSCREEN
+//                            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+//                    )
+//        }
     }
 }
 
@@ -68,11 +73,18 @@ class MainActivity : ComponentActivity() {
 fun MainScreen() {
     val context = LocalContext.current
     val appDatabase = AppDatabase.getDatabase(context)
-    val recipeRepository = RecipeRepository(appDatabase.recipeDao(), appDatabase.ingredientDao())
+    val recipeRepository = RecipeRepository(appDatabase.recipeDao(), appDatabase.ingredientDao(), appDatabase.tagDao())
     val shoppingTimeRepository = ShoppingTimeRepository(appDatabase.shoppingTimeDao())
     val navController = rememberNavController()
 
-    NavHost(navController = navController, graph = navGraph(navController, recipeRepository, shoppingTimeRepository))
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .systemBarsPadding()
+    ) {
+        NavHost(navController = navController, graph = navGraph(navController, recipeRepository, shoppingTimeRepository))
+    }
 }
 
 fun navGraph(
