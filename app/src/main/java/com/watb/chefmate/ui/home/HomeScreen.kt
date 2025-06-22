@@ -66,7 +66,6 @@ import com.watb.chefmate.viewmodel.RecipeViewModel
 fun HomeScreen(
     onRecipeClick: (Recipe) -> Unit,
     navController: NavController,
-//    recipes: List<Recipe> = emptyList(),
     recipeViewModel: RecipeViewModel
 ) {
     val scrollState = rememberScrollState()
@@ -83,21 +82,24 @@ fun HomeScreen(
             .background(color = Color(0xFFFFFFFF))
             .padding(bottom = 42.dp)
     ) {
-        Header("Nấu ngon") {
-            IconButton(
-                onClick = {},
-                modifier = Modifier
-                    .size(24.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_bell),
-                    contentDescription = "Notification",
-                    tint = Color(0xFFFFFFFF),
+        Header(
+            text = "Nấu ngon",
+            trailingIcon = {
+                IconButton(
+                    onClick = {},
                     modifier = Modifier
                         .size(24.dp)
-                )
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_bell),
+                        contentDescription = "Notification",
+                        tint = Color(0xFFFFFFFF),
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
+                }
             }
-        }
+        )
         CustomTextField(
             value = searchValue,
             onValueChange = { searchValue = it },
