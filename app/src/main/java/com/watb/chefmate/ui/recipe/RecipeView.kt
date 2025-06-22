@@ -12,6 +12,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -165,7 +167,6 @@ fun RecipeViewScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(color = Color(0xFFFFFFFF))
-//            .safeDrawingPadding()
     ) {
         Header(
             leadingIcon = {
@@ -444,9 +445,34 @@ Tác giả: ${recipe.userName}
                     .padding(start = 4.dp)
             )
         }
+        Row(
+            modifier = Modifier
+                .padding(top = 8.dp)
+                .fillMaxWidth(0.9f)
+        ) {
+            Text(
+                text = "Nhóm: ",
+                color = Color(0xFF555555),
+                fontSize = 14.sp,
+                fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                fontWeight = FontWeight(400),
+            )
+            Text(
+                text = if(recipe.tags.isEmpty()) "Không có" else recipe.tags.joinToString(", ") { it.tagName },
+                color = Color(0xFF000000),
+                fontSize = 14.sp,
+                fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                fontWeight = FontWeight(400),
+                maxLines = 1,
+                modifier = Modifier
+                    .weight(1f)
+                    .horizontalScroll(rememberScrollState())
+                    .padding(start = 4.dp)
+            )
+        }
         Box(
             modifier = Modifier
-                .padding(top = 16.dp)
+                .padding(top = 4.dp)
                 .fillMaxWidth(0.9f)
                 .height(40.dp)
         ) {
@@ -892,6 +918,23 @@ fun Modifier.bottomDashedBorder(
 fun RecipeViewPreview() {
     val navController = rememberNavController()
 
+    val comments = listOf(
+        CommentItem(
+            commentId = 1,
+            userId = 1,
+            userName = "nguyenvana",
+            content = "Ngon tuyệt! Mình làm thử và thành công ngay lần đầu.",
+            createdAt = "2025-06-15 10:20:00"
+        ),
+        CommentItem(
+            commentId = 1,
+            userId = 1,
+            userName = "tranthib",
+            content = "Cảm ơn công thức! Cả nhà mình đều thích.",
+            createdAt = "2025-06-15 12:45:00"
+        )
+    )
+
     val recipe = Recipe(
         recipeId = 0,
         image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
@@ -919,52 +962,20 @@ fun RecipeViewPreview() {
         cookingTime = "45 phút",
         ration = 4,
         isLiked = false,
-        comments = listOf(
-            CommentItem(
-                commentId = 1,
-                userId = 1,
-                userName = "nguyenvana",
-                content = "Ngon tuyệt! Mình làm thử và thành công ngay lần đầu.",
-                createdAt = "2025-06-15 10:20:00"
-            ),
-            CommentItem(
-                commentId = 1,
-                userId = 1,
-                userName = "tranthib",
-                content = "Cảm ơn công thức! Cả nhà mình đều thích.",
-                createdAt = "2025-06-15 12:45:00"
-            )
-        ),
+        comments = comments,
         createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()),
         tags = listOf(TagEntity(tagId = 1, tagName = "Ăn vặt")),
         userId = 0
     )
-    
-    val comments = listOf(
-        CommentItem(
-            commentId = 1,
-            userId = 1,
-            userName = "nguyenvana",
-            content = "Ngon tuyệt! Mình làm thử và thành công ngay lần đầu.",
-            createdAt = "2025-06-15 10:20:00"
-        ),
-        CommentItem(
-            commentId = 1,
-            userId = 1,
-            userName = "tranthib",
-            content = "Cảm ơn công thức! Cả nhà mình đều thích.",
-            createdAt = "2025-06-15 12:45:00"
-        )
-    )
 
-//    RecipeViewScreen(navController, recipe, false)
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxSize()
-            .background(color = Color(0xFFFFFFFF))
-    ) {
-//            StepsView(recipe)
-//            CommentsView(comments, 390)
-    }
+    RecipeViewScreen(navController, recipe, false)
+//    Column(
+//        horizontalAlignment = Alignment.CenterHorizontally,
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .background(color = Color(0xFFFFFFFF))
+//    ) {
+////            StepsView(recipe)
+////            CommentsView(comments, 390)
+//    }
 }
