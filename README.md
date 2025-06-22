@@ -10,17 +10,22 @@
 | User | Recipe | Interaction |
 | --- | --- | --- |
 | Đăng nhập | Hiển thị công thức nấu ăn | Yêu thích |
-| Đăng ký | Tìm kiếm công thức | Bình luận |
-| Đổi mật khẩu | Thêm vào “Công thức của tôi” | Chia sẻ |
-| Đăng xuất | Lập danh sách mua sắm |  |
-| Chỉnh sửa thông tin cá nhân | Quản lý danh sách mua sắm |  |
+| Đăng ký | Tìm kiếm công thức theo tên | Bình luận |
+| Đổi mật khẩu | Tìm kiếm công thức theo tag | Chia sẻ |
+| Đăng xuất | Thêm vào “Kho công thức” |  |
+| Chỉnh sửa thông tin cá nhân | Lập danh sách mua sắm |  |
+|  | Quản lý danh sách mua sắm |  |
 |  | Tạo công thức mới |  |
-|  | Chỉnh sửa công thức trong “Công thức của tôi” |  |
-|  | Xóa khỏi “Công thức của tôi” |  |
+|  | Chỉnh sửa công thức trong “Kho công thức” |  |
+|  | Xóa khỏi “Kho công thức” |  |
 |  | Lịch sử xem công thức |  |
 |  | Lịch sử mua sắm |  |
 |  | Lấy danh sách công thức Top Trending |  |
 |  | Lấy danh sách nguyên liệu sẵn có |  |
+|  | Lấy danh sách tag sẵn có |  |
+|  |  |  |
+|  |  |  |
+|  |  |  |
 
 ### a. User
 
@@ -33,17 +38,19 @@
 ### b. Recipe
 
 - [x]  Hiển thị công thức nấu ăn
-- [x]  Tìm kiếm công thức
-- [ ]  Thêm vào “Công thức cùa tôi”
+- [x]  Tìm kiếm công thức theo tên
+- [x]  Tìm kiếm công thức theo tag
+- [ ]  Thêm vào “Kho công thức”
 - [x]  Lập danh sách mua sắm
-- [ ]  Quản lý danh sách mua sắm
+- [x]  Quản lý danh sách mua sắm
 - [x]  Tạo công thức mới
-- [ ]  Chỉnh sửa công thức trong “Công thức của tôi”
-- [ ]  Xóa khỏi “Công thức của tôi”
+- [x]  Chỉnh sửa công thức trong “Kho công thức”
+- [x]  Xóa khỏi “Kho công thức”
 - [ ]  Lịch sử xem công thức
 - [ ]  Lịch sử mua sắm
 - [x]  Lấy danh sách Top Trending
 - [x]  Lấy danh sách nguyên liệu sẵn có
+- [x]  Lấy danh sách tag sẵn có
 
 ### c. Interaction
 
