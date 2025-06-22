@@ -1,9 +1,11 @@
 package com.watb.chefmate.api
 
 import android.annotation.SuppressLint
+import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
+import android.media.MediaScannerConnection
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
@@ -23,7 +25,9 @@ import com.watb.chefmate.data.RecipeListResponse
 import com.watb.chefmate.data.SearchRecipeByTagRequest
 import com.watb.chefmate.data.SearchRecipeRequest
 import com.watb.chefmate.helper.CommonHelper
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -31,6 +35,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -64,7 +70,7 @@ object ApiClient {
                             gson.fromJson(it, LoginResponse::class.java)
                         }
                     } else {
-                        Log.e("ApiClient", "Error: ${response.code}")
+                        Log.e(TAG, "Error: ${response.code}")
                         null
                     }
                 }
@@ -93,12 +99,12 @@ object ApiClient {
                 client.newCall(request).execute().use { response ->
                     if (response.isSuccessful) {
                         val responseBody = response.body?.string()
-                        Log.d("ApiClient", "Response Body: $responseBody")
+                        Log.d(TAG, "Response Body: $responseBody")
                         responseBody?.let {
                             gson.fromJson(it, RecipeListResponse::class.java)
                         }
                     } else {
-                        Log.e("ApiClient", "Error: ${response.code}")
+                        Log.e(TAG, "Error: ${response.code}")
                         null
                     }
                 }
@@ -135,7 +141,7 @@ object ApiClient {
                             gson.fromJson(it, RecipeListResponse::class.java)
                         }
                     } else {
-                        Log.e("ApiClient", "Error: ${response.code}")
+                        Log.e(TAG, "Error: ${response.code}")
                         null
                     }
                 }
@@ -172,7 +178,7 @@ object ApiClient {
                             gson.fromJson(it, RecipeListResponse::class.java)
                         }
                     } else {
-                        Log.e("ApiClient", "Error: ${response.code}")
+                        Log.e(TAG, "Error: ${response.code}")
                         null
                     }
                 }
@@ -205,8 +211,8 @@ object ApiClient {
         val imageRequestBody = byteArray.toRequestBody("image/jpeg".toMediaTypeOrNull(), 0, byteArray.size)
         val ingredientsRequestBody = gson.toJson(recipe.ingredients)
         val cookingSteps = gson.toJson(recipe.cookingSteps)
-        Log.d("ApiClient", "Ingredients Request Body: $ingredientsRequestBody")
-        Log.d("ApiClient", "Cooking Steps: $cookingSteps")
+        Log.d(TAG, "Ingredients Request Body: $ingredientsRequestBody")
+        Log.d(TAG, "Cooking Steps: $cookingSteps")
 
         val multipartBody = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
@@ -233,7 +239,7 @@ object ApiClient {
                             gson.fromJson(it, CreateRecipeResponse::class.java)
                         }
                     } else {
-                        Log.e("ApiClient", "Error: ${response.code}")
+                        Log.e(TAG, "Error: ${response.code}")
                         null
                     }
                 }
@@ -246,6 +252,87 @@ object ApiClient {
             } catch (e: SocketTimeoutException) {
                 e.printStackTrace()
                 null
+            }
+        }
+    }
+
+    fun downloadAndSaveImage(
+        context: Context,
+        coroutineScope: CoroutineScope,
+        imageUrl: String,
+        fileName: String = "Image_${System.currentTimeMillis()}.jpg",
+        onResult: (String) -> Unit
+    ) {
+        coroutineScope.launch(Dispatchers.IO) {
+            try {
+                Log.d(TAG, "Starting image download: URL = $imageUrl, FileName = $fileName")
+
+                Log.d(TAG, "Building HTTP request for URL: $imageUrl")
+                val request = Request.Builder()
+                    .url(imageUrl)
+                    .build()
+
+                Log.d(TAG, "Executing HTTP request")
+                val response = client.newCall(request).execute()
+
+                Log.d(TAG, "HTTP response code: ${response.code}")
+                if (!response.isSuccessful) {
+                    val errorMessage = "Error: HTTP ${response.code}"
+                    Log.e(TAG, errorMessage)
+                    onResult(errorMessage)
+                    return@launch
+                }
+
+                Log.d(TAG, "Retrieving image bytes")
+                val imageBytes = response.body?.bytes() ?: run {
+                    val errorMessage = "Empty image data"
+                    Log.e(TAG, errorMessage)
+                    throw Exception(errorMessage)
+                }
+                Log.d(TAG, "Image bytes retrieved, size: ${imageBytes.size} bytes")
+
+                Log.d(TAG, "Saving image to MediaStore")
+                val contentValues = ContentValues().apply {
+                    put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+                    put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/ChefMate")
+                        put(MediaStore.Images.Media.IS_PENDING, 1)
+                    }
+                }
+
+                val resolver = context.contentResolver
+                val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+                    ?: run {
+                        val errorMessage = "Failed to create MediaStore URI"
+                        Log.e(TAG, errorMessage)
+                        throw Exception(errorMessage)
+                    }
+                Log.d(TAG, "MediaStore URI created: $uri")
+
+                resolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(imageBytes)
+                    outputStream.flush()
+                } ?: run {
+                    val errorMessage = "Failed to open output stream"
+                    Log.e(TAG, errorMessage)
+                    throw Exception(errorMessage)
+                }
+                Log.d(TAG, "Image written to MediaStore")
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    contentValues.clear()
+                    contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
+                    resolver.update(uri, contentValues, null, null)
+                    Log.d(TAG, "MediaStore updated, IS_PENDING set to 0")
+                }
+
+                val successMessage = "Success: $uri"
+                Log.d(TAG, successMessage)
+                onResult(successMessage)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error downloading or saving image: ${e.message}", e)
+                onResult("Error: ${e.message}")
             }
         }
     }
@@ -266,7 +353,7 @@ object ApiClient {
                             gson.fromJson(it, AllIngredientsResponse::class.java)
                             }
                     } else {
-                        Log.e("ApiClient", "Error: ${response.code}")
+                        Log.e(TAG, "Error: ${response.code}")
                         null
                     }
                 }
@@ -299,7 +386,7 @@ object ApiClient {
                             gson.fromJson(it, AllTagsResponse::class.java)
                         }
                     } else {
-                        Log.e("ApiClient", "Error: ${response.code}")
+                        Log.e(TAG, "Error: ${response.code}")
                         null
                     }
                 }
@@ -338,7 +425,7 @@ object ApiClient {
                             gson.fromJson(it, InteractionResponse::class.java)
                         }
                     } else {
-                        Log.e("ApiClient", "Error: ${response.code}")
+                        Log.e(TAG, "Error: ${response.code}")
                         null
                     }
                 }
@@ -375,7 +462,7 @@ object ApiClient {
                             gson.fromJson(it, InteractionResponse::class.java)
                         }
                     } else {
-                        Log.e("ApiClient", "Error: ${response.code}")
+                        Log.e(TAG, "Error: ${response.code}")
                         null
                     }
                 }
@@ -412,7 +499,7 @@ object ApiClient {
                             gson.fromJson(it, InteractionResponse::class.java)
                             }
                     } else {
-                        Log.e("ApiClient", "Error: ${response.code}")
+                        Log.e(TAG, "Error: ${response.code}")
                         null
                     }
                 }
@@ -428,4 +515,6 @@ object ApiClient {
             }
         }
     }
+
+    private const val TAG = "ApiClient"
 }
