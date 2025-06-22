@@ -80,6 +80,7 @@ import com.watb.chefmate.data.CreateRecipeData
 import com.watb.chefmate.data.IngredientInput
 import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.StepInput
+import com.watb.chefmate.data.TagData
 import com.watb.chefmate.database.entities.IngredientEntity
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import kotlinx.coroutines.launch
@@ -110,6 +111,9 @@ fun AddRecipeScreen(
     }
     val steps = remember {
         mutableStateListOf(StepInput(1, ""))
+    }
+    val tags = remember {
+        mutableStateListOf("")
     }
 
     val galleryLauncher = rememberLauncherForActivityResult(
@@ -577,17 +581,22 @@ fun AddRecipeScreen(
                                         viewCount = 0,
                                         createdAt = "",
                                         ingredients = ingredientsToSave,
-                                        steps = stepsToSave
+                                        steps = stepsToSave,
+                                        tags = tags
                                     )
                                     navController.popBackStack()
                                 } else {
                                     val ingredientItems = mutableListOf<IngredientItem>()
                                     val cookingStepItems = mutableListOf<CookingStepAddRecipeData>()
+                                    val tagItems = mutableListOf<TagData>()
                                     ingredients.forEach { ingredient ->
                                         ingredientItems.add(IngredientItem(ingredientName = ingredient.name, weight = ingredient.weight.toIntOrNull() ?: 0, unit = ingredient.unit))
                                     }
                                     steps.forEach { cookingStep ->
                                         cookingStepItems.add(CookingStepAddRecipeData(content = cookingStep.content))
+                                    }
+                                    tags.forEach { tag ->
+                                        tagItems.add(TagData(tagName = tag))
                                     }
 
                                     val recipe = CreateRecipeData(
@@ -597,7 +606,8 @@ fun AddRecipeScreen(
                                         cookingTime = "${cookTime.value} ${selectedUnit.value}",
                                         ration = parsedRation,
                                         ingredients = ingredientItems.toList(),
-                                        cookingSteps = cookingStepItems.toList()
+                                        cookingSteps = cookingStepItems.toList(),
+                                        tags = tagItems.toList()
                                     )
                                     val response = ApiClient.createRecipe(context, recipe)
                                     if (response != null) {
@@ -613,7 +623,8 @@ fun AddRecipeScreen(
                                                 viewCount = 0,
                                                 createdAt = "",
                                                 ingredients = ingredientsToSave,
-                                                steps = stepsToSave
+                                                steps = stepsToSave,
+                                                tags = tags
                                             )
                                             navController.popBackStack()
                                         } else {
