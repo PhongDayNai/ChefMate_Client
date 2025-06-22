@@ -1,6 +1,7 @@
 package com.watb.chefmate.ui.theme
 
 import android.annotation.SuppressLint
+import android.icu.text.SimpleDateFormat
 import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -58,6 +59,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,8 +67,14 @@ import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
 import com.watb.chefmate.api.ApiConstant
 import com.watb.chefmate.data.AppConstant
+import com.watb.chefmate.data.CommentItem
+import com.watb.chefmate.data.CookingStep
+import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
+import com.watb.chefmate.database.entities.TagEntity
 import com.watb.chefmate.helper.CommonHelper
+import java.util.Date
+import java.util.Locale
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -124,7 +132,6 @@ fun Header(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-//            .height(60.dp)
             .background(brush = AppConstant.headerGradient)
             .safeDrawingPadding()
             .padding(16.dp),
@@ -224,7 +231,10 @@ fun SearchTextField(
 @Composable
 fun RecipeItem(
     onClick: (Recipe) -> Unit,
+    onEdit: (Recipe) -> Unit = {},
+    onDelete: (Recipe) -> Unit = {},
     recipe: Recipe,
+    isStorage: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -284,113 +294,64 @@ fun RecipeItem(
                     modifier = Modifier
                         .padding(top = 8.dp)
                 ) {
-//                    Icon(
-//                        painter = painterResource(R.drawable.ic_like),
-//                        contentDescription = "Like",
-//                        tint = Color(0xFFFB923C),
-//                        modifier = Modifier
-//                            .size(16.dp)
-//                    )
-//                    Text(
-//                        text = CommonHelper.parseNumber(recipe.likesQuantity),
-//                        color = Color(0xFF6B7280),
-//                        fontSize = 14.sp,
-//                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
-//                        fontWeight = FontWeight(400),
-//                        modifier = Modifier
-//                            .padding(start = 4.dp)
-//                    )
-//                    Icon(
-//                        painter = painterResource(R.drawable.ic_view),
-//                        contentDescription = "Like",
-//                        tint = Color(0xFFFB923C),
-//                        modifier = Modifier
-//                            .padding(start = 16.dp)
-//                            .size(16.dp)
-//                    )
-//                    Text(
-//                        text = CommonHelper.parseNumber(recipe.viewCount),
-//                        color = Color(0xFF6B7280),
-//                        fontSize = 14.sp,
-//                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
-//                        fontWeight = FontWeight(400),
-//                        modifier = Modifier
-//                            .padding(start = 4.dp)
-//                    )
-//                    Icon(
-//                        painter = painterResource(R.drawable.ic_comment),
-//                        contentDescription = "Like",
-//                        tint = Color(0xFFFB923C),
-//                        modifier = Modifier
-//                            .padding(start = 16.dp)
-//                            .size(16.dp)
-//                    )
-//                    Text(
-//                        text = CommonHelper.parseNumber(recipe.comments.size),
-//                        color = Color(0xFF6B7280),
-//                        fontSize = 14.sp,
-//                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
-//                        fontWeight = FontWeight(400),
-//                        modifier = Modifier
-//                            .padding(start = 4.dp)
-//                    )
-
-                    Icon(
-                        painter = painterResource(R.drawable.ic_like_filled),
-                        contentDescription = "Like",
-                        tint = Color(0xFFEF4444) ,
-                        modifier = Modifier
-                            .size(16.dp)
-                    )
-                    Text(
-                        text = CommonHelper.parseNumber(recipe.likeQuantity),
-                        color = Color(0xFF6B7280),
-                        fontSize = 14.sp,
-                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
-                        fontWeight = FontWeight(400),
-                        modifier = Modifier
-                            .padding(start = 4.dp)
-                    )
-                    Icon(
-                        painter = painterResource(R.drawable.ic_view_filled),
-                        contentDescription = "Like",
-                        tint = Color(0xFFFB923C),
-                        modifier = Modifier
-                            .padding(start = 16.dp)
-                            .size(16.dp)
-                    )
-                    Text(
-                        text = CommonHelper.parseNumber(recipe.viewCount),
-                        color = Color(0xFF6B7280),
-                        fontSize = 14.sp,
-                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
-                        fontWeight = FontWeight(400),
-                        modifier = Modifier
-                            .padding(start = 4.dp)
-                    )
-                    Icon(
-                        painter = painterResource(R.drawable.ic_comment_filled),
-                        contentDescription = "Like",
-                        tint = Color(0xFFFB923C),
-                        modifier = Modifier
-                            .padding(start = 16.dp)
-                            .size(16.dp)
-                    )
-                    Text(
-                        text = CommonHelper.parseNumber(recipe.comments.size),
-                        color = Color(0xFF6B7280),
-                        fontSize = 14.sp,
-                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
-                        fontWeight = FontWeight(400),
-                        modifier = Modifier
-                            .padding(start = 4.dp)
-                    )
+                    if (!isStorage) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_like_filled),
+                            contentDescription = "Like",
+                            tint = Color(0xFFEF4444) ,
+                            modifier = Modifier
+                                .size(16.dp)
+                        )
+                        Text(
+                            text = CommonHelper.parseNumber(recipe.likeQuantity),
+                            color = Color(0xFF6B7280),
+                            fontSize = 14.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                            fontWeight = FontWeight(400),
+                            modifier = Modifier
+                                .padding(start = 4.dp)
+                        )
+                        Icon(
+                            painter = painterResource(R.drawable.ic_view_filled),
+                            contentDescription = "Like",
+                            tint = Color(0xFFFB923C),
+                            modifier = Modifier
+                                .padding(start = 16.dp)
+                                .size(16.dp)
+                        )
+                        Text(
+                            text = CommonHelper.parseNumber(recipe.viewCount),
+                            color = Color(0xFF6B7280),
+                            fontSize = 14.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                            fontWeight = FontWeight(400),
+                            modifier = Modifier
+                                .padding(start = 4.dp)
+                        )
+                        Icon(
+                            painter = painterResource(R.drawable.ic_comment_filled),
+                            contentDescription = "Like",
+                            tint = Color(0xFFFB923C),
+                            modifier = Modifier
+                                .padding(start = 16.dp)
+                                .size(16.dp)
+                        )
+                        Text(
+                            text = CommonHelper.parseNumber(recipe.comments.size),
+                            color = Color(0xFF6B7280),
+                            fontSize = 14.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                            fontWeight = FontWeight(400),
+                            modifier = Modifier
+                                .padding(start = 4.dp)
+                        )
+                    }
                     Icon(
                         painter = painterResource(R.drawable.ic_clock_filled),
                         contentDescription = "Like",
                         tint = Color(0xFFFB923C),
                         modifier = Modifier
-                            .padding(start = 16.dp)
+                            .padding(start = if (isStorage) 0.dp else 16.dp)
                             .size(16.dp)
                     )
                     Text(
@@ -402,6 +363,24 @@ fun RecipeItem(
                         modifier = Modifier
                             .padding(start = 4.dp)
                     )
+                    Spacer(modifier = Modifier.weight(1f))
+                    if (isStorage) {
+                        SecondaryTextButtonTheme(
+                            onClick = { onEdit(recipe) },
+                            text = "Sửa",
+                            paddingOuter = 0.dp,
+                            paddingInner = 4.dp,
+                            modifier = Modifier
+                        )
+                        SecondaryTextButtonTheme(
+                            onClick = { onDelete(recipe) },
+                            text = "Xóa",
+                            paddingOuter = 0.dp,
+                            paddingInner = 4.dp,
+                            modifier = Modifier
+                                .padding(start = 4.dp)
+                        )
+                    }
                 }
             }
         }
@@ -413,6 +392,8 @@ fun SecondaryTextButtonTheme(
     onClick: () -> Unit,
     text: String,
     shape: Shape = CircleShape,
+    paddingOuter: Dp = 8.dp,
+    paddingInner: Dp = 16.dp,
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier
 ) {
     val backgroundGradient = Brush.horizontalGradient(
@@ -425,10 +406,10 @@ fun SecondaryTextButtonTheme(
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .padding(8.dp)
+            .padding(paddingOuter)
             .clickable(onClick = onClick)
             .border(width = 1.dp, brush = backgroundGradient, shape = shape)
-            .padding(16.dp)
+            .padding(paddingInner)
     ) {
         Text(
             text = text,
@@ -444,6 +425,54 @@ fun SecondaryTextButtonTheme(
 @Composable
 fun Preview() {
     var searchValue by remember { mutableStateOf("") }
+
+    val recipe = Recipe(
+        recipeId = 0,
+        image = "https://umbercoffee.vn/wp-content/uploads/2024/06/matcha-latte-umber-coffee-tea-ho-chi-minh-city-700000.jpg",
+        recipeName = "Phở bò Hà Nội",
+        userName = "duonghung99",
+        likeQuantity = 150,
+        viewCount = 3200,
+        ingredients = listOf(
+            IngredientItem(ingredientId = 1, ingredientName = "Thịt bò", weight = 500, unit = "g"),
+            IngredientItem(ingredientId = 2, ingredientName = "Bánh phở", weight = 200, unit = "g"),
+            IngredientItem(ingredientId = 3, ingredientName = "Hành tây", weight = 1, unit = "củ"),
+            IngredientItem(ingredientId = 4, ingredientName = "Quế", weight = 5, unit = "g"),
+            IngredientItem(ingredientId = 5, ingredientName = "Hoa hồi", weight = 2, unit = "cái"),
+            IngredientItem(ingredientId = 6, ingredientName = "Gừng", weight = 1, unit = "nhánh"),
+            IngredientItem(ingredientId = 7, ingredientName = "Muối", weight = 1, unit = "muỗng cà phê"),
+            IngredientItem(ingredientId = 8, ingredientName = "Nước mắm", weight = 2, unit = "muỗng canh"),
+        ),
+        cookingSteps = listOf(
+            CookingStep(indexStep = 1, stepContent = "Nướng hành và gừng cho thơm."),
+            CookingStep(indexStep = 2, stepContent = "Luộc thịt bò, vớt bọt."),
+            CookingStep(indexStep = 3, stepContent = "Thêm hành, gừng, quế, hồi vào nồi."),
+            CookingStep(indexStep = 4, stepContent = "Nêm nếm gia vị vừa ăn."),
+            CookingStep(indexStep = 5, stepContent = "Trụng bánh phở, xếp ra tô, chan nước dùng.")
+        ),
+        cookingTime = "45 phút",
+        ration = 4,
+        isLiked = false,
+        comments = listOf(
+            CommentItem(
+                commentId = 1,
+                userId = 1,
+                userName = "nguyenvana",
+                content = "Ngon tuyệt! Mình làm thử và thành công ngay lần đầu.",
+                createdAt = "2025-06-15 10:20:00"
+            ),
+            CommentItem(
+                commentId = 1,
+                userId = 1,
+                userName = "tranthib",
+                content = "Cảm ơn công thức! Cả nhà mình đều thích.",
+                createdAt = "2025-06-15 12:45:00"
+            )
+        ),
+        createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()),
+        tags = listOf(TagEntity(tagId = 1, tagName = "Ăn vặt")),
+        userId = 0
+    )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -477,6 +506,13 @@ fun Preview() {
                         .size(24.dp)
                 )
             },
+            modifier = Modifier
+                .padding(top = 16.dp)
+                .fillMaxWidth(0.9f)
+        )
+        RecipeItem(
+            onClick = {},
+            recipe = recipe,
             modifier = Modifier
                 .padding(top = 16.dp)
                 .fillMaxWidth(0.9f)
