@@ -39,7 +39,7 @@ import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.recipe.bottomDashedBorder
 import com.watb.chefmate.ui.theme.Header
-import com.watb.chefmate.ui.theme.SearchTextField
+import com.watb.chefmate.ui.theme.CustomTextField
 import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
 import kotlinx.coroutines.launch
 
@@ -408,6 +408,7 @@ fun CustomEditIngredientDialog(
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
                         modifier = Modifier
                             .padding(start = 8.dp)
                     )
@@ -433,10 +434,11 @@ fun CustomEditIngredientDialog(
                     Text(
                         text = "Tên nguyên liệu",
                         fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
                         modifier = Modifier
                             .padding(top = 6.dp)
                     )
-                    SearchTextField(
+                    CustomTextField(
                         value = name,
                         onValueChange = onNameChange,
                         placeholder = "Tên nguyên liệu",
@@ -447,13 +449,14 @@ fun CustomEditIngredientDialog(
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Định lượng",
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
                     )
                     Row(
                         modifier = Modifier
                             .padding(top = 12.dp)
                     ) {
-                        SearchTextField(
+                        CustomTextField(
                             value = weight,
                             onValueChange = onWeightChange,
                             placeholder = "Khối lượng",
@@ -462,7 +465,7 @@ fun CustomEditIngredientDialog(
                                 .padding(end = 4.dp)
                                 .weight(1f)
                         )
-                        SearchTextField(
+                        CustomTextField(
                             value = unit,
                             onValueChange = onUnitChange,
                             placeholder = "Đơn vị",

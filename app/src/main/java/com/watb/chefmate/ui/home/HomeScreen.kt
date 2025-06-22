@@ -58,7 +58,7 @@ import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.ui.theme.RecipeItem
-import com.watb.chefmate.ui.theme.SearchTextField
+import com.watb.chefmate.ui.theme.CustomTextField
 import com.watb.chefmate.viewmodel.RecipeViewModel
 
 @SuppressLint("MemberExtensionConflict")
@@ -98,7 +98,7 @@ fun HomeScreen(
                 )
             }
         }
-        SearchTextField(
+        CustomTextField(
             value = searchValue,
             onValueChange = { searchValue = it },
             placeholder = "Tìm kiếm món ăn",
@@ -187,7 +187,7 @@ fun HomeScreen(
                         .padding(horizontal = 8.dp)
                 ) {
                     Text(
-                        text = "Thể loại",
+                        text = "Tag",
                         color = Color(0xFF000000),
                         fontSize = 14.sp,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -198,7 +198,7 @@ fun HomeScreen(
             }
         }
         Text(
-            text = "Thể loại",
+            text = "Tags phổ biến",
             color = Color(0xFF000000),
             fontSize = 18.sp,
             fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
