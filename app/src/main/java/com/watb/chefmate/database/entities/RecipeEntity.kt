@@ -5,6 +5,7 @@ import androidx.room.PrimaryKey
 import com.watb.chefmate.data.CookingStep
 import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
+import com.watb.chefmate.data.Tag
 
 @Entity(tableName = "Recipes")
 data class RecipeEntity(
@@ -21,6 +22,7 @@ data class RecipeEntity(
     val ingredientWeights: String,
     val ingredientUnits: String,
     val cookingSteps: String,
+    val tags: String,
     val createdAt: String
 )
 
@@ -44,10 +46,17 @@ fun RecipeEntity.toRecipe(): Recipe {
         )
     }
 
+    val tagList = tags.split(";;;")
+    val tags = mutableListOf<TagEntity>()
+    tagList.forEachIndexed { index, tag ->
+        tags.add(TagEntity(index, tag))
+    }
+
     return Recipe(
         recipeId = recipeId,
         image = image,
         recipeName = recipeName,
+        userId = 0,
         userName = userName,
         likeQuantity = likeQuantity,
         viewCount = viewCount,
@@ -56,7 +65,8 @@ fun RecipeEntity.toRecipe(): Recipe {
         cookingTime = cookingTime,
         ration = ration,
         comments = emptyList(),
-        createdAt = createdAt
+        createdAt = createdAt,
+        tags = tags
     )
 }
 
@@ -64,4 +74,10 @@ fun RecipeEntity.toRecipe(): Recipe {
 data class IngredientEntity(
     @PrimaryKey(autoGenerate = true) val ingredientId: Int = 0,
     val ingredientName: String
+)
+
+@Entity(tableName = "Tags")
+data class TagEntity(
+    @PrimaryKey(autoGenerate = true) val tagId: Int = 0,
+    val tagName: String
 )

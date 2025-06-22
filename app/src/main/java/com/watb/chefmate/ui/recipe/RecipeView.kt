@@ -82,6 +82,8 @@ import com.watb.chefmate.data.CommentItem
 import com.watb.chefmate.data.CookingStep
 import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
+import com.watb.chefmate.data.Tag
+import com.watb.chefmate.database.entities.TagEntity
 import com.watb.chefmate.helper.CommonHelper
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
@@ -933,7 +935,9 @@ fun RecipeViewPreview() {
                 createdAt = "2025-06-15 12:45:00"
             )
         ),
-        createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+        createdAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()),
+        tags = listOf(TagEntity(tagId = 1, tagName = "Ăn vặt")),
+        userId = 0
     )
     
     val comments = listOf(

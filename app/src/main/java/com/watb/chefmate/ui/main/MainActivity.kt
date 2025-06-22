@@ -26,6 +26,8 @@ import com.watb.chefmate.data.CommentItem
 import com.watb.chefmate.data.CookingStep
 import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
+import com.watb.chefmate.data.Tag
+import com.watb.chefmate.database.entities.TagEntity
 import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.makeshoppinglist.ConsolidatedIngredientsScreen
 import com.watb.chefmate.ui.makeshoppinglist.MakeShoppingListScreen
@@ -82,6 +84,7 @@ fun navGraph(
         recipeId = -1,
         image = "",
         recipeName = "",
+        userId = -1,
         userName = "Admin",
         likeQuantity = 100,
         viewCount = 1151,
@@ -90,7 +93,8 @@ fun navGraph(
         cookingTime = "Unknown",
         comments = listOf<CommentItem>(),
         ration = 0,
-        createdAt = "2023-06-15 10:20:00"
+        createdAt = "2023-06-15 10:20:00",
+        tags = listOf<TagEntity>()
     )
     val recipeViewModel = RecipeViewModel(recipeRepository)
     val shoppingTimeViewModel = ShoppingTimeViewModel(shoppingTimeRepository)

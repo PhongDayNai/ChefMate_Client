@@ -87,15 +87,17 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         cookingTime: String,
         ration: Int,
         viewCount: Int,
-        createdAt: String, // Changed to String
+        createdAt: String,
         ingredients: List<Pair<String, Pair<Int, String>>>, // (name, (weight, unit))
-        steps: List<Pair<Int, String>> // (index, content)
+        steps: List<Pair<Int, String>>, // (index, content)
+        tags: List<String>
     ) {
         viewModelScope.launch {
             val ingredientNames = ingredients.joinToString(";;;") { it.first }
             val ingredientWeights = ingredients.joinToString(";;;") { it.second.first.toString() }
             val ingredientUnits = ingredients.joinToString(";;;") { it.second.second }
-            val cookingSteps = steps.sortedBy { it.first }.joinToString(";;;") { it.second } // Đảm bảo đúng thứ tự
+            val cookingSteps = steps.sortedBy { it.first }.joinToString(";;;") { it.second }
+            val tagsString = tags.joinToString(";;;")
 
             val newRecipe = RecipeEntity(
                 recipeName = recipeName,
@@ -111,6 +113,7 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
                 ingredientUnits = ingredientUnits,
                 cookingSteps = cookingSteps,
                 createdAt = createdAt,
+                tags = tagsString
             )
             repository.insertRecipe(newRecipe)
         }
@@ -129,13 +132,15 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         viewCount: Int,
         createdAt: String,
         ingredients: List<Pair<String, Pair<Int, String>>>,
-        steps: List<Pair<Int, String>>
+        steps: List<Pair<Int, String>>,
+        tags: List<String>
     ) {
         viewModelScope.launch {
             val ingredientNames = ingredients.joinToString(";;;") { it.first }
             val ingredientWeights = ingredients.joinToString(";;;") { it.second.first.toString() }
             val ingredientUnits = ingredients.joinToString(";;;") { it.second.second }
             val cookingSteps = steps.sortedBy { it.first }.joinToString(";;;") { it.second }
+            val tagsString = tags.joinToString(";;;")
 
             val updatedRecipe = RecipeEntity(
                 recipeId = recipeId,
@@ -152,6 +157,7 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
                 ingredientUnits = ingredientUnits,
                 cookingSteps = cookingSteps,
                 createdAt = createdAt,
+                tags = tagsString
             )
             repository.updateRecipe(updatedRecipe)
         }
