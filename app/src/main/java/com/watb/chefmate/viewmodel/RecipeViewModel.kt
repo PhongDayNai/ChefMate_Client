@@ -30,9 +30,6 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
     private val _searchResult = MutableStateFlow<List<Recipe>>(emptyList())
     val searchResult: StateFlow<List<Recipe>> = _searchResult
 
-    private val _lastSearchValue = MutableStateFlow<String>("")
-    val lastSearchValue: StateFlow<String> = _lastSearchValue
-
     val allRecipes: Flow<List<Recipe>> =
         repository.getAllRecipes().map { list ->
             list.map { it.toRecipe() }
