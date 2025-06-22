@@ -5,7 +5,6 @@ import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
-import android.media.MediaScannerConnection
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
@@ -19,6 +18,7 @@ import com.watb.chefmate.data.CreateRecipeResponse
 import com.watb.chefmate.data.IncreaseRequest
 import com.watb.chefmate.data.InteractionResponse
 import com.watb.chefmate.data.LikeRequest
+import com.watb.chefmate.data.LoginRequest
 import com.watb.chefmate.data.LoginResponse
 import com.watb.chefmate.data.RegisterRequest
 import com.watb.chefmate.data.RecipeListResponse
@@ -29,14 +29,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.FileOutputStream
 import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -71,6 +70,46 @@ object ApiClient {
                         }
                     } else {
                         Log.e(TAG, "Error: ${response.code}")
+                        null
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            } catch (e: TimeoutException) {
+                e.printStackTrace()
+                null
+            } catch (e: SocketTimeoutException) {
+                e.printStackTrace()
+                null
+            }
+        }
+    }
+
+    @SuppressLint("MemberExtensionConflict")
+    suspend fun login(phone: String, password: String): LoginResponse? {
+        val loginRequest = LoginRequest(phone, password)
+        val json = gson.toJson(loginRequest)
+        Log.d("Login", json.toString())
+
+        val requestBody = json.toRequestBody("application/json; charset=utf-8".toMediaType())
+        val request = Request.Builder()
+            .url(ApiConstant.LOGIN_URL)
+            .post(requestBody)
+            .build()
+
+        return withContext(Dispatchers.IO) {
+            try {
+                client.newCall(request).execute().use { response ->
+                    Log.d("Login", "Response code: ${response.code}")
+                    if (response.isSuccessful) {
+                        val responseBody = response.body?.string()
+                        responseBody?.let {
+                            Log.d("Login", it)
+                            gson.fromJson(it, LoginResponse::class.java)
+                        }
+                    } else {
+                        Log.d("Login", "Response nul or unsuccessful")
                         null
                     }
                 }
@@ -402,8 +441,6 @@ object ApiClient {
             }
         }
     }
-
-
 
     @SuppressLint("MemberExtensionConflict")
     suspend fun likeRecipe(userId: Int = 1, recipeId: Int): InteractionResponse? {
