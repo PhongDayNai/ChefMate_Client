@@ -2,9 +2,6 @@
 
 # I. Client - Ứng dụng di động
 
-- Công nghệ: Kotlin với thư viện Jetpack Compose
-- Cơ sở dữ liệu: RoomDB
-
 ## 1. Tính năng
 
 | User | Recipe | Interaction |
@@ -12,7 +9,7 @@
 | Đăng nhập | Hiển thị công thức nấu ăn | Yêu thích |
 | Đăng ký | Tìm kiếm công thức theo tên | Bình luận |
 | Đổi mật khẩu | Tìm kiếm công thức theo tag | Chia sẻ |
-| Đăng xuất | Thêm vào “Kho công thức” |  |
+| Đăng xuất | Lưu vào “Kho công thức” |  |
 | Chỉnh sửa thông tin cá nhân | Lập danh sách mua sắm |  |
 |  | Quản lý danh sách mua sắm |  |
 |  | Tạo công thức mới |  |
@@ -23,16 +20,13 @@
 |  | Lấy danh sách công thức Top Trending |  |
 |  | Lấy danh sách nguyên liệu sẵn có |  |
 |  | Lấy danh sách tag sẵn có |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
 
 ### a. User
 
-- [ ]  Đăng nhập
-- [ ]  Đăng ký
+- [x]  Đăng nhập
+- [x]  Đăng ký
 - [ ]  Đổi mật khẩu
-- [ ]  Đăng xuất
+- [x]  Đăng xuất
 - [ ]  Chỉnh sửa thông tin cá nhân
 
 ### b. Recipe
@@ -40,7 +34,7 @@
 - [x]  Hiển thị công thức nấu ăn
 - [x]  Tìm kiếm công thức theo tên
 - [x]  Tìm kiếm công thức theo tag
-- [ ]  Thêm vào “Kho công thức”
+- [x]  Thêm vào “Kho công thức”
 - [x]  Lập danh sách mua sắm
 - [x]  Quản lý danh sách mua sắm
 - [x]  Tạo công thức mới
