@@ -28,6 +28,8 @@ import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.database.entities.TagEntity
 import com.watb.chefmate.repository.ShoppingTimeRepository
+import com.watb.chefmate.ui.account.SignInScreen
+import com.watb.chefmate.ui.account.SignUpScreen
 import com.watb.chefmate.ui.makeshoppinglist.ConsolidatedIngredientsScreen
 import com.watb.chefmate.ui.makeshoppinglist.MakeShoppingListScreen
 import com.watb.chefmate.ui.recipe.AddOrEditRecipeScreen
@@ -93,6 +95,12 @@ fun navGraph(
     return navController.createGraph("splash") {
         composable("splash") {
             SplashScreen(navController)
+        }
+        composable("signIn") {
+            SignInScreen(navController)
+        }
+        composable("signUp") {
+            SignUpScreen(navController)
         }
         composable("mainAct") {
             MainAct(
