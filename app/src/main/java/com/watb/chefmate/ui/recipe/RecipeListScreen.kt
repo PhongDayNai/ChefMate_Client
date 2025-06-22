@@ -8,18 +8,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.watb.chefmate.R
 import com.watb.chefmate.data.Recipe
-import com.watb.chefmate.database.AppDatabase
-import com.watb.chefmate.repository.RecipeRepository
+import com.watb.chefmate.ui.theme.CustomDialog
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.ui.theme.RecipeItem
 import com.watb.chefmate.viewmodel.RecipeViewModel
@@ -31,6 +30,9 @@ fun RecipeListScreen(
     viewModel: RecipeViewModel
 ) {
     val recipes by viewModel.allRecipes.collectAsState(initial = emptyList())
+    var selectedRecipe by remember { mutableStateOf<Recipe?>(null) }
+
+    var isShowDialog by remember { mutableStateOf(false) }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -68,9 +70,8 @@ fun RecipeListScreen(
                             navController.navigate("add_edit_recipe/${recipe.recipeId}")
                         },
                         onDelete = {
-                            recipe.recipeId?.let {
-                                viewModel.deleteRecipeById(recipe.recipeId)
-                            }
+                            isShowDialog = true
+                            selectedRecipe = recipe
                         },
                         recipe = recipe,
                         isStorage = true,
@@ -78,6 +79,26 @@ fun RecipeListScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
+            }
+            if (isShowDialog) {
+                CustomDialog(
+                    title = "Xóa công thức",
+                    "", {}, "", {}, "", {},
+                    isConfirm = true,
+                    confirmText = "Bạn có chắc chắn muốn xóa công thức này?",
+                    onConfirm = {
+                        selectedRecipe?.recipeId?.let { id ->
+                            viewModel.deleteRecipeById(id)
+                        }
+                        isShowDialog = false
+                        selectedRecipe = null
+                    },
+                    onDismiss = {
+                        isShowDialog = false
+                        selectedRecipe = null
+                    },
+                    buttonText = "Xóa"
+                )
             }
         }
     }

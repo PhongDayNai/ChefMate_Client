@@ -38,6 +38,7 @@ import com.watb.chefmate.helper.CommonHelper.parseIngredientName
 import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.recipe.bottomDashedBorder
+import com.watb.chefmate.ui.theme.CustomDialog
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.ui.theme.SearchTextField
 import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
@@ -80,12 +81,16 @@ fun ConsolidatedIngredientsScreen(
             text = "Danh sách mua sắm",
             leadingIcon = {
                 IconButton(
-                    onClick = { navController.navigate("mainAct") }
+                    onClick = { navController.navigate("mainAct") },
+                    modifier = Modifier
+                        .size(24.dp)
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_back),
                         contentDescription = "back",
-                        tint = Color.White
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(20.dp)
                     )
                 }
             }
@@ -173,7 +178,7 @@ fun ConsolidatedIngredientsScreen(
                 }
             }
             if (editIndex != null) {
-                CustomEditIngredientDialog(
+                CustomDialog(
                     title = "Chỉnh sửa nguyên liệu",
                     name = editName,
                     onNameChange = { editName = it },
@@ -206,6 +211,8 @@ fun ConsolidatedIngredientsScreen(
 
                         editIndex = null
                     },
+                    isConfirm = false,
+                    confirmText = "",
                     onDismiss = {
                         editIndex = null
                     },
@@ -213,7 +220,7 @@ fun ConsolidatedIngredientsScreen(
                 )
             }
             if (showAddIngredient) {
-                CustomEditIngredientDialog(
+                CustomDialog(
                     title = "Thêm mới nguyên liệu",
                     name = addName,
                     onNameChange = { addName = it },
@@ -250,6 +257,8 @@ fun ConsolidatedIngredientsScreen(
 
                         showAddIngredient = false
                     },
+                    isConfirm = false,
+                    confirmText = "",
                     onDismiss = { showAddIngredient = false },
                     buttonText = "Thêm mới"
                 )
@@ -370,128 +379,6 @@ fun IngredientItem(
                 modifier = Modifier
                     .size(24.dp)
             )
-        }
-    }
-}
-
-@Composable
-fun CustomEditIngredientDialog(
-    title: String,
-    name: String,
-    onNameChange: (String) -> Unit,
-    weight: String,
-    onWeightChange: (String) -> Unit,
-    unit: String,
-    onUnitChange: (String) -> Unit,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-    buttonText: String
-) {
-    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
-        Card(
-            shape = RoundedCornerShape(0.dp),
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .wrapContentHeight(),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-            Column {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFFF97518))
-                        .padding(12.dp)
-                ) {
-                    Text(
-                        text = title,
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                    )
-                    Spacer( modifier = Modifier.weight(1f))
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier
-                            .size(24.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_cancel),
-                            contentDescription = "cancel",
-                            tint = Color(0xFFFFFFFF),
-                            modifier = Modifier
-                                .size(20.dp)
-                        )
-                    }
-                }
-
-                Column(
-                    modifier = Modifier.padding(8.dp)
-                ) {
-                    Text(
-                        text = "Tên nguyên liệu",
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier
-                            .padding(top = 6.dp)
-                    )
-                    SearchTextField(
-                        value = name,
-                        onValueChange = onNameChange,
-                        placeholder = "Tên nguyên liệu",
-                        placeholderSize = 12.sp,
-                        modifier = Modifier
-                            .padding(top = 12.dp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Định lượng",
-                        fontWeight = FontWeight.Bold
-                    )
-                    Row(
-                        modifier = Modifier
-                            .padding(top = 12.dp)
-                    ) {
-                        SearchTextField(
-                            value = weight,
-                            onValueChange = onWeightChange,
-                            placeholder = "Khối lượng",
-                            placeholderSize = 12.sp,
-                            modifier = Modifier
-                                .padding(end = 4.dp)
-                                .weight(1f)
-                        )
-                        SearchTextField(
-                            value = unit,
-                            onValueChange = onUnitChange,
-                            placeholder = "Đơn vị",
-                            placeholderSize = 12.sp,
-                            modifier = Modifier
-                                .padding(start = 4.dp)
-                                .weight(1f)
-                        )
-                    }
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    Spacer(modifier = Modifier.weight(1f))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(
-                        onClick = onConfirm,
-                        shape = RoundedCornerShape(10.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFF97518)
-                        )
-                    ) {
-                        Text(text = buttonText)
-                    }
-                }
-            }
         }
     }
 }
