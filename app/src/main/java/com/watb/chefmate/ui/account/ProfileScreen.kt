@@ -65,12 +65,17 @@ import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
 import com.watb.chefmate.data.AppConstant
 import com.watb.chefmate.helper.CommonHelper
+import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.ui.theme.SecondaryTextButtonTheme
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(navController: NavController) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
     var isShownLogoutBottomSheet by remember { mutableStateOf(false) }
     var isRating by remember { mutableStateOf(false) }
 
@@ -163,7 +168,17 @@ fun ProfileScreen(navController: NavController) {
         if (isShownLogoutBottomSheet) {
             LogoutBottomSheet(
                 navController = navController,
-                onLogout = { isShownLogoutBottomSheet = false },
+                onLogout = {
+                    coroutineScope.launch {
+                        isShownLogoutBottomSheet = false
+                        DataStoreHelper.clearLoginState(context = context)
+                        navController.navigate("signIn") {
+                            popUpTo("signIn") {
+                                inclusive = false
+                            }
+                        }
+                    }
+                },
                 onDismiss = { isShownLogoutBottomSheet = false }
             )
         }

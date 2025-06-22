@@ -1,6 +1,9 @@
 package com.watb.chefmate.ui.account
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,8 +17,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -23,36 +24,45 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
-import com.watb.chefmate.ui.theme.CustomTextField
+import com.watb.chefmate.api.ApiClient
+import com.watb.chefmate.helper.DataStoreHelper
+import com.watb.chefmate.ui.theme.CircularLoading
+import kotlinx.coroutines.launch
 
 @Composable
-fun SignInActivity() {
+fun SignInScreen(navController: NavController) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    var isLoading by remember { mutableStateOf(false) }
+    var phoneNumber by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
     ConstraintLayout(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFFFFFFF))
     ) {
-        val (heaadRef, contentRef, agreeRef, btnRef) = createRefs()
-        var isConfirm by remember { mutableStateOf(false) }
+        val (headRef, contentRef, btnRef) = createRefs()
         Card(
             shape = RoundedCornerShape(0.dp),
             colors = CardDefaults.cardColors(
@@ -61,7 +71,7 @@ fun SignInActivity() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(205.dp)
-                .constrainAs(heaadRef) {
+                .constrainAs(headRef) {
                     top.linkTo(parent.top)
                     start.linkTo(parent.start)
                 }
@@ -79,7 +89,7 @@ fun SignInActivity() {
             ) {
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    text = "Đăng ký",
+                    text = "Đăng nhập",
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                     color = Color(0xFFFFFFFF),
                     fontSize = 32.sp,
@@ -88,7 +98,7 @@ fun SignInActivity() {
                         .padding(bottom = 15.dp)
                 )
                 Text(
-                    text = "Chào mừng đến với ChefMate",
+                    text = "Chào mừng trở lại ChefMate",
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                     color = Color(0xFFFFFFFF),
                     fontSize = 18.sp,
@@ -96,163 +106,151 @@ fun SignInActivity() {
                 )
             }
         }
-        
+
         Column(
             modifier = Modifier
-                .padding(start = 40.dp, end = 40.dp, top = 25.dp)
+                .padding(40.dp)
                 .fillMaxWidth()
                 .constrainAs(contentRef) {
-                    top.linkTo(heaadRef.bottom)
+                    top.linkTo(headRef.bottom, margin = 50.dp)
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
                 }
         ) {
-            val fullName = remember { mutableStateOf("") }
-            val phoneNumber = remember { mutableStateOf("") }
-            val email = remember { mutableStateOf("") }
-            val password = remember { mutableStateOf("") }
-            val confirmPassword = remember { mutableStateOf("") }
-
             var isShowPassword by remember { mutableStateOf(false) }
-            var isShowConfirmPassword by remember { mutableStateOf(false) }
 
-            InputField(
-                label = "Họ và tên",
-                onValueChange = { fullName.value = it },
-                valueTextField = fullName.value,
-                placehodlerText = "Vui lòng nhập họ và tên",
-            )
             InputField(
                 label = "Số điện thoại",
-                onValueChange = { phoneNumber.value = it },
-                valueTextField = phoneNumber.value,
-                placehodlerText = "Vui lòng nhập số điện thoại",
+                onValueChange = { phoneNumber = it },
+                valueTextField = phoneNumber,
+                placeholderText = "Vui lòng nhập số điện thoại"
             )
-            InputField(
-                label = "Email",
-                onValueChange = { email.value = it },
-                valueTextField = email.value,
-                placehodlerText = "Vui lòng nhập email",
-            )
+
             InputField(
                 label = "Mật khẩu",
-                onValueChange = { password.value = it },
-                valueTextField = password.value,
-                placehodlerText = "Vui lòng nhập mật khẩu",
-                trailingIcon = {
-                    IconButton(
-                        onClick = {isShowConfirmPassword = !isShowConfirmPassword}
-                    ) {
-                        Icon(
-                            if (isShowConfirmPassword) painterResource(R.drawable.ic_open_eye) else painterResource(R.drawable.ic_close_eye),
-                            tint = Color(0xFF777779),
-                            contentDescription = ""
-                        )
-                    }
-                },
-                visualTransformation = if(isShowConfirmPassword) VisualTransformation.None else PasswordVisualTransformation()
-            )
-            InputField(
-                label = "Xác nhận mật khẩu",
-                onValueChange = { confirmPassword.value = it },
-                valueTextField = confirmPassword.value,
-                placehodlerText = "Vui lòng xác nhận mật khẩu",
+                onValueChange = { password = it },
+                valueTextField = password,
+                placeholderText = "Vui lòng nhập mật khẩu",
                 trailingIcon = {
                     IconButton(
                         onClick = {isShowPassword = !isShowPassword}
                     ) {
                         Icon(
-                            if (isShowPassword) painterResource(R.drawable.ic_open_eye) else painterResource(R.drawable.ic_close_eye),
+                            if (isShowPassword) painterResource(R.drawable.ic_open_eye) else painterResource(
+                                R.drawable.ic_close_eye),
                             tint = Color(0xFF777779),
                             contentDescription = ""
                         )
                     }
                 },
-                visualTransformation = if(isShowPassword) VisualTransformation.None else PasswordVisualTransformation()
+                visualTransformation = if(isShowPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                modifier = Modifier
+                    .padding(top = 12.dp)
             )
         }
-        val annotatedString = buildAnnotatedString {
-            append("Đồng ý với ")
-            withStyle(style = SpanStyle(color = Color(0xFFB4B4B4), fontWeight = FontWeight.Bold)) {
-                append("Điều khoản dịch vụ\n")
-            }
-            append(" và ")
-            withStyle(style = SpanStyle(color = Color(0xFFB4B4B4), fontWeight = FontWeight.Bold)) {
-                append("Chính sách bảo mật")
-            }
-            append(" của ChefMate.")
-        }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
+
+        Column(
             modifier = Modifier
-                .constrainAs(agreeRef) {
+                .padding(top = 16.dp)
+                .constrainAs(btnRef) {
                     top.linkTo(contentRef.bottom)
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
                 }
         ) {
-            Checkbox(
-                checked = isConfirm,
-                colors = CheckboxDefaults.colors(
-                    checkedColor = Color(0xFFF97316),
-                    uncheckedColor = Color(0xFFB4B4B4)
+            Button(
+                onClick = {
+                    if (phoneNumber != "" && password != "") {
+                        coroutineScope.launch {
+                            isLoading = true
+                            val response = ApiClient.login(phone = phoneNumber, password = password)
+                            Log.d("Login", "Response: $response")
+                            if (response != null) {
+                                if (response.data != null) {
+                                    DataStoreHelper.saveLoginState(
+                                        context = context,
+                                        isLoggedIn = true,
+                                        userId = response.data.userId,
+                                        username = response.data.fullName,
+                                        email = response.data.email,
+                                        phoneNumber = response.data.phone,
+                                        followCount = response.data.followCount,
+                                        recipeCount = response.data.recipeCount,
+                                        createdAt = response.data.createdAt
+                                    )
+                                    navController.navigate("mainAct") {
+                                        popUpTo("signIn") {
+                                            inclusive = true
+                                        }
+                                    }
+                                    isLoading = false
+                                } else {
+                                    isLoading = false
+                                    Toast.makeText(context, "Đăng nhập thất bại. Vui lòng thử lại", Toast.LENGTH_SHORT).show()
+                                }
+                            } else {
+                                isLoading = false
+                                Toast.makeText(context, "Đăng nhập thất bại. Vui lòng thử lại!", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } else {
+                        isLoading = false
+                        Toast.makeText(context, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFF97316)
                 ),
-                onCheckedChange = { isConfirm = it }
-            )
-            Text(
-                text =  annotatedString,
-                fontSize = 14.sp,
-
-            )
+                modifier = Modifier
+                    .width(242.dp)
+            ) {
+                Text(
+                    text = "Đăng nhập",
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                    color = Color(0xFFFFFFFF),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .padding(top = 12.dp)
+            ) {
+                Text(
+                    text = "Bạn chưa có tài khoản?",
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                    color = Color(0xFF777779),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = "Đăng ký ngay",
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                    color = Color(0xFFF97316),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .padding(start = 6.dp)
+                        .clickable(
+                            onClick = {
+                                navController.navigate("signUp") {
+                                    popUpTo("signIn") {
+                                        inclusive = true
+                                    }
+                                }
+                            }
+                        )
+                )
+            }
         }
-        Button(
-            onClick = {
-
-            },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFF97316)
-            ),
-            modifier = Modifier
-                .padding(top = 15.dp)
-                .width(242.dp)
-                .constrainAs(btnRef) {
-                    top.linkTo(agreeRef.bottom)
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                }
-        ) {
-            Text(
-                text = "Đăng ký"
-            )
+        if (isLoading) {
+            CircularLoading()
         }
-    }
-}
-
-@Composable
-fun InputField(label: String, valueTextField: String, placehodlerText: String, onValueChange: (String) -> Unit, trailingIcon: @Composable (() -> Unit)? = null, visualTransformation: VisualTransformation = VisualTransformation.None) {
-    Column {
-        Text(
-            text = label,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier
-                .padding(top = 16.dp)
-        )
-        CustomTextField(
-            value = valueTextField,
-            onValueChange = onValueChange,
-            placeholder = placehodlerText,
-            trailingIcon = trailingIcon,
-            visualTransformation = visualTransformation,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp)
-        )
     }
 }
 
 @Preview
 @Composable
 fun SignInScreenPreview() {
-    SignInActivity()
+    SignInScreen(rememberNavController())
 }
