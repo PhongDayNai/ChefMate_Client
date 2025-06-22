@@ -127,10 +127,11 @@ fun Header(
     text: String? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
+    modifier: Modifier = Modifier
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(brush = AppConstant.headerGradient)
             .padding(16.dp),
@@ -624,19 +625,22 @@ fun Preview() {
             .fillMaxSize()
             .background(color = Color(0xFFFFFFFF))
     ) {
-        Header("Nấu ngon") {
-            IconButton(
-                onClick = {}
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_bell),
-                    contentDescription = "Notification",
-                    tint = Color(0xFFFFFFFF),
-                    modifier = Modifier
-                        .size(24.dp)
-                )
+        Header(
+            text = "Nấu ngon",
+            trailingIcon = {
+                IconButton(
+                    onClick = {}
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_bell),
+                        contentDescription = "Notification",
+                        tint = Color(0xFFFFFFFF),
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
+                }
             }
-        }
+        )
         CustomTextField(
             value = searchValue,
             onValueChange = { searchValue = it },
