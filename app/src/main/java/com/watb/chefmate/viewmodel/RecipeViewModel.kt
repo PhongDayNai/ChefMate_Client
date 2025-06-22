@@ -205,6 +205,9 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         return repository.getRecipeById(recipeId).map { it?.toRecipe() }
     }
 
+    fun getRecipeByName(name: String): Flow<Recipe?> {
+        return repository.getRecipeByName(name).map { it?.toRecipe() }
+    }
 
     fun parseIngredientsJson(jsonString: String): List<Pair<String, Pair<Int, String>>> {
         val gson = Gson()

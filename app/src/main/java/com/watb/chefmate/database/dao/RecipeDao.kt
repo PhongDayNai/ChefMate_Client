@@ -29,6 +29,9 @@ interface RecipeDao {
 
     @Query("SELECT * FROM Recipes WHERE recipeId IN (:ids)")
     fun getRecipesByIds(ids: List<Int>): Flow<List<RecipeEntity>>
+
+    @Query("SELECT * FROM recipes WHERE recipeName LIKE :name")
+    fun getRecipeByName(name: String): Flow<RecipeEntity?>
 }
 
 @Dao

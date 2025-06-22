@@ -27,6 +27,10 @@ class RecipeRepository(
 
     suspend fun getRecipesByIds(ids: List<Int>) = recipeDao.getRecipesByIds(ids)
 
+    fun getRecipeByName(name: String): Flow<RecipeEntity?> {
+        return recipeDao.getRecipeByName(name)
+    }
+
     suspend fun deleteRecipeById(recipeId: Int) {
         recipeDao.deleteRecipeById(recipeId)
     }

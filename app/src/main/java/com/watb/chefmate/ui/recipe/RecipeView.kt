@@ -49,6 +49,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -118,6 +119,8 @@ fun RecipeViewScreen(
     val coroutineScope = rememberCoroutineScope()
     val lazyListState = rememberLazyListState()
 
+    val recipeState by recipeViewModel.getRecipeByName(recipe.recipeName).collectAsState(initial = null)
+
     var markPainter by remember { mutableStateOf(R.drawable.ic_mark) }
     var isLiked by remember { mutableStateOf(recipe.isLiked) }
     var likeQuantity by remember { mutableStateOf(recipe.likeQuantity) }
@@ -152,17 +155,27 @@ fun RecipeViewScreen(
     )
 
     LaunchedEffect(Unit) {
-        recipe.recipeId?.let {
-            val response = ApiClient.increaseViewCount(recipe.recipeId)
-            if (response != null) {
-                if (response.success) {
-                    if (response.data == true) {
-                        viewQuantity += 1
-                    } else {
-                        Log.e("RecipeViewScreen", "Error: ${response.message}")
+        if (!isHistory) {
+            recipe.recipeId?.let {
+                val response = ApiClient.increaseViewCount(recipe.recipeId)
+                if (response != null) {
+                    if (response.success) {
+                        if (response.data != null) {
+                            viewQuantity = response.data.count
+                        } else {
+                            Log.e("RecipeViewScreen", "Error: ${response.message}")
+                        }
                     }
                 }
             }
+        }
+    }
+
+    LaunchedEffect(recipeState) {
+        Log.d("RecipeViewScreen", "recipeName: ${recipe.recipeName}")
+        Log.d("RecipeViewScreen", "recipeState: $recipeState")
+        if (recipeState != null) {
+            markPainter = R.drawable.ic_mark_filled
         }
     }
 
@@ -266,7 +279,7 @@ fun RecipeViewScreen(
                         onClick = {
                             val shareText = """
 ${recipe.recipeName}
-${recipe.likeQuantity} yêu , ${recipe.viewCount} lượt xem, ${recipe.comments.size} bình luận, ${recipe.cookingTime} chế biến
+${recipe.likeQuantity} yêu thích, ${recipe.viewCount} lượt xem, ${recipe.comments.size} bình luận, ${recipe.cookingTime} chế biến
 
 Nguyên liệu:
 ${recipe.ingredients.joinToString("\n") { ingredient ->
@@ -318,7 +331,10 @@ Tác giả: ${recipe.userName}
             modifier = Modifier
                 .fillMaxWidth(0.9f)
         ) {
-            CircularProgressIndicator()
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .size(32.dp)
+            )
         }
         AnimatedVisibility(
             visible = !isExpanded,
@@ -417,9 +433,9 @@ Tác giả: ${recipe.userName}
                                     val response = ApiClient.likeRecipe(recipeId = recipe.recipeId)
                                     if (response != null) {
                                         if (response.success) {
-                                            if (response.data == true) {
+                                            if (response.data != null) {
                                                 isLiked = true
-                                                likeQuantity += 1
+                                                likeQuantity = response.data.count
                                             } else {
                                                 Log.e("RecipeViewScreen", "Error: ${response.message}")
                                                 Toast.makeText(context, "Bạn đã yêu thích công thức này", Toast.LENGTH_SHORT).show()
@@ -627,17 +643,12 @@ Tác giả: ${recipe.userName}
                                     val response = ApiClient.commentRecipe(recipeId = recipe.recipeId, content = commentContent)
                                     if (response != null) {
                                         if (response.success) {
-                                            if (response.data == true) {
-                                                comments.add(
-                                                    CommentItem(
-                                                        commentId = -1,
-                                                        userId = 1,
-                                                        userName = "Người dùng",
-                                                        content = commentContent,
-                                                        createdAt = CommonHelper.toIso8601UTC(Date())
-                                                    )
-                                                )
-                                                commentQuantity += 1
+                                            if (response.data != null) {
+                                                commentQuantity = response.data.count
+                                                if (response.data.comments != null) {
+                                                    comments.clear()
+                                                    comments.addAll(response.data.comments)
+                                                }
                                             } else {
                                                 Log.e("RecipeViewScreen", "Error: ${response.message}")
                                                 Toast.makeText(context, "Vui lòng thử lại", Toast.LENGTH_SHORT).show()
