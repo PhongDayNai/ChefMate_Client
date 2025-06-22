@@ -42,7 +42,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import com.watb.chefmate.R
-import com.watb.chefmate.data.AppConstant
 import com.watb.chefmate.ui.theme.CustomTextField
 
 @Composable
@@ -145,7 +144,7 @@ fun SignInActivity() {
                         onClick = {isShowConfirmPassword = !isShowConfirmPassword}
                     ) {
                         Icon(
-                            if (isShowConfirmPassword) painterResource(R.drawable.ic_openeye) else painterResource(R.drawable.ic_closeeye),
+                            if (isShowConfirmPassword) painterResource(R.drawable.ic_open_eye) else painterResource(R.drawable.ic_close_eye),
                             tint = Color(0xFF777779),
                             contentDescription = ""
                         )
@@ -163,7 +162,7 @@ fun SignInActivity() {
                         onClick = {isShowPassword = !isShowPassword}
                     ) {
                         Icon(
-                            if (isShowPassword) painterResource(R.drawable.ic_openeye) else painterResource(R.drawable.ic_closeeye),
+                            if (isShowPassword) painterResource(R.drawable.ic_open_eye) else painterResource(R.drawable.ic_close_eye),
                             tint = Color(0xFF777779),
                             contentDescription = ""
                         )
