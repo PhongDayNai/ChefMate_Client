@@ -133,8 +133,13 @@ data class IncreaseRequest(
 
 data class InteractionResponse(
     val success: Boolean,
-    val data: Boolean? = null,
+    val data: InteractionData? = null,
     val message: String? = null
+)
+
+data class InteractionData(
+    val count: Int,
+    val comments: List<CommentItem>? = null
 )
 
 data class IngredientInput(
