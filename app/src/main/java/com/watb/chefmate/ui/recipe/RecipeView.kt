@@ -5,10 +5,16 @@ import android.content.Intent
 import android.icu.text.SimpleDateFormat
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,6 +40,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -73,6 +80,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
@@ -84,13 +92,17 @@ import com.watb.chefmate.data.CommentItem
 import com.watb.chefmate.data.CookingStep
 import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
+import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.database.entities.TagEntity
 import com.watb.chefmate.helper.CommonHelper
+import com.watb.chefmate.repository.RecipeRepository
+import com.watb.chefmate.viewmodel.RecipeViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.Locale
+import kotlin.text.isNotBlank
 
 @SuppressLint("MemberExtensionConflict")
 @OptIn(FlowPreview::class)
@@ -98,7 +110,8 @@ import java.util.Locale
 fun RecipeViewScreen(
     navController: NavController,
     recipe: Recipe,
-    isHistory: Boolean = false
+    isHistory: Boolean = false,
+    recipeViewModel: RecipeViewModel
 ) {
     val context = LocalContext.current
     val screenWidth = LocalConfiguration.current.screenWidthDp
@@ -111,6 +124,7 @@ fun RecipeViewScreen(
     var commentQuantity by remember { mutableStateOf(recipe.comments.size) }
     var viewQuantity by remember { mutableStateOf(recipe.viewCount) }
     val comments = remember { recipe.comments.toMutableStateList() }
+    var isLoading by remember { mutableStateOf(false) }
 
     var selectedPageManual by remember { mutableIntStateOf(-1) }
 
@@ -188,7 +202,51 @@ fun RecipeViewScreen(
                     IconButton(
                         onClick = {
                             if (markPainter == R.drawable.ic_mark) {
-                                markPainter = R.drawable.ic_mark_filled
+                                if (!isHistory) {
+                                    if (recipe.image.startsWith("/")) {
+                                        isLoading = true
+                                        ApiClient.downloadAndSaveImage(
+                                            context = context,
+                                            coroutineScope = coroutineScope,
+                                            imageUrl = "${ApiConstant.MAIN_URL}${recipe.image}",
+                                            onResult = { status ->
+                                                if (status.startsWith("Success")) {
+                                                    val ingredientsToSave = recipe.ingredients.filter { it.ingredientName.isNotBlank() }.map {
+                                                        Pair(it.ingredientName, Pair(it.weight, it.unit))
+                                                    }
+                                                    val stepsToSave = recipe.cookingSteps.filter { it.stepContent.isNotBlank() }.map {
+                                                        Pair(it.indexStep ?: 0, it.stepContent)
+                                                    }
+                                                    val tags = recipe.tags.map { tag ->
+                                                        tag.tagName
+                                                    }
+
+                                                    coroutineScope.launch {
+                                                        recipeViewModel.addRecipe(
+                                                            recipeName = recipe.recipeName,
+                                                            imageUri = status.substringAfter("Success: "),
+                                                            userName = recipe.userName,
+                                                            isPublic = false,
+                                                            likeQuantity = recipe.likeQuantity,
+                                                            cookingTime = recipe.cookingTime,
+                                                            ration = recipe.ration,
+                                                            viewCount = recipe.viewCount,
+                                                            createdAt = recipe.createdAt,
+                                                            ingredients = ingredientsToSave,
+                                                            steps = stepsToSave,
+                                                            tags = tags,
+                                                        )
+                                                        markPainter = R.drawable.ic_mark_filled
+                                                        isLoading = false
+                                                    }
+                                                } else {
+                                                    isLoading = false
+                                                    Toast.makeText(context, "Vui lòng thử lại", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
                             } else {
                                 Toast.makeText(context, "Đã lưu", Toast.LENGTH_SHORT).show()
                             }
@@ -249,24 +307,36 @@ Tác giả: ${recipe.userName}
                         )
                     }
                 }
-            }
-        )
-        Box(
+            },
             modifier = Modifier
-                .animateContentSize()
+                .padding(bottom = 8.dp)
+        )
+        AnimatedVisibility(
+            visible = isLoading,
+            enter = fadeIn() + slideInVertically() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
         ) {
-            if (!isExpanded) {
-                Image(
-                    painter = if (recipe.image.startsWith("/")) rememberAsyncImagePainter("${ApiConstant.MAIN_URL}${recipe.image}") else rememberAsyncImagePainter(model = recipe.image),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .padding(top = 16.dp)
-                        .fillMaxWidth(0.9f)
-                        .height(260.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                )
-            }
+            CircularProgressIndicator()
+        }
+        AnimatedVisibility(
+            visible = !isExpanded,
+            enter = fadeIn() + slideInVertically() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+        ) {
+            Image(
+                painter = if (recipe.image.startsWith("/")) rememberAsyncImagePainter("${ApiConstant.MAIN_URL}${recipe.image}") else rememberAsyncImagePainter(model = recipe.image),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .padding(top = 16.dp)
+                    .fillMaxWidth(0.9f)
+                    .height(260.dp)
+                    .clip(RoundedCornerShape(16.dp))
+            )
         }
         Text(
             text = recipe.recipeName,
@@ -274,7 +344,7 @@ Tác giả: ${recipe.userName}
             fontSize = 24.sp,
             fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
             modifier = Modifier
-                .padding(top = 16.dp)
+                .padding(top = 8.dp)
                 .fillMaxWidth(0.9f)
         )
         Row(
@@ -910,7 +980,13 @@ fun Modifier.bottomDashedBorder(
 @Composable
 fun RecipeViewPreview() {
     val navController = rememberNavController()
-
+    val database = AppDatabase.getDatabase(LocalContext.current)
+    val viewModel: RecipeViewModel = viewModel(
+        factory = RecipeViewModel.Factory(
+            repository = RecipeRepository(database.recipeDao(), database.ingredientDao(), database.tagDao())
+        )
+    )
+    
     val comments = listOf(
         CommentItem(
             commentId = 1,
@@ -961,7 +1037,7 @@ fun RecipeViewPreview() {
         userId = 0
     )
 
-    RecipeViewScreen(navController, recipe, false)
+    RecipeViewScreen(navController, recipe, false, recipeViewModel = viewModel)
 //    Column(
 //        horizontalAlignment = Alignment.CenterHorizontally,
 //        modifier = Modifier
