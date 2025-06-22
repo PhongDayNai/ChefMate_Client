@@ -14,6 +14,7 @@ import com.google.gson.reflect.TypeToken
 import com.watb.chefmate.api.ApiClient
 import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.database.entities.IngredientEntity
+import com.watb.chefmate.database.entities.TagEntity
 import com.watb.chefmate.database.entities.toRecipe
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -56,21 +57,41 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         }
     }
 
-    fun getAllIngredientsFromServer() {
+    fun getIATDataFromServer() {
         viewModelScope.launch {
-            val response = ApiClient.getAllIngredients()
-            response?.data?.let {
-                val localIngredients: Flow<List<IngredientEntity>?> = getAllIngredients()
-                if (localIngredients.first() != null) {
-                    if (response.data.size != localIngredients.first()!!.size) {
-                        deleteAllIngredients()
+            launch {
+                val ingredientsResponse = ApiClient.getAllIngredients()
+                ingredientsResponse?.data?.let {
+                    val localIngredients: Flow<List<IngredientEntity>?> = getAllIngredients()
+                    if (localIngredients.first() != null) {
+                        if (ingredientsResponse.data.size != localIngredients.first()!!.size) {
+                            deleteAllIngredients()
+                            it.forEach { ingredient ->
+                                insertIngredient(ingredient)
+                            }
+                        }
+                    } else {
                         it.forEach { ingredient ->
                             insertIngredient(ingredient)
                         }
                     }
-                } else {
-                    it.forEach { ingredient ->
-                        insertIngredient(ingredient)
+                }
+            }
+            launch {
+                val tagsResponse = ApiClient.getAllTags()
+                tagsResponse?.data?.let {
+                    val localTags: Flow<List<TagEntity>?> = getAllTags()
+                    if (localTags.first() != null) {
+                        if (tagsResponse.data.size != localTags.first()!!.size) {
+                            deleteAllTags()
+                            it.forEach { tag ->
+                                insertTag(tag)
+                            }
+                        }
+                    } else {
+                        it.forEach { tag ->
+                            insertTag(tag)
+                        }
                     }
                 }
             }
@@ -207,6 +228,30 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
     fun deleteAllIngredients() {
         viewModelScope.launch {
             repository.deleteAllIngredients()
+        }
+    }
+
+    fun insertTag(tag: TagEntity) {
+        viewModelScope.launch {
+            repository.insertTag(tag)
+        }
+    }
+
+    fun getAllTags(): Flow<List<TagEntity>?> {
+        return repository.getAllTags()
+    }
+
+    fun getTagByName(name: String): Flow<TagEntity?> {
+        return repository.getTagByName(name)
+    }
+
+    fun getTagById(tagId: Int): Flow<TagEntity?> {
+        return repository.getTagById(tagId)
+    }
+
+    fun deleteAllTags() {
+        viewModelScope.launch {
+            repository.deleteAllTags()
         }
     }
 
