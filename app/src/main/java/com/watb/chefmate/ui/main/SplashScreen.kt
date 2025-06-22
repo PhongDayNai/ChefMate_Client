@@ -11,12 +11,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -27,10 +29,17 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.navigation.NavController
 import com.watb.chefmate.R
 import com.watb.chefmate.api.ApiConstant
+import com.watb.chefmate.helper.DataStoreHelper
 
 @Composable
 fun SplashScreen(navController: NavController) {
+    val context = LocalContext.current
     var isShowDialog by remember { mutableStateOf(true) }
+    var isLoggedIn by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        isLoggedIn = DataStoreHelper.isLoggedIn(context = context)
+    }
 
     Box(
         contentAlignment = Alignment.Center,
@@ -42,9 +51,17 @@ fun SplashScreen(navController: NavController) {
                 if (ApiConstant.MAIN_URL == "") {
                     isShowDialog = true
                 } else {
-                    navController.navigate("mainAct") {
-                        popUpTo("splash") {
-                            inclusive = true
+                    if (isLoggedIn) {
+                        navController.navigate("mainAct") {
+                            popUpTo("splash") {
+                                inclusive = true
+                            }
+                        }
+                    } else {
+                        navController.navigate("signIn") {
+                            popUpTo("splash") {
+                                inclusive = true
+                            }
                         }
                     }
                 }
