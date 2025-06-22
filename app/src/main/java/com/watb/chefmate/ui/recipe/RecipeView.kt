@@ -444,7 +444,7 @@ Tác giả: ${recipe.userName}
                 .fillMaxWidth(0.9f)
         ) {
             Text(
-                text = "Thể loại: ",
+                text = "Tag${if (recipe.tags.size > 1) "s" else ""}: ",
                 color = Color(0xFF555555),
                 fontSize = 14.sp,
                 fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),

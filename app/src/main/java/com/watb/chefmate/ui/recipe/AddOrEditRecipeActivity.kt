@@ -9,16 +9,22 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -36,6 +42,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
@@ -63,15 +70,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.core.net.toUri
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
 import com.watb.chefmate.api.ApiClient
@@ -82,7 +95,10 @@ import com.watb.chefmate.data.IngredientInput
 import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.StepInput
 import com.watb.chefmate.data.TagData
+import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.database.entities.IngredientEntity
+import com.watb.chefmate.database.entities.TagEntity
+import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -111,6 +127,8 @@ fun AddOrEditRecipeScreen(
     val selectedUnit = remember { mutableStateOf("Phút") }
     val userName = remember { mutableStateOf("") }
     val tagsInput = remember { mutableStateOf("") }
+    var isShownAddTagDialog by remember { mutableStateOf(false) }
+    var selectedTag by remember { mutableStateOf("") }
 
     val ingredients = remember {
         mutableStateListOf(IngredientInput("", "", ""))
@@ -119,7 +137,7 @@ fun AddOrEditRecipeScreen(
         mutableStateListOf(StepInput(1, ""))
     }
     val tags = remember {
-        mutableStateListOf("")
+        mutableStateListOf<String>()
     }
 
     val galleryLauncher = rememberLauncherForActivityResult(
@@ -236,6 +254,7 @@ fun AddOrEditRecipeScreen(
                 fontSize = 20.sp,
                 color = Color(0xFFFFFFFF),
                 fontWeight = FontWeight(600),
+                fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
                 modifier = Modifier
                     .padding(start = 4.dp)
             )
@@ -266,7 +285,72 @@ fun AddOrEditRecipeScreen(
                     .align(Alignment.CenterHorizontally)
                     .clickable { galleryLauncher.launch(arrayOf("image/*")) }
             )
-
+            Text(
+                text = "Tags",
+                fontWeight = FontWeight(600),
+                fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                fontSize = 16.sp,
+                modifier = Modifier
+                    .padding(top = 12.dp)
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .fillMaxWidth()
+                    .border(
+                        width = 1.dp,
+                        color = Color(0xFFE0E0E0),
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                    .padding(horizontal = 8.dp, vertical = 8.dp)
+            ) {
+                IconButton(
+                    onClick = { isShownAddTagDialog = true },
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .height(32.dp)
+                ) {
+                    Text(
+                        text = "Thêm",
+                        color = Color(0xFFFB923C),
+                        fontWeight = FontWeight(600),
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                        fontSize = 14.sp,
+                        modifier = Modifier
+                    )
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .horizontalScroll(rememberScrollState())
+                ) {
+                    if (tags.isEmpty()) {
+                        Text(
+                            text = "Chưa nhập tag nào",
+                            color = Color(0xFF555555),
+                            fontWeight = FontWeight(500),
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                            fontSize = 14.sp,
+                            modifier = Modifier
+                        )
+                    } else {
+                        tags.forEach { tag ->
+                            Text(
+                                text = tag,
+                                color = Color(0xFF000000),
+                                fontWeight = FontWeight(500),
+                                fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                                fontSize = 14.sp,
+                                modifier = Modifier
+                                    .padding(start = 8.dp)
+                                    .background(color = Color(0xFFFDBA74), shape = CircleShape)
+                                    .padding(6.dp)
+                            )
+                        }
+                    }
+                }
+            }
             OutlinedTextField(
                 value = nameRecipe.value,
                 onValueChange = { nameRecipe.value = it },
@@ -288,33 +372,29 @@ fun AddOrEditRecipeScreen(
                 modifier = Modifier
                     .padding(top = 12.dp)
                     .fillMaxWidth()
-                    .padding(top = 8.dp)
             )
-
-            OutlinedTextField(
-                value = tagsInput.value,
-                onValueChange = { tagsInput.value = it },
-                label = { Text(text = "Thể loại") },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFFE0E0E0),
-                    unfocusedBorderColor = Color(0xFFE0E0E0)
-                ),
-                shape = RoundedCornerShape(10.dp),
-                maxLines = 1,
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Next
-                ),
-                keyboardActions = KeyboardActions(
-                    onNext = {
-                        cookTimeFocusRequester.requestFocus()
-                    }
-                ),
-                modifier = Modifier
-                    .padding(top = 12.dp)
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-            )
-
+//            OutlinedTextField(
+//                value = tagsInput.value,
+//                onValueChange = { tagsInput.value = it },
+//                label = { Text(text = "Thể loại") },
+//                colors = OutlinedTextFieldDefaults.colors(
+//                    focusedBorderColor = Color(0xFFE0E0E0),
+//                    unfocusedBorderColor = Color(0xFFE0E0E0)
+//                ),
+//                shape = RoundedCornerShape(10.dp),
+//                maxLines = 1,
+//                keyboardOptions = KeyboardOptions(
+//                    imeAction = ImeAction.Next
+//                ),
+//                keyboardActions = KeyboardActions(
+//                    onNext = {
+//                        cookTimeFocusRequester.requestFocus()
+//                    }
+//                ),
+//                modifier = Modifier
+//                    .padding(top = 12.dp)
+//                    .fillMaxWidth()
+//            )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -383,6 +463,7 @@ fun AddOrEditRecipeScreen(
                 Text(
                     text = "Trạng thái",
                     fontWeight = FontWeight(600),
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
                     fontSize = 16.sp
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -412,6 +493,7 @@ fun AddOrEditRecipeScreen(
                 Text(
                     text = "Nguyên liệu",
                     fontWeight = FontWeight(600),
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
                     fontSize = 16.sp,
                 )
 
@@ -443,7 +525,11 @@ fun AddOrEditRecipeScreen(
                                     },
                                     modifier = Modifier
                                         .weight(1f)
-                                        .focusRequester(ingredientFocusRequesters.getOrNull(nameIndex) ?: FocusRequester())
+                                        .focusRequester(
+                                            ingredientFocusRequesters.getOrNull(
+                                                nameIndex
+                                            ) ?: FocusRequester()
+                                        )
                                 )
                                 if (ingredients.size > 1) {
                                     IconButton(
@@ -494,7 +580,11 @@ fun AddOrEditRecipeScreen(
                                     modifier = Modifier
                                         .padding(start = 5.dp, end = 5.dp)
                                         .weight(1f)
-                                        .focusRequester(ingredientFocusRequesters.getOrNull(weightIndex) ?: FocusRequester())
+                                        .focusRequester(
+                                            ingredientFocusRequesters.getOrNull(
+                                                weightIndex
+                                            ) ?: FocusRequester()
+                                        )
                                 )
                                 TextField(
                                     value = ingredient.unit,
@@ -514,7 +604,11 @@ fun AddOrEditRecipeScreen(
                                     ),
                                     modifier = Modifier
                                         .weight(1f)
-                                        .focusRequester(ingredientFocusRequesters.getOrNull(unitIndex) ?: FocusRequester())
+                                        .focusRequester(
+                                            ingredientFocusRequesters.getOrNull(
+                                                unitIndex
+                                            ) ?: FocusRequester()
+                                        )
                                 )
                             }
                         }
@@ -529,7 +623,8 @@ fun AddOrEditRecipeScreen(
                             ingredients.add(IngredientInput("", "", ""))
                             coroutineScope.launch {
                                 scrollState.animateScrollTo(scrollState.maxValue)
-                                ingredientFocusRequesters.getOrNull((ingredients.size - 1) * 3)?.requestFocus()
+                                ingredientFocusRequesters.getOrNull((ingredients.size - 1) * 3)
+                                    ?.requestFocus()
                             }
                         }
                 ) {
@@ -551,6 +646,7 @@ fun AddOrEditRecipeScreen(
                 Text(
                     text = "Các bước nấu",
                     fontWeight = FontWeight(600),
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
                     fontSize = 16.sp,
                     modifier = Modifier
                         .padding(bottom = 12.dp)
@@ -762,6 +858,30 @@ fun AddOrEditRecipeScreen(
                 )
             }
         }
+        if (isShownAddTagDialog) {
+            AddTagDialog(
+                onDismiss = {
+                    isShownAddTagDialog = false
+                    selectedTag = ""
+                },
+                selectedTag = selectedTag,
+                tags = tags,
+                onTagSelected = { selectedTag = it },
+                onAddNewTag = {
+                    if (selectedTag.isNotBlank()) {
+                        if (!tags.contains(selectedTag)) {
+                            tags.add(selectedTag)
+                            selectedTag = ""
+                        } else {
+                            Toast.makeText(context, "Tag đã được chọn", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Toast.makeText(context, "Vui lòng nhập tag", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                recipeViewModel = recipeViewModel
+            )
+        }
     }
 }
 
@@ -885,17 +1005,21 @@ fun IngredientDropdown(
 
         ExposedDropdownMenu(
             expanded = expanded.value,
-            onDismissRequest = { expanded.value = false }
+            onDismissRequest = { expanded.value = false },
+            modifier = Modifier
+                .heightIn(max = 300.dp)
         ) {
             if (ingredientsSearch.isEmpty()) {
-                ingredients.forEach { ingredient ->
-                    DropdownMenuItem(
-                        text = { Text(ingredient.ingredientName) },
-                        onClick = {
-                            onIngredientSelected(ingredient.ingredientName)
-                            expanded.value = false
-                        }
-                    )
+                if (selectedIngredient == "") {
+                    ingredients.forEach { ingredient ->
+                        DropdownMenuItem(
+                            text = { Text(ingredient.ingredientName) },
+                            onClick = {
+                                onIngredientSelected(ingredient.ingredientName)
+                                expanded.value = false
+                            }
+                        )
+                    }
                 }
             } else {
                 ingredientsSearch.forEach { ingredient ->
@@ -912,15 +1036,249 @@ fun IngredientDropdown(
     }
 }
 
+@Composable
+fun AddTagDialog(
+    onDismiss: () -> Unit = {},
+    selectedTag: String,
+    tags: List<String>,
+    onTagSelected: (String) -> Unit,
+    onAddNewTag: () -> Unit,
+    recipeViewModel: RecipeViewModel,
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+    ) {
+        ConstraintLayout(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            val (contentRef, closeButtonRef) = createRefs()
+
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(color = Color(0xFFFFFFFF), shape = RoundedCornerShape(16.dp))
+                    .constrainAs(contentRef) {
+                        top.linkTo(parent.top)
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                    }
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = "Thêm tag",
+                    fontWeight = FontWeight(600),
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                    fontSize = 18.sp,
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                )
+                TagDropdown(
+                    selectedTag = selectedTag,
+                    onTagSelected = onTagSelected,
+                    recipeViewModel = recipeViewModel,
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .fillMaxWidth()
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                ) {
+                    if (tags.isEmpty()) {
+                        Text(
+                            text = "Chưa nhập tag nào",
+                            color = Color(0xFF555555),
+                            fontWeight = FontWeight(500),
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                            fontSize = 14.sp,
+                            modifier = Modifier
+                        )
+                    } else {
+                        tags.forEach { tag ->
+                            Text(
+                                text = tag,
+                                color = Color(0xFF000000),
+                                fontWeight = FontWeight(500),
+                                fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                                fontSize = 14.sp,
+                                modifier = Modifier
+                                    .padding(start = 8.dp)
+                                    .background(color = Color(0xAFFDBA74), shape = CircleShape)
+                                    .padding(6.dp)
+                            )
+                        }
+                    }
+                }
+                Button(
+                    onClick = onAddNewTag,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFB923C)
+                    ),
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .align(Alignment.End)
+                ) {
+                    Text(text = "Thêm")
+                }
+            }
+
+            Button(
+                onClick = onDismiss,
+                contentPadding = PaddingValues(0.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFFFFFF)
+                ),
+                modifier = Modifier
+                    .size(36.dp)
+                    .constrainAs(closeButtonRef) {
+                        top.linkTo(contentRef.bottom, margin = 24.dp)
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                    }
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_cancel),
+                    contentDescription = "Close",
+                    tint = Color(0xFFFB923C),
+                    modifier = Modifier
+                        .size(24.dp)
+                )
+            }
+        }
+    }
+}
+
+@SuppressLint("MemberExtensionConflict")
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TagDropdown(
+    selectedTag: String,
+    onTagSelected: (String) -> Unit,
+    recipeViewModel: RecipeViewModel,
+    modifier: Modifier = Modifier
+) {
+    val expanded = remember { mutableStateOf(false) }
+    val tags = remember { mutableStateListOf<TagEntity>() }
+    val tagsSearch = remember { mutableStateListOf<TagEntity>() }
+
+    LaunchedEffect(Unit) {
+        recipeViewModel.getAllTags().collect { list ->
+            list?.let {
+                tags.clear()
+                tags.addAll(it)
+                tagsSearch.clear()
+                tagsSearch.addAll(it)
+            }
+        }
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded.value,
+        onExpandedChange = {
+            if (tagsSearch.isNotEmpty()) {
+                expanded.value = true
+            } else {
+                expanded.value = tags.isNotEmpty()
+            }
+        },
+        modifier = modifier
+//            .heightIn(max = 200.dp)
+    ) {
+        OutlinedTextField(
+            value = selectedTag,
+            onValueChange = { newValue ->
+                onTagSelected(newValue)
+
+                tagsSearch.clear()
+                tagsSearch.addAll(
+                    tags.filter {
+                        it.tagName.contains(newValue, ignoreCase = true)
+                    }
+                )
+
+                expanded.value = true
+            },
+            label = { Text(text = "Tên tag", fontSize = 12.sp) },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color(0xFFE0E0E0),
+                unfocusedBorderColor = Color(0xFFE0E0E0),
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = { onTagSelected(selectedTag) }
+            ),
+            maxLines = 1,
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Done
+            ),
+            shape = RoundedCornerShape(10.dp),
+            modifier = Modifier
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, true)
+                .fillMaxWidth()
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded.value,
+            onDismissRequest = { expanded.value = false },
+            modifier = Modifier
+//                .fillMaxWidth()
+                .heightIn(max = 300.dp)
+        ) {
+            if (tagsSearch.isEmpty()) {
+                if (selectedTag == "") {
+                    tags.forEach { tag ->
+                        DropdownMenuItem(
+                            text = { Text(tag.tagName) },
+                            onClick = {
+                                onTagSelected(tag.tagName)
+                                expanded.value = false
+                            }
+                        )
+                    }
+                }
+            } else {
+                tagsSearch.forEach { tag ->
+                    DropdownMenuItem(
+                        text = { Text(tag.tagName) },
+                        onClick = {
+                            onTagSelected(tag.tagName)
+                            expanded.value = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Preview
 @Composable
 fun AddRecipeScreensPreview() {
-//    val navController = rememberNavController()
-//    val viewModel: RecipeViewModel = viewModel(
-//        factory = RecipeViewModel.Factory(
-//            repository = RecipeRepository(AppDatabase.getDatabase(LocalContext.current).recipeDao())
-//        )
-//    )
-//    AddRecipeScreen(navController, viewModel = viewModel)
+    val navController = rememberNavController()
+    val database = AppDatabase.getDatabase(LocalContext.current)
+    val viewModel: RecipeViewModel = viewModel(
+        factory = RecipeViewModel.Factory(
+            repository = RecipeRepository(database.recipeDao(), database.ingredientDao(), database.tagDao())
+        )
+    )
+//    AddOrEditRecipeScreen(navController, recipeViewModel = viewModel)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        AddTagDialog(
+            onDismiss = { },
+            selectedTag = "Thịt",
+            tags = listOf("Thịt", "Cá", "Trứng", "Hạt"),
+            onTagSelected = { },
+            onAddNewTag = { },
+            recipeViewModel = viewModel
+        )
+    }
 }
 
