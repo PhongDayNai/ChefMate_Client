@@ -73,8 +73,6 @@ fun MainAct(
         pageCount = { 3 }
     )
 
-    val topTrendingRecipes by recipeViewModel.topTrending.collectAsState()
-
     LaunchedEffect(Unit) {
         launch {
             recipeViewModel.getTopTrending()
@@ -119,14 +117,15 @@ fun MainAct(
                                 onRecipeClick(selectedRecipe, false)
                             },
                             navController = navController,
-                            recipes = topTrendingRecipes
+//                            recipes = topTrendingRecipes,
+                            recipeViewModel = recipeViewModel,
                         )
                         1 -> RecipeListScreen(
                             navController = navController,
                             onRecipeClick = { selectedRecipe ->
                                 onRecipeClick(selectedRecipe, true)
                             },
-                            recipeViewModel
+                            viewModel = recipeViewModel
                         )
                         2 -> ProfileScreen(navController)
                     }
