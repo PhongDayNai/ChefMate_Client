@@ -29,6 +29,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.ByteArrayOutputStream
+import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -42,8 +43,8 @@ object ApiClient {
     private val gson = Gson()
 
     @SuppressLint("MemberExtensionConflict")
-    suspend fun register(phone: String, password: String, fullName: String): LoginResponse? {
-        val registerRequest = RegisterRequest(fullName, phone, password)
+    suspend fun register(fullName: String, phone: String, email: String, password: String): LoginResponse? {
+        val registerRequest = RegisterRequest(fullName, phone, email, password)
         val json = gson.toJson(registerRequest)
 
         val requestBody = json.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
@@ -65,7 +66,13 @@ object ApiClient {
                         null
                     }
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
             } catch (e: TimeoutException) {
+                e.printStackTrace()
+                null
+            } catch (e: SocketTimeoutException) {
                 e.printStackTrace()
                 null
             }
@@ -93,7 +100,13 @@ object ApiClient {
                         null
                     }
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
             } catch (e: TimeoutException) {
+                e.printStackTrace()
+                null
+            } catch (e: SocketTimeoutException) {
                 e.printStackTrace()
                 null
             }
@@ -124,7 +137,13 @@ object ApiClient {
                         null
                     }
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
             } catch (e: TimeoutException) {
+                e.printStackTrace()
+                null
+            } catch (e: SocketTimeoutException) {
                 e.printStackTrace()
                 null
             }
@@ -182,6 +201,12 @@ object ApiClient {
             } catch (e: Exception) {
                 e.printStackTrace()
                 null
+            } catch (e: TimeoutException) {
+                e.printStackTrace()
+                null
+            } catch (e: SocketTimeoutException) {
+                e.printStackTrace()
+                null
             }
         }
     }
@@ -207,6 +232,12 @@ object ApiClient {
                     }
                 }
             } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            } catch (e: TimeoutException) {
+                e.printStackTrace()
+                null
+            } catch (e: SocketTimeoutException) {
                 e.printStackTrace()
                 null
             }
@@ -240,6 +271,12 @@ object ApiClient {
             } catch (e: Exception) {
                 e.printStackTrace()
                 null
+            } catch (e: TimeoutException) {
+                e.printStackTrace()
+                null
+            } catch (e: SocketTimeoutException) {
+                e.printStackTrace()
+                null
             }
         }
     }
@@ -271,6 +308,12 @@ object ApiClient {
             } catch (e: Exception) {
                 e.printStackTrace()
                 null
+            } catch (e: TimeoutException) {
+                e.printStackTrace()
+                null
+            } catch (e: SocketTimeoutException) {
+                e.printStackTrace()
+                null
             }
         }
     }
@@ -300,6 +343,12 @@ object ApiClient {
                     }
                 }
             } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            } catch (e: TimeoutException) {
+                e.printStackTrace()
+                null
+            } catch (e: SocketTimeoutException) {
                 e.printStackTrace()
                 null
             }
