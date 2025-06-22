@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,11 +18,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -412,6 +417,151 @@ fun SecondaryTextButtonTheme(
             fontWeight = FontWeight(600),
             fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
         )
+    }
+}
+
+@Composable
+fun CustomDialog(
+    title: String,
+    name: String,
+    onNameChange: (String) -> Unit,
+    weight: String,
+    onWeightChange: (String) -> Unit,
+    unit: String,
+    onUnitChange: (String) -> Unit,
+    isConfirm: Boolean,
+    confirmText: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    buttonText: String
+) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .wrapContentHeight(),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFF97518))
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = title,
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                    )
+                    Spacer( modifier = Modifier.weight(1f))
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .size(24.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_cancel),
+                            contentDescription = "cancel",
+                            tint = Color(0xFFFFFFFF),
+                            modifier = Modifier
+                                .size(20.dp)
+                        )
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.padding(8.dp)
+                ) {
+                    if (isConfirm) {
+                        Text(
+                            text = confirmText,
+                            color = Color(0xFF6B7280),
+                            fontSize = 14.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                            fontWeight = FontWeight(400),
+                            modifier = Modifier
+                                .padding(start = 4.dp)
+                        )
+                    } else {
+                        Text(
+                            text = "Tên nguyên liệu",
+                            color = Color(0xFF6B7280),
+                            fontSize = 14.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                            fontWeight = FontWeight(400),
+                            modifier = Modifier
+                                .padding(start = 4.dp)
+                        )
+                        SearchTextField(
+                            value = name,
+                            onValueChange = onNameChange,
+                            placeholder = "Tên nguyên liệu",
+                            placeholderSize = 12.sp,
+                            modifier = Modifier
+                                .padding(top = 12.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Định lượng",
+                            color = Color(0xFF6B7280),
+                            fontSize = 14.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                            fontWeight = FontWeight(400),
+                            modifier = Modifier
+                                .padding(start = 4.dp)
+                        )
+                        Row(
+                            modifier = Modifier
+                                .padding(top = 12.dp)
+                        ) {
+                            SearchTextField(
+                                value = weight,
+                                onValueChange = onWeightChange,
+                                placeholder = "Khối lượng",
+                                placeholderSize = 12.sp,
+                                modifier = Modifier
+                                    .padding(end = 4.dp)
+                                    .weight(1f)
+                            )
+                            SearchTextField(
+                                value = unit,
+                                onValueChange = onUnitChange,
+                                placeholder = "Đơn vị",
+                                placeholderSize = 12.sp,
+                                modifier = Modifier
+                                    .padding(start = 4.dp)
+                                    .weight(1f)
+                            )
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = onConfirm,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFF97518)
+                        )
+                    ) {
+                        Text(text = buttonText)
+                    }
+                }
+            }
+        }
     }
 }
 
