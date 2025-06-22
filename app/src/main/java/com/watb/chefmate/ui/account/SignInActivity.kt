@@ -54,7 +54,7 @@ fun SignInScreen(navController: NavController) {
     val coroutineScope = rememberCoroutineScope()
 
     var isLoading by remember { mutableStateOf(false) }
-    var phoneNumber by remember { mutableStateOf("") }
+    var identifier by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
     ConstraintLayout(
@@ -120,17 +120,17 @@ fun SignInScreen(navController: NavController) {
             var isShowPassword by remember { mutableStateOf(false) }
 
             InputField(
-                label = "Số điện thoại",
-                onValueChange = { phoneNumber = it },
-                valueTextField = phoneNumber,
-                placeholderText = "Vui lòng nhập số điện thoại"
+                label = "Số điện thoại hoặc email",
+                onValueChange = { identifier = it },
+                valueTextField = identifier,
+                placeholderText = "Nhập số điện thoại hoặc email"
             )
 
             InputField(
                 label = "Mật khẩu",
                 onValueChange = { password = it },
                 valueTextField = password,
-                placeholderText = "Vui lòng nhập mật khẩu",
+                placeholderText = "Nhập mật khẩu",
                 trailingIcon = {
                     IconButton(
                         onClick = {isShowPassword = !isShowPassword}
@@ -160,10 +160,10 @@ fun SignInScreen(navController: NavController) {
         ) {
             Button(
                 onClick = {
-                    if (phoneNumber != "" && password != "") {
+                    if (identifier != "" && password != "") {
                         coroutineScope.launch {
                             isLoading = true
-                            val response = ApiClient.login(phone = phoneNumber, password = password)
+                            val response = ApiClient.login(identifier = identifier, password = password)
                             Log.d("Login", "Response: $response")
                             if (response != null) {
                                 if (response.data != null) {

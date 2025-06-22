@@ -87,8 +87,8 @@ object ApiClient {
     }
 
     @SuppressLint("MemberExtensionConflict")
-    suspend fun login(phone: String, password: String): LoginResponse? {
-        val loginRequest = LoginRequest(phone, password)
+    suspend fun login(identifier: String, password: String): LoginResponse? {
+        val loginRequest = LoginRequest(identifier, password)
         val json = gson.toJson(loginRequest)
         Log.d("Login", json.toString())
 

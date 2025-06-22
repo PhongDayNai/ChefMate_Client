@@ -68,7 +68,7 @@ data class RegisterRequest(
 )
 
 data class LoginRequest(
-    val phone: String,
+    val identifier: String,
     val password: String
 )
 
