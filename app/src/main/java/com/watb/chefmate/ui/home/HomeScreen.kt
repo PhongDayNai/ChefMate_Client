@@ -213,9 +213,9 @@ fun HomeScreen(
                 .animateContentSize()
         ) {
             val imageLeft = listOf(R.drawable.img_drinks_recipes, R.drawable.img_sauce_recipes, R.drawable.img_soup_recipes)
-            val recipesTypeLeft = listOf("Công thức đồ uống", "Công thức nước chấm", "Công thức món súp")
+            val recipesTypeLeft = listOf("Công thức\nđồ uống", "Công thức\nnước chấm", "Công thức\nmón súp")
             val imageRight = listOf(R.drawable.img_salad_recipes, R.drawable.img_main_course_recipes, R.drawable.img_vegetarian_recipes)
-            val recipesTypeRight = listOf("Công thức salad", "Công thức món chính", "Công thức món chay")
+            val recipesTypeRight = listOf("Công thức\nsalad", "Công thức\nmón chính", "Công thức\nmón chay")
 
             if (showPopular.value) {
                 imageLeft.forEachIndexed { index, image ->
@@ -226,7 +226,11 @@ fun HomeScreen(
                             .fillMaxWidth(0.85f)
                     ) {
                         SearchTypeItem(
-                            onClick = {},
+                            onClick = {
+                                val value = recipesTypeLeft[index].replace("Công thức\n", "")
+                                navController.navigate("searchRecipe/tag/$value")
+                                recipeViewModel.searchRecipeByTag(value, userId = null)
+                            },
                             text = recipesTypeLeft[index],
                             image = image,
                             modifier = Modifier
@@ -234,7 +238,11 @@ fun HomeScreen(
                                 .weight(1f)
                         )
                         SearchTypeItem(
-                            onClick = {},
+                            onClick = {
+                                val value = recipesTypeRight[index].replace("Công thức\n", "")
+                                navController.navigate("searchRecipe/tag/$value")
+                                recipeViewModel.searchRecipeByTag(value, userId = null)
+                            },
                             text = recipesTypeRight[index],
                             image = imageRight[index],
                             modifier = Modifier
