@@ -58,6 +58,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -161,6 +162,7 @@ fun CustomTextField(
     trailingIcon: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -216,6 +218,7 @@ fun CustomTextField(
                         }
                     }
                 },
+                visualTransformation = visualTransformation,
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(focusRequester)
