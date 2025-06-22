@@ -29,9 +29,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -564,6 +566,29 @@ fun CustomDialog(
                         Text(text = buttonText)
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun CircularLoading(color: Color = Color.Black.copy(alpha = 0.75f), modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier,
+        color = color
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(200.dp)
+            ) {
+                CircularProgressIndicator(
+                    color = Color.Green,
+                    modifier = Modifier.size(150.dp)
+                )
             }
         }
     }
