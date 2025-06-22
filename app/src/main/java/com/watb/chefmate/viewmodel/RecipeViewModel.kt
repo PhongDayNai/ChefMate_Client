@@ -198,12 +198,6 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         }
     }
 
-    fun getRecipesByIds(recipeIds: List<Int>): Flow<List<Recipe>> {
-        return repository.getAllRecipes().map { recipes ->
-            recipes.filter { it.recipeId in recipeIds }.map { it.toRecipe() }
-        }
-    }
-
     fun deleteRecipeById(recipeId: Int) {
         viewModelScope.launch {
             repository.deleteRecipeById(recipeId)
