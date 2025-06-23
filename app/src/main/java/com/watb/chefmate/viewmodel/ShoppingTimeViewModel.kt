@@ -6,12 +6,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.watb.chefmate.database.entities.ShoppingTimeEntity
 import com.watb.chefmate.repository.ShoppingTimeRepository
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class ShoppingTimeViewModel(private val repository: ShoppingTimeRepository) : ViewModel() {
-    private val _shoppingTime = MutableStateFlow<ShoppingTimeEntity>(ShoppingTimeEntity(0,"", "", "", "", "", ""))
+    private val _shoppingTimes = MutableStateFlow<List<ShoppingTimeEntity>>(emptyList())
+    val shoppingTimes: MutableStateFlow<List<ShoppingTimeEntity>> = _shoppingTimes
+
+    private val _shoppingTime = MutableStateFlow(ShoppingTimeEntity(0,"", "", "", "", "", ""))
     val shoppingTime: MutableStateFlow<ShoppingTimeEntity> = _shoppingTime
 
     private var _shoppingIngredientNames = MutableStateFlow<List<String>>(emptyList())
@@ -26,7 +28,13 @@ class ShoppingTimeViewModel(private val repository: ShoppingTimeRepository) : Vi
     private var _shoppingIngredientStatuses = MutableStateFlow<List<String>>(emptyList())
     val shoppingIngredientStatuses: MutableStateFlow<List<String>> = _shoppingIngredientStatuses
 
-    fun getAllShoppingTimes(): Flow<List<ShoppingTimeEntity>> = repository.getAllShoppingTimes()
+    fun getAllShoppingTimes() {
+        viewModelScope.launch {
+            repository.getAllShoppingTimes().collect {
+                _shoppingTimes.value = it
+            }
+        }
+    }
 
     fun insertShoppingTime(shoppingTime: ShoppingTimeEntity, onDone: (Long) -> Unit) {
         viewModelScope.launch {

@@ -29,6 +29,7 @@ import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.database.entities.TagEntity
 import com.watb.chefmate.repository.ShoppingTimeRepository
+import com.watb.chefmate.ui.account.EditProfileScreen
 import com.watb.chefmate.ui.account.SignInScreen
 import com.watb.chefmate.ui.account.SignUpScreen
 import com.watb.chefmate.ui.makeshoppinglist.ConsolidatedIngredientsScreen
@@ -107,6 +108,9 @@ fun navGraph(
         composable("signUp") {
             SignUpScreen(navController, userViewModel)
         }
+        composable("editProfile") {
+            EditProfileScreen(navController, userViewModel)
+        }
         composable("mainAct") {
             MainAct(
                 navController = navController,
@@ -157,14 +161,14 @@ fun navGraph(
             }
         }
         composable("make_shopping_list_screen") {
-            MakeShoppingListScreen(navController, recipeViewModel)
+            MakeShoppingListScreen(navController, recipeViewModel, shoppingTimeViewModel)
         }
         composable(
             route = "consolidated_ingredients_screen/{shoppingTimeId}",
             arguments = listOf(navArgument("shoppingTimeId") { type = NavType.IntType })
         ) { backStackEntry ->
             val shoppingTimeId = backStackEntry.arguments?.getInt("shoppingTimeId") ?: 0
-            ConsolidatedIngredientsScreen(navController, shoppingTimeId, shoppingTimeViewModel)
+            ConsolidatedIngredientsScreen(navController, shoppingTimeId, shoppingTimeViewModel = shoppingTimeViewModel)
         }
     }
 }
