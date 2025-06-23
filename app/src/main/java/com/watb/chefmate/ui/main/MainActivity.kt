@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph
 import androidx.navigation.NavType
@@ -38,6 +39,7 @@ import com.watb.chefmate.ui.recipe.SearchResultScreen
 import com.watb.chefmate.ui.theme.ChefMateTheme
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
+import com.watb.chefmate.viewmodel.UserViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,6 +60,8 @@ fun MainScreen() {
     val recipeRepository = RecipeRepository(appDatabase.recipeDao(), appDatabase.ingredientDao(), appDatabase.tagDao())
     val shoppingTimeRepository = ShoppingTimeRepository(appDatabase.shoppingTimeDao())
     val navController = rememberNavController()
+    val userViewModel: UserViewModel = viewModel()
+    userViewModel.isLoggedIn(context)
 
     Box(
         modifier = Modifier
@@ -65,12 +69,13 @@ fun MainScreen() {
             .statusBarsPadding()
             .systemBarsPadding()
     ) {
-        NavHost(navController = navController, graph = navGraph(navController, recipeRepository, shoppingTimeRepository))
+        NavHost(navController = navController, graph = navGraph(navController, userViewModel, recipeRepository, shoppingTimeRepository))
     }
 }
 
 fun navGraph(
     navController: NavController,
+    userViewModel: UserViewModel,
     recipeRepository: RecipeRepository,
     shoppingTimeRepository: ShoppingTimeRepository
 ): NavGraph {
@@ -97,10 +102,10 @@ fun navGraph(
             SplashScreen(navController)
         }
         composable("signIn") {
-            SignInScreen(navController)
+            SignInScreen(navController, userViewModel)
         }
         composable("signUp") {
-            SignUpScreen(navController)
+            SignUpScreen(navController, userViewModel)
         }
         composable("mainAct") {
             MainAct(
@@ -113,14 +118,15 @@ fun navGraph(
                         navController.navigate("recipeViewHistory")
                     }
                 },
+                userViewModel = userViewModel,
                 recipeViewModel = recipeViewModel
             )
         }
         composable("recipeView") {
-            RecipeViewScreen(navController, recipe, recipeViewModel = recipeViewModel)
+            RecipeViewScreen(navController, recipe, userViewModel = userViewModel, recipeViewModel = recipeViewModel)
         }
         composable("recipeViewHistory") {
-            RecipeViewScreen(navController, recipe, true, recipeViewModel)
+            RecipeViewScreen(navController, recipe, true, userViewModel, recipeViewModel)
         }
         composable(
             route = "add_edit_recipe/{recipeId}",
@@ -130,7 +136,7 @@ fun navGraph(
             })
         ) { backStackEntry ->
             val recipeId = backStackEntry.arguments?.getInt("recipeId") ?: 0
-            AddOrEditRecipeScreen(navController = navController, recipeId = recipeId, recipeViewModel = recipeViewModel)
+            AddOrEditRecipeScreen(navController = navController, recipeId = recipeId, userViewModel, recipeViewModel = recipeViewModel)
         }
         composable("searchRecipe/{searchType}/{searchValue}") { backStackEntry ->
             val searchType = backStackEntry.arguments?.getString("searchType")

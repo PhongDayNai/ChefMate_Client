@@ -47,6 +47,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
@@ -54,11 +55,14 @@ import com.watb.chefmate.api.ApiClient
 import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.ui.theme.CircularLoading
 import com.watb.chefmate.ui.theme.CustomTextField
-import kotlinx.coroutines.Dispatchers
+import com.watb.chefmate.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun SignUpScreen(navController: NavController) {
+fun SignUpScreen(
+    navController: NavController,
+    userViewModel: UserViewModel
+) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -248,17 +252,7 @@ fun SignUpScreen(navController: NavController) {
                                         )
                                         if (response != null) {
                                             if (response.data != null) {
-                                                DataStoreHelper.saveLoginState(
-                                                    context = context,
-                                                    isLoggedIn = true,
-                                                    userId = response.data.userId,
-                                                    username = response.data.fullName,
-                                                    email = response.data.email,
-                                                    phoneNumber = response.data.phone,
-                                                    followCount = response.data.followCount,
-                                                    recipeCount = response.data.recipeCount,
-                                                    createdAt = response.data.createdAt
-                                                )
+                                                userViewModel.saveLoginState(context, response.data)
                                                 navController.navigate("mainAct") {
                                                     popUpTo("signUp") {
                                                         inclusive = true
@@ -365,5 +359,6 @@ fun InputField(
 @Preview
 @Composable
 fun SignUpScreenPreview() {
-    SignUpScreen(rememberNavController())
+    val userViewModel: UserViewModel = viewModel()
+    SignUpScreen(rememberNavController(), userViewModel)
 }

@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.watb.chefmate.data.UserData
 import kotlinx.coroutines.flow.first
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "dataStore")
@@ -50,6 +51,19 @@ object DataStoreHelper {
             preferences[RECIPE_COUNT] = recipeCount
             preferences[CREATED_AT] = createdAt
         }
+    }
+
+    suspend fun getUserData(context: Context): UserData {
+        val preferences = context.dataStore.data.first()
+        return UserData(
+            userId = preferences[USER_ID] ?: 0,
+            fullName = preferences[USERNAME] ?: "User",
+            phone = preferences[PHONE_NUMBER] ?: "0123456789",
+            preferences[EMAIL] ?: "user@gmail.com",
+            followCount = preferences[FOLLOW_COUNT] ?: 0,
+            recipeCount = preferences[RECIPE_COUNT] ?: 0,
+            createdAt = preferences[CREATED_AT] ?: "2025-06-26"
+        )
     }
 
     suspend fun getUserId(context: Context): Int {
