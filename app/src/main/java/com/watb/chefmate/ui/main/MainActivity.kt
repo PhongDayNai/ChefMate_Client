@@ -161,7 +161,7 @@ fun navGraph(
             }
         }
         composable("make_shopping_list_screen") {
-            MakeShoppingListScreen(navController, recipeViewModel)
+            MakeShoppingListScreen(navController, recipeViewModel, shoppingTimeViewModel)
         }
         composable(
             route = "consolidated_ingredients_screen/{shoppingTimeId}",
