@@ -96,9 +96,9 @@ import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.database.entities.TagEntity
 import com.watb.chefmate.helper.CommonHelper
-import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.viewmodel.RecipeViewModel
+import com.watb.chefmate.viewmodel.UserViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -113,6 +113,7 @@ fun RecipeViewScreen(
     navController: NavController,
     recipe: Recipe,
     isHistory: Boolean = false,
+    userViewModel: UserViewModel,
     recipeViewModel: RecipeViewModel
 ) {
     val context = LocalContext.current
@@ -122,8 +123,9 @@ fun RecipeViewScreen(
 
     val recipeState by recipeViewModel.getRecipeByName(recipe.recipeName).collectAsState(initial = null)
 
-    var isLoggedIn by remember { mutableStateOf(false) }
-    var userId by remember { mutableStateOf<Int?>(null) }
+    val isLoggedIn by userViewModel.isLoggedIn.collectAsState()
+    val user by userViewModel.user.collectAsState()
+
     var markPainter by remember { mutableStateOf(R.drawable.ic_mark) }
     var isLiked by remember { mutableStateOf(recipe.isLiked) }
     var likeQuantity by remember { mutableStateOf(recipe.likeQuantity) }
@@ -158,25 +160,19 @@ fun RecipeViewScreen(
     )
 
     LaunchedEffect(Unit) {
-        launch {
-            if (!isHistory) {
-                recipe.recipeId?.let {
-                    val response = ApiClient.increaseViewCount(recipe.recipeId)
-                    if (response != null) {
-                        if (response.success) {
-                            if (response.data != null) {
-                                viewQuantity = response.data.count
-                            } else {
-                                Log.e("RecipeViewScreen", "Error: ${response.message}")
-                            }
+        if (!isHistory) {
+            recipe.recipeId?.let {
+                val response = ApiClient.increaseViewCount(recipe.recipeId)
+                if (response != null) {
+                    if (response.success) {
+                        if (response.data != null) {
+                            viewQuantity = response.data.count
+                        } else {
+                            Log.e("RecipeViewScreen", "Error: ${response.message}")
                         }
                     }
                 }
             }
-        }
-        launch {
-            isLoggedIn = DataStoreHelper.isLoggedIn(context)
-            userId = DataStoreHelper.getUserId(context)
         }
     }
 
@@ -439,9 +435,9 @@ Tác giả: ${recipe.userName}
                         if (!isLiked) {
                             recipe.recipeId?.let {
                                 if (isLoggedIn) {
-                                    userId?.let {
+                                    user?.let {
                                         coroutineScope.launch {
-                                            val response = ApiClient.likeRecipe(recipeId = recipe.recipeId, userId = userId!!)
+                                            val response = ApiClient.likeRecipe(recipeId = recipe.recipeId, userId = user!!.userId)
                                             if (response != null) {
                                                 if (response.success) {
                                                     if (response.data != null) {
@@ -1007,6 +1003,7 @@ fun Modifier.bottomDashedBorder(
 fun RecipeViewPreview() {
     val navController = rememberNavController()
     val database = AppDatabase.getDatabase(LocalContext.current)
+    val userViewModel: UserViewModel = viewModel()
     val viewModel: RecipeViewModel = viewModel(
         factory = RecipeViewModel.Factory(
             repository = RecipeRepository(database.recipeDao(), database.ingredientDao(), database.tagDao())
@@ -1063,7 +1060,7 @@ fun RecipeViewPreview() {
         userId = 0
     )
 
-    RecipeViewScreen(navController, recipe, false, recipeViewModel = viewModel)
+    RecipeViewScreen(navController, recipe, false, userViewModel, recipeViewModel = viewModel)
 //    Column(
 //        horizontalAlignment = Alignment.CenterHorizontally,
 //        modifier = Modifier

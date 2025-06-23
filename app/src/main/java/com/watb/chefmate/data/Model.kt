@@ -87,11 +87,11 @@ data class ChangePasswordRequest(
 
 data class LoginResponse(
     val success: Boolean,
-    val data: LoginData? = null,
+    val data: UserData? = null,
     val message: String? = null
 )
 
-data class LoginData(
+data class UserData(
     val userId: Int,
     val fullName: String,
     val phone: String,

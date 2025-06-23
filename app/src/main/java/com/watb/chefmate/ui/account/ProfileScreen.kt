@@ -32,7 +32,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,39 +61,32 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.core.net.toUri
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
 import com.watb.chefmate.data.AppConstant
+import com.watb.chefmate.data.UserData
 import com.watb.chefmate.helper.CommonHelper
 import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.ui.theme.PrimaryTextButtonTheme
 import com.watb.chefmate.ui.theme.SecondaryTextButtonTheme
+import com.watb.chefmate.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun ProfileScreen(navController: NavController) {
+fun ProfileScreen(
+    navController: NavController,
+    userViewModel: UserViewModel
+) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    var isLoggedIn by remember { mutableStateOf(false) }
-    var userName by remember { mutableStateOf("") }
-    var phoneNumber by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var followCount by remember { mutableStateOf(0) }
-    var recipeCount by remember { mutableStateOf(0) }
+    val isLoggedIn by userViewModel.isLoggedIn.collectAsState()
+    val user by userViewModel.user.collectAsState()
 
     var isShownLogoutBottomSheet by remember { mutableStateOf(false) }
     var isRating by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        isLoggedIn = DataStoreHelper.isLoggedIn(context)
-        userName = DataStoreHelper.getUsername(context)
-        phoneNumber = DataStoreHelper.getPhoneNumber(context)
-        email = DataStoreHelper.getEmail(context)
-        followCount = DataStoreHelper.getFollowCount(context)
-        recipeCount = DataStoreHelper.getRecipeCount(context)
-    }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -144,11 +137,7 @@ fun ProfileScreen(navController: NavController) {
         ProfileInformationCard(
             isLoggedIn = isLoggedIn,
             navController = navController,
-            userName = userName,
-            phoneNumber = phoneNumber,
-            email = email,
-            followCount = followCount,
-            recipeCount = recipeCount,
+            user = user,
             modifier = Modifier
                 .fillMaxWidth(0.9f)
         )
@@ -191,16 +180,10 @@ fun ProfileScreen(navController: NavController) {
         }
         if (isShownLogoutBottomSheet) {
             LogoutBottomSheet(
-                navController = navController,
                 onLogout = {
                     coroutineScope.launch {
                         isShownLogoutBottomSheet = false
-                        DataStoreHelper.clearLoginState(context = context)
-                        navController.navigate("signIn") {
-                            popUpTo("mainAct") {
-                                inclusive = true
-                            }
-                        }
+                        userViewModel.logout(context)
                     }
                 },
                 onDismiss = { isShownLogoutBottomSheet = false }
@@ -216,11 +199,7 @@ fun ProfileScreen(navController: NavController) {
 fun ProfileInformationCard(
     isLoggedIn: Boolean,
     navController: NavController,
-    userName: String,
-    phoneNumber: String,
-    email: String,
-    followCount: Int,
-    recipeCount: Int,
+    user: UserData?,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -268,13 +247,13 @@ fun ProfileInformationCard(
                                 .padding(start = 8.dp)
                         ) {
                             Text(
-                                text = if (userName != "") userName else "Đang cập nhật...",
+                                text = user?.fullName ?: "Đang cập nhật...",
                                 fontSize = 18.sp,
                                 fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
                                 color = Color(0xFF000000)
                             )
                             Text(
-                                text = "${CommonHelper.parseNumber(followCount)} người theo dõi",
+                                text = if (user?.followCount != null) "${CommonHelper.parseNumber(user.followCount)} người theo dõi" else "Đang cập nhật...",
                                 fontSize = 12.sp,
                                 fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                                 color = Color(0xFF5A5A60)
@@ -290,7 +269,7 @@ fun ProfileInformationCard(
                                     tint = Color(0xFF5A5A60),
                                 )
                                 Text(
-                                    text = if (phoneNumber != "") "+84 ${phoneNumber.drop(1)}" else "Đang cập nhật...",
+                                    text = if (user?.phone != "") "+84 ${user?.phone?.drop(1)}" else "Đang cập nhật...",
                                     fontSize = 14.sp,
                                     fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
                                     color = Color(0xFF5A5A60),
@@ -309,7 +288,7 @@ fun ProfileInformationCard(
                                     tint = Color(0xFF5A5A60),
                                 )
                                 Text(
-                                    text = if (email != "") email else "Đang cập nhật...",
+                                    text = user?.email ?: "Đang cập nhật...",
                                     fontSize = 14.sp,
                                     fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
                                     color = Color(0xFF5A5A60),
@@ -378,7 +357,7 @@ fun ProfileInformationCard(
                                     fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
                                 )
                             ) {
-                                append("$recipeCount công thức")
+                                append("${user?.recipeCount ?: 0} công thức")
                             }
                         }
                         Text(text = annotatedString)
@@ -387,8 +366,12 @@ fun ProfileInformationCard(
                             modifier = Modifier
                                 .padding(top = 2.dp)
                                 .clickable {
-                                    if (recipeCount == 0) {
-                                        Toast.makeText(context, "Bạn chưa có công thức nào", Toast.LENGTH_SHORT).show()
+                                    if (user?.recipeCount == 0) {
+                                        Toast.makeText(
+                                            context,
+                                            "Bạn chưa có công thức nào",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                     }
                                 }
                         ) {
@@ -412,20 +395,6 @@ fun ProfileInformationCard(
                 }
             }
             if (!isLoggedIn) {
-//                Box(
-//                    contentAlignment = Alignment.Center,
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .fillMaxHeight()
-//                        .background(color = Color(0xFFFFFFFF).copy(alpha = 0.8f))
-//                        .blur(50.dp)
-//                ) {
-//                    Box(
-//                        modifier = Modifier
-//                            .size(120.dp, 40.dp)
-//                            .background(brush = AppConstant.onPrimaryGradient)
-//                    )
-//                }
                 PrimaryTextButtonTheme(
                     onClick = {
                         navController.navigate("signIn") {
@@ -593,7 +562,8 @@ fun RatingDialog(onDismiss: () -> Unit) {
                                     onDismiss()
                                 } catch (e: Exception) {
                                     e.printStackTrace()
-                                    val webUri = "https://play.google.com/store/apps/details?id=$packageName".toUri()
+                                    val webUri =
+                                        "https://play.google.com/store/apps/details?id=$packageName".toUri()
                                     context.startActivity(Intent(Intent.ACTION_VIEW, webUri))
                                     onDismiss()
                                 }
@@ -643,7 +613,6 @@ fun RatingDialog(onDismiss: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LogoutBottomSheet(
-    navController: NavController,
     onLogout: () -> Unit,
     onDismiss: () -> Unit = {}
 ) {
@@ -731,5 +700,6 @@ fun LogoutBottomSheet(
 @Composable
 fun ProfileScreenPreview() {
     val navController = rememberNavController()
-    ProfileScreen(navController)
+    val userViewModel: UserViewModel = viewModel()
+    ProfileScreen(navController, userViewModel)
 }

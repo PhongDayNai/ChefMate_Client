@@ -57,6 +57,7 @@ import com.watb.chefmate.ui.account.ProfileScreen
 import com.watb.chefmate.ui.home.HomeScreen
 import com.watb.chefmate.ui.recipe.RecipeListScreen
 import com.watb.chefmate.viewmodel.RecipeViewModel
+import com.watb.chefmate.viewmodel.UserViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -64,6 +65,7 @@ import kotlinx.coroutines.launch
 fun MainAct(
     navController: NavController,
     onRecipeClick: (Recipe, Boolean) -> Unit,
+    userViewModel: UserViewModel,
     recipeViewModel: RecipeViewModel
 ) {
     val context = LocalContext.current
@@ -132,7 +134,7 @@ fun MainAct(
                             },
                             viewModel = recipeViewModel
                         )
-                        2 -> ProfileScreen(navController)
+                        2 -> ProfileScreen(navController, userViewModel)
                     }
                 }
             }

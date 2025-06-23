@@ -40,16 +40,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
 import com.watb.chefmate.api.ApiClient
-import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.ui.theme.CircularLoading
+import com.watb.chefmate.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun SignInScreen(navController: NavController) {
+fun SignInScreen(
+    navController: NavController,
+    userViewModel: UserViewModel
+) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -169,17 +173,7 @@ fun SignInScreen(navController: NavController) {
                                 if (response != null) {
                                     if (response.success) {
                                         if (response.data != null) {
-                                            DataStoreHelper.saveLoginState(
-                                                context = context,
-                                                isLoggedIn = true,
-                                                userId = response.data.userId,
-                                                username = response.data.fullName,
-                                                email = response.data.email,
-                                                phoneNumber = response.data.phone,
-                                                followCount = response.data.followCount,
-                                                recipeCount = response.data.recipeCount,
-                                                createdAt = response.data.createdAt
-                                            )
+                                            userViewModel.saveLoginState(context, response.data)
                                             navController.navigate("mainAct") {
                                                 popUpTo("signIn") {
                                                     inclusive = true
@@ -268,5 +262,6 @@ fun SignInScreen(navController: NavController) {
 @Preview
 @Composable
 fun SignInScreenPreview() {
-    SignInScreen(rememberNavController())
+    val userViewModel: UserViewModel = viewModel()
+    SignInScreen(rememberNavController(), userViewModel)
 }
