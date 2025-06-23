@@ -651,7 +651,7 @@ Tác giả: ${recipe.userName}
                         onComment = { commentContent ->
                             recipe.recipeId?.let {
                                 coroutineScope.launch {
-                                    val response = ApiClient.commentRecipe(recipeId = recipe.recipeId, content = commentContent)
+                                    val response = ApiClient.commentRecipe(recipeId = recipe.recipeId, content = commentContent.trim())
                                     if (response != null) {
                                         if (response.success) {
                                             if (response.data != null) {

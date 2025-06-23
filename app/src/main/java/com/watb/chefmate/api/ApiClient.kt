@@ -104,17 +104,6 @@ object ApiClient {
         return withContext(Dispatchers.IO) {
             try {
                 client.newCall(request).execute().use { response ->
-                    Log.d("Login", "Response code: ${response.code}")
-//                    if (response.isSuccessful) {
-//                        val responseBody = response.body?.string()
-//                        responseBody?.let {
-//                            Log.d("Login", it)
-//                            gson.fromJson(it, LoginResponse::class.java)
-//                        }
-//                    } else {
-//                        Log.d("Login", "Response nul or unsuccessful")
-//                        null
-//                    }
                     Log.d(TAG, "login response code: ${response.code}")
                     when (response.code) {
                         in 200..299 -> {
@@ -328,33 +317,24 @@ object ApiClient {
     ) {
         coroutineScope.launch(Dispatchers.IO) {
             try {
-                Log.d(TAG, "Starting image download: URL = $imageUrl, FileName = $fileName")
-
-                Log.d(TAG, "Building HTTP request for URL: $imageUrl")
                 val request = Request.Builder()
                     .url(imageUrl)
                     .build()
 
-                Log.d(TAG, "Executing HTTP request")
                 val response = client.newCall(request).execute()
 
-                Log.d(TAG, "HTTP response code: ${response.code}")
                 if (!response.isSuccessful) {
                     val errorMessage = "Error: HTTP ${response.code}"
-                    Log.e(TAG, errorMessage)
                     onResult(errorMessage)
                     return@launch
                 }
 
-                Log.d(TAG, "Retrieving image bytes")
                 val imageBytes = response.body?.bytes() ?: run {
                     val errorMessage = "Empty image data"
                     Log.e(TAG, errorMessage)
                     throw Exception(errorMessage)
                 }
-                Log.d(TAG, "Image bytes retrieved, size: ${imageBytes.size} bytes")
 
-                Log.d(TAG, "Saving image to MediaStore")
                 val contentValues = ContentValues().apply {
                     put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
                     put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
@@ -371,7 +351,6 @@ object ApiClient {
                         Log.e(TAG, errorMessage)
                         throw Exception(errorMessage)
                     }
-                Log.d(TAG, "MediaStore URI created: $uri")
 
                 resolver.openOutputStream(uri)?.use { outputStream ->
                     outputStream.write(imageBytes)
@@ -381,13 +360,11 @@ object ApiClient {
                     Log.e(TAG, errorMessage)
                     throw Exception(errorMessage)
                 }
-                Log.d(TAG, "Image written to MediaStore")
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     contentValues.clear()
                     contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
                     resolver.update(uri, contentValues, null, null)
-                    Log.d(TAG, "MediaStore updated, IS_PENDING set to 0")
                 }
 
                 val successMessage = "Success: $uri"

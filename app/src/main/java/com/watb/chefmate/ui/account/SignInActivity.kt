@@ -168,7 +168,7 @@ fun SignInScreen(
                         coroutineScope.launch {
                             isLoading = true
                             try {
-                                val response = ApiClient.login(identifier = identifier, password = password)
+                                val response = ApiClient.login(identifier = identifier.trim(), password = password.trim())
                                 Log.d("Login", "Response: $response")
                                 if (response != null) {
                                     if (response.success) {
