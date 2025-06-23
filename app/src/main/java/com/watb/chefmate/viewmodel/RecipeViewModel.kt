@@ -35,8 +35,8 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
             list.map { it.toRecipe() }
         }
 
-    suspend fun getTopTrending() {
-        val response = ApiClient.getTopTrending()
+    suspend fun getTopTrending(userId: Int? = null) {
+        val response = ApiClient.getTopTrending(userId)
         response?.let {
             response.data?.let {
                 _topTrending.value = it

@@ -118,6 +118,10 @@ data class SearchRecipeByTagRequest(
     val userId: Int? = null
 )
 
+data class UserIDRequest(
+    val userId: Int? = null
+)
+
 data class RecipeListResponse(
     val success: Boolean,
     val data: List<Recipe>? = null,
