@@ -22,6 +22,8 @@ object ApiConstant {
         get() = "$MAIN_URL/api/recipes/search"
     val SEARCH_BY_TAG_URL: String
         get() = "$MAIN_URL/api/recipes/search-by-tag"
+    val GET_RECIPES_BY_USER_ID_URL: String
+        get() = "$MAIN_URL/api/recipes/user-recipes"
     val CREATE_RECIPE_URL: String
         get() = "$MAIN_URL/api/recipes/create"
     val GET_ALL_INGREDIENTS_URL: String
