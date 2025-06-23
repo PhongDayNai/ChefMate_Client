@@ -62,6 +62,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
+import com.watb.chefmate.helper.DataStoreHelper
+import com.watb.chefmate.ui.theme.CircularLoading
 import com.watb.chefmate.ui.theme.PrimaryTextButtonTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -70,6 +72,36 @@ import kotlinx.coroutines.withContext
 fun EditProfileScreen(
     navController: NavController
 ) {
+    val context = LocalContext.current
+
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val coroutineScope = rememberCoroutineScope()
+
+    var screen by remember { mutableStateOf(0) }
+    var displayNameCurrent by remember { mutableStateOf("") }
+    var phoneNumberCurrent by remember { mutableStateOf("") }
+    var emailCurrent by remember { mutableStateOf("") }
+
+    var displayNameNew by remember { mutableStateOf("") }
+    var phoneNumberNew by remember { mutableStateOf("") }
+    var emailNew by remember { mutableStateOf("") }
+
+    var isLoading by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        displayNameCurrent = DataStoreHelper.getUsername(context)
+        displayNameNew = displayNameCurrent
+        phoneNumberCurrent = DataStoreHelper.getPhoneNumber(context)
+        phoneNumberNew = phoneNumberCurrent
+        emailCurrent = DataStoreHelper.getEmail(context)
+        emailNew = emailCurrent
+    }
+
+    val hasChanges by remember {
+        derivedStateOf {
+            displayNameCurrent != displayNameNew || phoneNumberCurrent != phoneNumberNew || emailCurrent != emailNew
+        }
+    }
     Box {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -133,6 +165,62 @@ fun EditProfileScreen(
                         .clip(CircleShape)
                 )
             }
+            Card(
+                elevation = CardDefaults.elevatedCardElevation(
+                    defaultElevation = 8.dp
+                ),
+                modifier = Modifier
+                    .padding(top = 32.dp)
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(color = Color(0xFFFFFFFF))
+                        .verticalScroll(state = rememberScrollState())
+                ) {
+                    AnimatedContent(
+                        targetState = screen,
+                        transitionSpec = {
+                            if (targetState > initialState) {
+                                slideInHorizontally { width -> width } + fadeIn() togetherWith
+                                        slideOutHorizontally { width -> -width } + fadeOut()
+                            } else {
+                                slideInHorizontally { width -> -width } + fadeIn() togetherWith
+                                        slideOutHorizontally { width -> width } + fadeOut()
+                            }.using(
+                                SizeTransform(clip = false)
+                            )
+                        }
+                    ) { target ->
+                        when (target) {
+                            0 -> {
+                                EditPersonalInformation(
+                                    context = context,
+                                    hasChanges = hasChanges,
+                                    displayNameNew = displayNameNew,
+                                    onChangeDisplayName = { newValue ->
+                                        displayNameNew = newValue
+                                    },
+                                    emailNew = emailNew,
+                                    onChangeEmail = { newValue ->
+                                        emailNew = newValue
+                                    },
+                                    phoneNumberNew = phoneNumberNew,
+                                    onChangePhoneNumber = { newValue ->
+                                        phoneNumberNew = newValue
+                                    },
+                                    onChangePassword = { screen = 1 },
+                                    onChangeLoading = { isLoading = it }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (isLoading) {
+            CircularLoading()
         }
     }
 }
