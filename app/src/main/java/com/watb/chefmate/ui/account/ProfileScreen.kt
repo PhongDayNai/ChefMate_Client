@@ -185,8 +185,8 @@ fun ProfileScreen(navController: NavController) {
                         isShownLogoutBottomSheet = false
                         DataStoreHelper.clearLoginState(context = context)
                         navController.navigate("signIn") {
-                            popUpTo("signIn") {
-                                inclusive = false
+                            popUpTo("mainAct") {
+                                inclusive = true
                             }
                         }
                     }
