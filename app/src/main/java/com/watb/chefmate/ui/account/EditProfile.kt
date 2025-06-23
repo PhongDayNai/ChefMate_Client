@@ -17,3 +17,8 @@ fun EditPersonalInformation(
 
 }
 
+@Composable
+fun EditPassword () {
+
+}
+
