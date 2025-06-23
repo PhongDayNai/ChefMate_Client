@@ -168,7 +168,7 @@ fun navGraph(
             arguments = listOf(navArgument("shoppingTimeId") { type = NavType.IntType })
         ) { backStackEntry ->
             val shoppingTimeId = backStackEntry.arguments?.getInt("shoppingTimeId") ?: 0
-            ConsolidatedIngredientsScreen(navController, shoppingTimeId, shoppingTimeViewModel)
+            ConsolidatedIngredientsScreen(navController, shoppingTimeId, shoppingTimeViewModel = shoppingTimeViewModel)
         }
     }
 }
