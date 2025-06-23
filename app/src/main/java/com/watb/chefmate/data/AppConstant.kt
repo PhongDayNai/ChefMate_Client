@@ -28,4 +28,18 @@ object AppConstant {
             1.0f to Color(0xFFFDBA74)
         )
     )
+
+    val unselectedPrimaryGradient = Brush.verticalGradient(
+        colorStops = arrayOf(
+            0.0f to Color(0xFFC3C3C6),
+            1.0f to Color(0xFFC3C3C6)
+        )
+    )
+
+    val onPrimaryGradient = Brush.horizontalGradient(
+        colorStops = arrayOf(
+            0.0f to Color(0xFFFF7121),
+            1.0f to Color(0xFFFEAA43)
+        )
+    )
 }
