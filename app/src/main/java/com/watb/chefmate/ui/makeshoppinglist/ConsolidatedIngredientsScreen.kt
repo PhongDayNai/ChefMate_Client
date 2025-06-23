@@ -8,8 +8,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
@@ -282,7 +280,7 @@ fun ConsolidatedIngredientsScreen(
                     Text(
                         text = "Bổ sung",
                         color = Color(0xFF000000),
-                        fontSize = 20.sp,
+                        fontSize = 16.sp,
                         fontFamily = FontFamily(Font(R.font.roboto_bold))
                     )
                 }
@@ -311,7 +309,7 @@ fun ConsolidatedIngredientsScreen(
                 Text(
                     text = if (!isHistory) "Hoàn thành" else "Trở lại",
                     color = Color(0xFFFFFFFF),
-                    fontSize = 20.sp,
+                    fontSize = 16.sp,
                     fontFamily = FontFamily(Font(R.font.roboto_bold))
                 )
             }
