@@ -416,9 +416,9 @@ fun EditPersonalInformation(
                         if (hasChanges) {
                             val response = ApiClient.updateUserInformation(
                                 userId = userId,
-                                fullName = displayNameNew,
-                                email = emailNew,
-                                phoneNumber = phoneNumberNew
+                                fullName = displayNameNew.trim(),
+                                email = emailNew.trim(),
+                                phoneNumber = phoneNumberNew.trim()
                             )
                             if (response != null) {
                                 if (response.success) {
@@ -680,9 +680,9 @@ fun EditPassword(
                         coroutineScope.launch {
                             withContext(Dispatchers.Main) { onChangeLoading(true) }
                             val response = ApiClient.changePassword(
-                                phone = phoneNumberCurrent,
-                                currentPassword = currentPassword,
-                                newPassword = newPassword
+                                phone = phoneNumberCurrent.trim(),
+                                currentPassword = currentPassword.trim(),
+                                newPassword = newPassword.trim()
                             )
                             if (response != null) {
                                 if (response.success) {
