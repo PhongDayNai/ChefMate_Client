@@ -16,16 +16,18 @@ class UserViewModel : ViewModel() {
     private val _user = MutableStateFlow<UserData?>(null)
     val user: StateFlow<UserData?> = _user
 
-    fun isLoggedIn(context: Context) {
+    fun isLoggedIn(context: Context, onFinished: () -> Unit = {}) {
         viewModelScope.launch {
             _isLoggedIn.value = DataStoreHelper.isLoggedIn(context)
             if (_isLoggedIn.value) {
-                getUserData(context)
+                getUserData(context) {
+                    onFinished()
+                }
             }
         }
     }
 
-    fun saveLoginState(context: Context, userData: UserData) {
+    fun saveLoginState(context: Context, userData: UserData, onFinished: () -> Unit = {}) {
         viewModelScope.launch {
             DataStoreHelper.saveLoginState(
                 context = context,
@@ -38,13 +40,16 @@ class UserViewModel : ViewModel() {
                 recipeCount = userData.recipeCount,
                 createdAt = userData.createdAt
             )
-            isLoggedIn(context)
+            isLoggedIn(context) {
+                onFinished()
+            }
         }
     }
 
-    fun getUserData(context: Context) {
+    fun getUserData(context: Context, onFinished: () -> Unit = {}) {
         viewModelScope.launch {
             _user.value = DataStoreHelper.getUserData(context)
+            onFinished()
         }
     }
 
