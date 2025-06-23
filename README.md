@@ -127,3 +127,5 @@
     | `recipeId` | `INT` | `FOREIGN KEY REFERENCES Recipes(recipeId)` | liên kết đến bảng Recipes |
     | `index` | `INT` | `NOT NULL` | STT bước |
     | `content` | `NVARCHAR(500)` | `NOT NULL` | chi tiết bước |
+
+# [II. Server - Máy chủ](https://github.com/PhongDayNai/ChefMate_Server)
