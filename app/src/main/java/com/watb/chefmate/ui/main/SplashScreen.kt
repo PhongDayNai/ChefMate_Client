@@ -33,13 +33,7 @@ import com.watb.chefmate.helper.DataStoreHelper
 
 @Composable
 fun SplashScreen(navController: NavController) {
-    val context = LocalContext.current
     var isShowDialog by remember { mutableStateOf(true) }
-    var isLoggedIn by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        isLoggedIn = DataStoreHelper.isLoggedIn(context = context)
-    }
 
     Box(
         contentAlignment = Alignment.Center,
@@ -51,17 +45,9 @@ fun SplashScreen(navController: NavController) {
                 if (ApiConstant.MAIN_URL == "") {
                     isShowDialog = true
                 } else {
-                    if (isLoggedIn) {
-                        navController.navigate("mainAct") {
-                            popUpTo("splash") {
-                                inclusive = true
-                            }
-                        }
-                    } else {
-                        navController.navigate("signIn") {
-                            popUpTo("splash") {
-                                inclusive = true
-                            }
+                    navController.navigate("mainAct") {
+                        popUpTo("splash") {
+                            inclusive = true
                         }
                     }
                 }
