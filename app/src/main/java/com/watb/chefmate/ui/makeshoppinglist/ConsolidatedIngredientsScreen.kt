@@ -40,7 +40,6 @@ import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.recipe.bottomDashedBorder
 import com.watb.chefmate.ui.theme.CustomDialog
 import com.watb.chefmate.ui.theme.Header
-import com.watb.chefmate.ui.theme.CustomTextField
 import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
 import kotlinx.coroutines.launch
 
@@ -48,6 +47,7 @@ import kotlinx.coroutines.launch
 fun ConsolidatedIngredientsScreen(
     navController: NavController,
     shoppingTimeId: Int,
+    isHistory: Boolean = false,
     shoppingTimeViewModel: ShoppingTimeViewModel
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -128,6 +128,7 @@ fun ConsolidatedIngredientsScreen(
                         weight = weight,
                         unit = unit,
                         status = status,
+                        isHistory = isHistory,
                         onCheckedChange = {
                             val newStatus = if (status == StatusShopping.BOUGHT.value) StatusShopping.WAITING.value else StatusShopping.BOUGHT.value
 
@@ -265,31 +266,39 @@ fun ConsolidatedIngredientsScreen(
             }
         }
         Row {
-            Button(
-                onClick = {
-                    showAddIngredient = true
-                },
-                border = _root_ide_package_.androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF000000)),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFDCC8C8),
-                ),
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier
-                    .padding(30.dp)
-            ) {
-                Text(
-                    text = "Bổ sung",
-                    color = Color(0xFF000000)
-                )
+            if (!isHistory) {
+                Button(
+                    onClick = {
+                        showAddIngredient = true
+                    },
+                    border = _root_ide_package_.androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF000000)),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFDCC8C8),
+                    ),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier
+                        .padding(30.dp)
+                ) {
+                    Text(
+                        text = "Bổ sung",
+                        color = Color(0xFF000000),
+                        fontSize = 20.sp,
+                        fontFamily = FontFamily(Font(R.font.roboto_bold))
+                    )
+                }
             }
             Spacer(modifier = Modifier.weight(1f))
             Button(
                 onClick = {
-                    coroutineScope.launch {
-                        DataStoreHelper.finishShopping(context)
-                    }
-                    navController.navigate("mainAct") {
-                        popUpTo("mainAct") { inclusive = true }
+                    if (!isHistory) {
+                        coroutineScope.launch {
+                            DataStoreHelper.finishShopping(context)
+                            navController.navigate("mainAct") {
+                                popUpTo("consolidated_ingredients_screen/$shoppingTimeId") { inclusive = true }
+                            }
+                        }
+                    } else {
+                        navController.popBackStack()
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
@@ -300,7 +309,10 @@ fun ConsolidatedIngredientsScreen(
                     .padding(30.dp)
             ) {
                 Text(
-                    text = "Hoàn thành"
+                    text = if (!isHistory) "Hoàn thành" else "Trở lại",
+                    color = Color(0xFFFFFFFF),
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font(R.font.roboto_bold))
                 )
             }
         }
@@ -320,6 +332,7 @@ fun IngredientItem(
     weight: String,
     unit: String,
     status: String,
+    isHistory: Boolean,
     onCheckedChange: () -> Unit,
     onCouldNotBuyClick: () -> Unit,
     onEditClick: () -> Unit
@@ -334,7 +347,7 @@ fun IngredientItem(
         Checkbox(
             checked = status == StatusShopping.BOUGHT.value,
             onCheckedChange = { onCheckedChange() },
-            enabled = status != StatusShopping.COULD_NOT_BUY.value,
+            enabled = if (isHistory) false else status != StatusShopping.COULD_NOT_BUY.value,
             colors = CheckboxDefaults.colors(
                 checkedColor = Color(0xFFFFFFFF),
                 uncheckedColor = Color(0xFF4E4E4E),
@@ -357,7 +370,7 @@ fun IngredientItem(
 
         IconButton(
             onClick = { onEditClick() },
-            enabled = status == StatusShopping.WAITING.value
+            enabled = if (isHistory) false else status == StatusShopping.WAITING.value
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_editingredirnt),
@@ -370,7 +383,7 @@ fun IngredientItem(
 
         IconButton(
             onClick = { onCouldNotBuyClick() },
-            enabled = status != StatusShopping.BOUGHT.value
+            enabled = if (isHistory) false else status != StatusShopping.BOUGHT.value
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_couldn_tbuy),
