@@ -76,7 +76,7 @@ fun ConsolidatedIngredientsScreen(
             .background(Color(0xFFFFFFFF))
     ) {
         Header(
-            text = "Danh sách mua sắm",
+            text = if (!isHistory) "Danh sách mua sắm" else "Lịch sử mua sắm",
             leadingIcon = {
                 IconButton(
                     onClick = {
