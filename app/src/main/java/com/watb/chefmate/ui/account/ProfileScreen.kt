@@ -41,6 +41,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -66,6 +67,7 @@ import com.watb.chefmate.R
 import com.watb.chefmate.data.AppConstant
 import com.watb.chefmate.helper.CommonHelper
 import com.watb.chefmate.helper.DataStoreHelper
+import com.watb.chefmate.ui.theme.PrimaryTextButtonTheme
 import com.watb.chefmate.ui.theme.SecondaryTextButtonTheme
 import kotlinx.coroutines.launch
 
@@ -74,6 +76,7 @@ fun ProfileScreen(navController: NavController) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
+    var isLoggedIn by remember { mutableStateOf(false) }
     var userName by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -84,6 +87,7 @@ fun ProfileScreen(navController: NavController) {
     var isRating by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
+        isLoggedIn = DataStoreHelper.isLoggedIn(context)
         userName = DataStoreHelper.getUsername(context)
         phoneNumber = DataStoreHelper.getPhoneNumber(context)
         email = DataStoreHelper.getEmail(context)
@@ -119,7 +123,13 @@ fun ProfileScreen(navController: NavController) {
                     .border(width = 1.dp, color = Color(0xFF85D0B6), shape = CircleShape)
             ) {
                 IconButton(
-                    onClick = { isShownLogoutBottomSheet = true }
+                    onClick = {
+                        if (isLoggedIn) {
+                            isShownLogoutBottomSheet = true
+                        } else {
+                            Toast.makeText(context, "Vui lòng đăng nhập để sử dụng tính năng này", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_logout),
@@ -132,6 +142,8 @@ fun ProfileScreen(navController: NavController) {
             }
         }
         ProfileInformationCard(
+            isLoggedIn = isLoggedIn,
+            navController = navController,
             userName = userName,
             phoneNumber = phoneNumber,
             email = email,
@@ -202,6 +214,8 @@ fun ProfileScreen(navController: NavController) {
 
 @Composable
 fun ProfileInformationCard(
+    isLoggedIn: Boolean,
+    navController: NavController,
     userName: String,
     phoneNumber: String,
     email: String,
@@ -221,175 +235,207 @@ fun ProfileInformationCard(
         modifier = modifier
             .fillMaxWidth()
     ) {
-        Column(
+        Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
         ) {
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top,
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .blur(radius = if (isLoggedIn) 0.dp else 20.dp)
+                    .padding(12.dp)
             ) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top,
                     modifier = Modifier
+                        .fillMaxWidth()
                 ) {
-                    Image(
-                        painter = painterResource(R.drawable.img_common_avatar),
-                        contentDescription = "Avatar",
-                        modifier = Modifier
-                            .size(60.dp)
-                            .border(1.dp, Color(0xFFE0E0E0), shape = CircleShape)
-                            .clip(CircleShape)
-                    )
-                    Column(
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                    ) {
-                        Text(
-                            text = if (userName != "") userName else "Đang cập nhật...",
-                            fontSize = 18.sp,
-                            fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
-                            color = Color(0xFF000000)
-                        )
-                        Text(
-                            text = "${CommonHelper.parseNumber(followCount)} người theo dõi",
-                            fontSize = 12.sp,
-                            fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                            color = Color(0xFF5A5A60)
-                        )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .padding(top = 2.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_phone),
-                                contentDescription = "Phone",
-                                tint = Color(0xFF5A5A60),
-                            )
-                            Text(
-                                text = if (phoneNumber != "") "+84 ${phoneNumber.drop(1)}" else "Đang cập nhật...",
-                                fontSize = 14.sp,
-                                fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
-                                color = Color(0xFF5A5A60),
-                                modifier = Modifier
-                                    .padding(start = 4.dp)
-                            )
-                        }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .padding(top = 2.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_mail),
-                                contentDescription = "Phone",
-                                tint = Color(0xFF5A5A60),
-                            )
-                            Text(
-                                text = if (email != "") email else "Đang cập nhật...",
-                                fontSize = 14.sp,
-                                fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
-                                color = Color(0xFF5A5A60),
-                                modifier = Modifier
-                                    .padding(start = 4.dp)
-                            )
-                        }
-                    }
-                }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .clickable { /*TODO*/ }
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_edit),
-                        contentDescription = "Edit",
-                        tint = Color(0xFF2E8D8C),
-                    )
-                    Text(
-                        text = "Sửa",
-                        fontSize = 14.sp,
-                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
-                        color = Color(0xFF2E8D8C),
-                        modifier = Modifier
-                            .padding(start = 4.dp)
-                    )
-                }
-            }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .padding(top = 10.dp)
-                    .fillMaxWidth()
-                    .background(color = Color(0xFFE9EBEE), RoundedCornerShape(10.dp))
-                    .border(width = 1.dp, color = Color(0xFFE1E1E3), RoundedCornerShape(10.dp))
-                    .padding(10.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_recipe),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(color = Color(0xFFD7EDED), shape = CircleShape)
-                        .border(1.dp, color = Color(0xFFFFFFFF), shape = CircleShape)
-                        .padding(8.dp)
-                )
-                Column(
-                    modifier = Modifier
-                        .padding(start = 10.dp)
-                ) {
-                    val annotatedString = buildAnnotatedString {
-                        withStyle(
-                            style = SpanStyle(
-                                color = Color(0xFF1B1B1D),
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
-                            )
-                        ) {
-                            append("Bạn đã đăng ")
-                        }
-                        withStyle(
-                            style = SpanStyle(
-                                color = Color(0xFF1B1B1D),
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
-                            )
-                        ) {
-                            append("$recipeCount công thức")
-                        }
-                    }
-                    Text(text = annotatedString)
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .padding(top = 2.dp)
-                            .clickable {
-                                if (recipeCount == 0) {
-                                    Toast.makeText(context, "Bạn chưa có công thức nào", Toast.LENGTH_SHORT).show()
-                                }
-                            }
                     ) {
+                        Image(
+                            painter = painterResource(R.drawable.img_common_avatar),
+                            contentDescription = "Avatar",
+                            modifier = Modifier
+                                .size(60.dp)
+                                .border(1.dp, Color(0xFFE0E0E0), shape = CircleShape)
+                                .clip(CircleShape)
+                        )
+                        Column(
+                            modifier = Modifier
+                                .padding(start = 8.dp)
+                        ) {
+                            Text(
+                                text = if (userName != "") userName else "Đang cập nhật...",
+                                fontSize = 18.sp,
+                                fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                                color = Color(0xFF000000)
+                            )
+                            Text(
+                                text = "${CommonHelper.parseNumber(followCount)} người theo dõi",
+                                fontSize = 12.sp,
+                                fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                                color = Color(0xFF5A5A60)
+                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .padding(top = 2.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_phone),
+                                    contentDescription = "Phone",
+                                    tint = Color(0xFF5A5A60),
+                                )
+                                Text(
+                                    text = if (phoneNumber != "") "+84 ${phoneNumber.drop(1)}" else "Đang cập nhật...",
+                                    fontSize = 14.sp,
+                                    fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                                    color = Color(0xFF5A5A60),
+                                    modifier = Modifier
+                                        .padding(start = 4.dp)
+                                )
+                            }
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .padding(top = 2.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_mail),
+                                    contentDescription = "Phone",
+                                    tint = Color(0xFF5A5A60),
+                                )
+                                Text(
+                                    text = if (email != "") email else "Đang cập nhật...",
+                                    fontSize = 14.sp,
+                                    fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                                    color = Color(0xFF5A5A60),
+                                    modifier = Modifier
+                                        .padding(start = 4.dp)
+                                )
+                            }
+                        }
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clickable { /*TODO*/ }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_edit),
+                            contentDescription = "Edit",
+                            tint = Color(0xFF2E8D8C),
+                        )
                         Text(
-                            text = "Xem tất cả công thức",
-                            fontSize = 12.sp,
+                            text = "Sửa",
+                            fontSize = 14.sp,
                             fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
                             color = Color(0xFF2E8D8C),
-                            textDecoration = TextDecoration.Underline,
-                        )
-                        Icon(
-                            painter = painterResource(R.drawable.ic_arrow_right),
-                            contentDescription = null,
-                            tint = Color(0xFF2E8D8C),
                             modifier = Modifier
                                 .padding(start = 4.dp)
-                                .size(8.dp)
                         )
                     }
                 }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(top = 10.dp)
+                        .fillMaxWidth()
+                        .background(color = Color(0xFFE9EBEE), RoundedCornerShape(10.dp))
+                        .border(width = 1.dp, color = Color(0xFFE1E1E3), RoundedCornerShape(10.dp))
+                        .padding(10.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_recipe),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(color = Color(0xFFD7EDED), shape = CircleShape)
+                            .border(1.dp, color = Color(0xFFFFFFFF), shape = CircleShape)
+                            .padding(8.dp)
+                    )
+                    Column(
+                        modifier = Modifier
+                            .padding(start = 10.dp)
+                    ) {
+                        val annotatedString = buildAnnotatedString {
+                            withStyle(
+                                style = SpanStyle(
+                                    color = Color(0xFF1B1B1D),
+                                    fontSize = 12.sp,
+                                    fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
+                                )
+                            ) {
+                                append("Bạn đã đăng ")
+                            }
+                            withStyle(
+                                style = SpanStyle(
+                                    color = Color(0xFF1B1B1D),
+                                    fontSize = 12.sp,
+                                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                                )
+                            ) {
+                                append("$recipeCount công thức")
+                            }
+                        }
+                        Text(text = annotatedString)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .padding(top = 2.dp)
+                                .clickable {
+                                    if (recipeCount == 0) {
+                                        Toast.makeText(context, "Bạn chưa có công thức nào", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                        ) {
+                            Text(
+                                text = "Xem tất cả công thức",
+                                fontSize = 12.sp,
+                                fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                                color = Color(0xFF2E8D8C),
+                                textDecoration = TextDecoration.Underline,
+                            )
+                            Icon(
+                                painter = painterResource(R.drawable.ic_arrow_right),
+                                contentDescription = null,
+                                tint = Color(0xFF2E8D8C),
+                                modifier = Modifier
+                                    .padding(start = 4.dp)
+                                    .size(8.dp)
+                            )
+                        }
+                    }
+                }
+            }
+            if (!isLoggedIn) {
+//                Box(
+//                    contentAlignment = Alignment.Center,
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .fillMaxHeight()
+//                        .background(color = Color(0xFFFFFFFF).copy(alpha = 0.8f))
+//                        .blur(50.dp)
+//                ) {
+//                    Box(
+//                        modifier = Modifier
+//                            .size(120.dp, 40.dp)
+//                            .background(brush = AppConstant.onPrimaryGradient)
+//                    )
+//                }
+                PrimaryTextButtonTheme(
+                    onClick = {
+                        navController.navigate("signIn") {
+                            popUpTo("mainAct") {
+                                inclusive = false
+                            }
+                        }
+                    },
+                    text = "Đăng nhập ngay"
+                )
             }
         }
     }

@@ -98,6 +98,7 @@ import com.watb.chefmate.data.TagData
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.database.entities.IngredientEntity
 import com.watb.chefmate.database.entities.TagEntity
+import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import kotlinx.coroutines.launch
@@ -118,10 +119,11 @@ fun AddOrEditRecipeScreen(
     val coroutineScope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
 
+    var isLoggedIn by remember { mutableStateOf(false) }
     val nameRecipe = remember { mutableStateOf("") }
     val cookTime = remember { mutableStateOf("") }
     val ration = remember { mutableStateOf("") }
-    var isPublic by remember { mutableStateOf(true) }
+    var isPublic by remember { mutableStateOf(false) }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var isLoading by remember { mutableStateOf(false) }
     val selectedUnit = remember { mutableStateOf("Phút") }
@@ -150,6 +152,10 @@ fun AddOrEditRecipeScreen(
                 Intent.FLAG_GRANT_READ_URI_PERMISSION
             )
         }
+    }
+
+    LaunchedEffect(Unit) {
+        isLoggedIn = DataStoreHelper.isLoggedIn(context)
     }
 
     LaunchedEffect(recipeId) {
@@ -469,7 +475,13 @@ fun AddOrEditRecipeScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     RadioButton(
                         selected = isPublic,
-                        onClick = { isPublic = true },
+                        onClick = {
+                            if (!isLoggedIn) {
+                                Toast.makeText(context, "Vui lòng đăng nhập để sử dụng tính năng này!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                isPublic = true
+                            }
+                        },
                         colors = RadioButtonDefaults.colors(selectedColor = Color(0xFFFB923C))
                     )
                     Text(text = "Công khai")
