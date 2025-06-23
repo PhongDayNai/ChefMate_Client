@@ -393,6 +393,40 @@ fun RecipeItem(
 }
 
 @Composable
+fun PrimaryTextButtonTheme(
+    onClick: () -> Unit,
+    text: String,
+    enabled: Boolean = true,
+    shape: Shape = CircleShape,
+    borderWidth: Int = 0,
+    borderColor: Color = Color.Transparent,
+    @SuppressLint("ModifierParameter") modifier: Modifier = Modifier
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .padding(8.dp)
+            .clickable(
+                onClick = { if (enabled) onClick() }
+            )
+            .background(
+                brush = if (enabled) AppConstant.onPrimaryGradient else AppConstant.unselectedPrimaryGradient,
+                shape = shape
+            )
+            .border(width = borderWidth.dp, color = borderColor, shape = shape)
+            .padding(16.dp)
+    ) {
+        Text(
+            text = text,
+            color = Color(0xFFFFFFFF),
+            fontSize = 16.sp,
+            fontWeight = FontWeight(600),
+            fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+        )
+    }
+}
+
+@Composable
 fun SecondaryTextButtonTheme(
     onClick: () -> Unit,
     text: String,
