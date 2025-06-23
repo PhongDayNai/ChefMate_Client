@@ -42,7 +42,6 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
@@ -53,6 +52,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -75,7 +75,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -98,9 +97,9 @@ import com.watb.chefmate.data.TagData
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.database.entities.IngredientEntity
 import com.watb.chefmate.database.entities.TagEntity
-import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.viewmodel.RecipeViewModel
+import com.watb.chefmate.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -112,6 +111,7 @@ import kotlin.text.toIntOrNull
 fun AddOrEditRecipeScreen(
     navController: NavController,
     recipeId: Int = -1,
+    userViewModel: UserViewModel,
     recipeViewModel: RecipeViewModel
 ) {
     val context = LocalContext.current
@@ -119,7 +119,8 @@ fun AddOrEditRecipeScreen(
     val coroutineScope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    var isLoggedIn by remember { mutableStateOf(false) }
+    val isLoggedIn by userViewModel.isLoggedIn.collectAsState()
+    val user by userViewModel.user.collectAsState()
     val nameRecipe = remember { mutableStateOf("") }
     val cookTime = remember { mutableStateOf("") }
     val ration = remember { mutableStateOf("") }
@@ -152,10 +153,6 @@ fun AddOrEditRecipeScreen(
                 Intent.FLAG_GRANT_READ_URI_PERMISSION
             )
         }
-    }
-
-    LaunchedEffect(Unit) {
-        isLoggedIn = DataStoreHelper.isLoggedIn(context)
     }
 
     LaunchedEffect(recipeId) {
@@ -767,54 +764,56 @@ fun AddOrEditRecipeScreen(
                                     )
                                     navController.popBackStack()
                                 } else {
-                                    val ingredientItems = mutableListOf<IngredientItem>()
-                                    val cookingStepItems = mutableListOf<CookingStepAddRecipeData>()
-                                    val tagItems = mutableListOf<TagData>()
-                                    ingredients.forEach { ingredient ->
-                                        ingredientItems.add(IngredientItem(ingredientName = ingredient.name, weight = ingredient.weight.toIntOrNull() ?: 0, unit = ingredient.unit))
-                                    }
-                                    steps.forEach { cookingStep ->
-                                        cookingStepItems.add(CookingStepAddRecipeData(content = cookingStep.content))
-                                    }
-                                    tags.forEach { tag ->
-                                        tagItems.add(TagData(tagName = tag))
-                                    }
-
-                                    val recipe = CreateRecipeData(
-                                        recipeName = nameRecipe.value,
-                                        image = imageUri?.toString() ?: "",
-                                        userId = 1,
-                                        cookingTime = "${cookTime.value} ${selectedUnit.value}",
-                                        ration = parsedRation,
-                                        ingredients = ingredientItems.toList(),
-                                        cookingSteps = cookingStepItems.toList(),
-                                        tags = tagItems.toList()
-                                    )
-                                    val response = ApiClient.createRecipe(context, recipe)
-                                    if (response != null) {
-                                        if (response.success) {
-                                            recipeViewModel.addRecipe(
-                                                recipeName = nameRecipe.value,
-                                                imageUri = imageUri.toString(),
-                                                userName = "Thanh",
-                                                isPublic = isPublic,
-                                                likeQuantity = 0,
-                                                cookingTime = "${cookTime.value} ${selectedUnit.value}",
-                                                ration = parsedRation,
-                                                viewCount = 0,
-                                                createdAt = "",
-                                                ingredients = ingredientsToSave,
-                                                steps = stepsToSave,
-                                                tags = tagsToSave
-                                            )
-                                            navController.popBackStack()
-                                        } else {
-                                            Log.e("AddRecipeScreen", "Error: ${response.message}")
-                                            Toast.makeText(context, response.message, Toast.LENGTH_SHORT).show()
+                                    if (user != null) {
+                                        val ingredientItems = mutableListOf<IngredientItem>()
+                                        val cookingStepItems = mutableListOf<CookingStepAddRecipeData>()
+                                        val tagItems = mutableListOf<TagData>()
+                                        ingredients.forEach { ingredient ->
+                                            ingredientItems.add(IngredientItem(ingredientName = ingredient.name, weight = ingredient.weight.toIntOrNull() ?: 0, unit = ingredient.unit))
                                         }
-                                    } else {
-                                        Log.e("AddRecipeScreen", "Error: Response is null")
-                                        Toast.makeText(context, "Có lỗi xảy ra. Vui lòng thử lại!", Toast.LENGTH_SHORT).show()
+                                        steps.forEach { cookingStep ->
+                                            cookingStepItems.add(CookingStepAddRecipeData(content = cookingStep.content))
+                                        }
+                                        tags.forEach { tag ->
+                                            tagItems.add(TagData(tagName = tag))
+                                        }
+
+                                        val recipe = CreateRecipeData(
+                                            recipeName = nameRecipe.value,
+                                            image = imageUri?.toString() ?: "",
+                                            userId = user!!.userId,
+                                            cookingTime = "${cookTime.value} ${selectedUnit.value}",
+                                            ration = parsedRation,
+                                            ingredients = ingredientItems.toList(),
+                                            cookingSteps = cookingStepItems.toList(),
+                                            tags = tagItems.toList()
+                                        )
+                                        val response = ApiClient.createRecipe(context, recipe)
+                                        if (response != null) {
+                                            if (response.success) {
+                                                recipeViewModel.addRecipe(
+                                                    recipeName = nameRecipe.value,
+                                                    imageUri = imageUri.toString(),
+                                                    userName = "Thanh",
+                                                    isPublic = isPublic,
+                                                    likeQuantity = 0,
+                                                    cookingTime = "${cookTime.value} ${selectedUnit.value}",
+                                                    ration = parsedRation,
+                                                    viewCount = 0,
+                                                    createdAt = "",
+                                                    ingredients = ingredientsToSave,
+                                                    steps = stepsToSave,
+                                                    tags = tagsToSave
+                                                )
+                                                navController.popBackStack()
+                                            } else {
+                                                Log.e("AddRecipeScreen", "Error: ${response.message}")
+                                                Toast.makeText(context, response.message, Toast.LENGTH_SHORT).show()
+                                            }
+                                        } else {
+                                            Log.e("AddRecipeScreen", "Error: Response is null")
+                                            Toast.makeText(context, "Có lỗi xảy ra. Vui lòng thử lại!", Toast.LENGTH_SHORT).show()
+                                        }
                                     }
                                 }
                             } else {
@@ -1238,7 +1237,6 @@ fun TagDropdown(
             expanded = expanded.value,
             onDismissRequest = { expanded.value = false },
             modifier = Modifier
-//                .fillMaxWidth()
                 .heightIn(max = 300.dp)
         ) {
             if (tagsSearch.isEmpty()) {
