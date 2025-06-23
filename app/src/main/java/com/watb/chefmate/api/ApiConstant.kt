@@ -8,6 +8,12 @@ object ApiConstant {
         get() = "$MAIN_URL/api/users/login"
     val REGISTER_URL: String
         get() = "$MAIN_URL/api/users/register"
+    val UPDATE_USER_INFORMATION_URL: String
+        get() = "$MAIN_URL/api/users/update-user-information"
+    val CHANGE_PASSWORD_URL: String
+        get() = "$MAIN_URL/api/users/change-password"
+    val GET_USER_INFORMATION_URL: String
+        get() = "$MAIN_URL/api/users/get-information"
 
     // recipe
     val TOP_TRENDING_URL: String
