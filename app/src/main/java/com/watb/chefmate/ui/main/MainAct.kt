@@ -83,6 +83,9 @@ fun MainAct(
                 userId = DataStoreHelper.getUserId(context)
             }
             recipeViewModel.getTopTrending(userId)
+            if (userId != null) {
+                recipeViewModel.getPersonalRecipes(userId)
+            }
         }
         launch {
             recipeViewModel.getIATDataFromServer()
