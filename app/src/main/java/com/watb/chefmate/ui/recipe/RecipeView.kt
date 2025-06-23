@@ -390,35 +390,37 @@ Tác giả: ${recipe.userName}
                 modifier = Modifier
                     .padding(start = 8.dp)
             )
-            Button(
-                onClick = {},
-                contentPadding = PaddingValues(vertical = 0.dp, horizontal = 8.dp),
-                shape = RoundedCornerShape(6.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFADAEBC)
-                ),
-                modifier = Modifier
-                    .padding(start = 16.dp)
-                    .height(24.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
+            if (!isHistory) {
+                Button(
+                    onClick = {},
+                    contentPadding = PaddingValues(vertical = 0.dp, horizontal = 8.dp),
+                    shape = RoundedCornerShape(6.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFADAEBC)
+                    ),
+                    modifier = Modifier
+                        .padding(start = 16.dp)
+                        .height(24.dp)
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_add),
-                        contentDescription = null,
-                        tint = Color(0xFFFFFFFF),
-                        modifier = Modifier
-                            .size(16.dp)
-                    )
-                    Text(
-                        text = "Theo dõi",
-                        color = Color(0xFFFFFFFF),
-                        fontSize = 14.sp,
-                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
-                        modifier = Modifier
-                            .padding(start = 4.dp)
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_add),
+                            contentDescription = null,
+                            tint = Color(0xFFFFFFFF),
+                            modifier = Modifier
+                                .size(16.dp)
+                        )
+                        Text(
+                            text = "Theo dõi",
+                            color = Color(0xFFFFFFFF),
+                            fontSize = 14.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                            modifier = Modifier
+                                .padding(start = 4.dp)
+                        )
+                    }
                 }
             }
         }
@@ -428,51 +430,70 @@ Tác giả: ${recipe.userName}
                 .padding(top = 8.dp)
                 .fillMaxWidth(0.9f)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clickable {
-                        if (!isLiked) {
-                            recipe.recipeId?.let {
-                                if (isLoggedIn) {
-                                    user?.let {
-                                        coroutineScope.launch {
-                                            val response = ApiClient.likeRecipe(recipeId = recipe.recipeId, userId = user!!.userId)
-                                            if (response != null) {
-                                                if (response.success) {
-                                                    if (response.data != null) {
-                                                        isLiked = true
-                                                        likeQuantity = response.data.count
+            if (!isHistory) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clickable {
+                            if (!isLiked) {
+                                recipe.recipeId?.let {
+                                    if (isLoggedIn) {
+                                        user?.let {
+                                            coroutineScope.launch {
+                                                val response = ApiClient.likeRecipe(recipeId = recipe.recipeId, userId = user!!.userId)
+                                                if (response != null) {
+                                                    if (response.success) {
+                                                        if (response.data != null) {
+                                                            isLiked = true
+                                                            likeQuantity = response.data.count
+                                                        } else {
+                                                            Log.e("RecipeViewScreen", "Error: ${response.message}")
+                                                            Toast.makeText(context, "Bạn đã yêu thích công thức này", Toast.LENGTH_SHORT).show()
+                                                        }
                                                     } else {
                                                         Log.e("RecipeViewScreen", "Error: ${response.message}")
                                                         Toast.makeText(context, "Bạn đã yêu thích công thức này", Toast.LENGTH_SHORT).show()
                                                     }
                                                 } else {
-                                                    Log.e("RecipeViewScreen", "Error: ${response.message}")
-                                                    Toast.makeText(context, "Bạn đã yêu thích công thức này", Toast.LENGTH_SHORT).show()
+                                                    Log.e("RecipeViewScreen", "Error: Response is null")
+                                                    Toast.makeText(context, "Vui lòng thử lại", Toast.LENGTH_SHORT).show()
                                                 }
-                                            } else {
-                                                Log.e("RecipeViewScreen", "Error: Response is null")
-                                                Toast.makeText(context, "Vui lòng thử lại", Toast.LENGTH_SHORT).show()
                                             }
                                         }
+                                    } else {
+                                        Toast.makeText(context, "Vui lòng đăng nhập để sử dụng tính năng này!", Toast.LENGTH_SHORT).show()
                                     }
-                                } else {
-                                    Toast.makeText(context, "Vui lòng đăng nhập để sử dụng tính năng này!", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
-                    }
-            ) {
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_like_filled),
+                        contentDescription = "Like",
+                        tint = if (isLiked) Color(0xFFEF4444) else Color(0xFFCFCDCD),
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
+                    Text(
+                        text = CommonHelper.parseNumber(likeQuantity),
+                        color = Color(0xFF6B7280),
+                        fontSize = 14.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                        fontWeight = FontWeight(400),
+                        modifier = Modifier
+                            .padding(start = 4.dp)
+                    )
+                }
                 Icon(
-                    painter = painterResource(R.drawable.ic_like_filled),
+                    painter = painterResource(R.drawable.ic_view_filled),
                     contentDescription = "Like",
-                    tint = if (isLiked) Color(0xFFEF4444) else Color(0xFFCFCDCD),
+                    tint = Color(0xFFFB923C),
                     modifier = Modifier
-                        .size(24.dp)
+                        .padding(start = 16.dp)
+                        .size(16.dp)
                 )
                 Text(
-                    text = CommonHelper.parseNumber(likeQuantity),
+                    text = CommonHelper.parseNumber(viewQuantity),
                     color = Color(0xFF6B7280),
                     fontSize = 14.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
@@ -480,25 +501,6 @@ Tác giả: ${recipe.userName}
                     modifier = Modifier
                         .padding(start = 4.dp)
                 )
-            }
-            Icon(
-                painter = painterResource(R.drawable.ic_view_filled),
-                contentDescription = "Like",
-                tint = Color(0xFFFB923C),
-                modifier = Modifier
-                    .padding(start = 16.dp)
-                    .size(16.dp)
-            )
-            Text(
-                text = CommonHelper.parseNumber(viewQuantity),
-                color = Color(0xFF6B7280),
-                fontSize = 14.sp,
-                fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
-                fontWeight = FontWeight(400),
-                modifier = Modifier
-                    .padding(start = 4.dp)
-            )
-            if (!isHistory) {
                 Icon(
                     painter = painterResource(R.drawable.ic_comment_filled),
                     contentDescription = "Like",
@@ -522,7 +524,7 @@ Tác giả: ${recipe.userName}
                 contentDescription = "Like",
                 tint = Color(0xFFFB923C),
                 modifier = Modifier
-                    .padding(start = 16.dp)
+                    .padding(start = if (!isHistory) 16.dp else 0.dp)
                     .size(16.dp)
             )
             Text(

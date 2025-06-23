@@ -208,18 +208,24 @@ fun HomeScreen(
                 .padding(top = 16.dp)
                 .fillMaxWidth(0.9f)
         )
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+        AnimatedVisibility(
+            visible = showPopular.value,
+            enter = fadeIn() + slideInVertically() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
             modifier = Modifier
                 .fillMaxWidth()
-                .animateContentSize()
         ) {
-            val imageLeft = listOf(R.drawable.img_drinks_recipes, R.drawable.img_sauce_recipes, R.drawable.img_soup_recipes)
-            val recipesTypeLeft = listOf("Công thức\nđồ uống", "Công thức\nnước chấm", "Công thức\nmón súp")
-            val imageRight = listOf(R.drawable.img_salad_recipes, R.drawable.img_main_course_recipes, R.drawable.img_vegetarian_recipes)
-            val recipesTypeRight = listOf("Công thức\nsalad", "Công thức\nmón chính", "Công thức\nmón chay")
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateContentSize()
+            ) {
+                val imageLeft = listOf(R.drawable.img_drinks_recipes, R.drawable.img_sauce_recipes, R.drawable.img_soup_recipes)
+                val recipesTypeLeft = listOf("Công thức\nđồ uống", "Công thức\nnước chấm", "Công thức\nmón súp")
+                val imageRight = listOf(R.drawable.img_salad_recipes, R.drawable.img_main_course_recipes, R.drawable.img_vegetarian_recipes)
+                val recipesTypeRight = listOf("Công thức\nsalad", "Công thức\nmón chính", "Công thức\nmón chay")
 
-            if (showPopular.value) {
                 imageLeft.forEachIndexed { index, image ->
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
