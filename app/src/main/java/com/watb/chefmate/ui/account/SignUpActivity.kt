@@ -245,10 +245,10 @@ fun SignUpScreen(
                                     coroutineScope.launch {
                                         isLoading = true
                                         val response = ApiClient.register(
-                                            fullName = fullName.value,
-                                            phone = phoneNumber.value,
-                                            email = email.value,
-                                            password = password.value
+                                            fullName = fullName.value.trim(),
+                                            phone = phoneNumber.value.trim(),
+                                            email = email.value.trim(),
+                                            password = password.value.trim()
                                         )
                                         if (response != null) {
                                             if (response.data != null) {

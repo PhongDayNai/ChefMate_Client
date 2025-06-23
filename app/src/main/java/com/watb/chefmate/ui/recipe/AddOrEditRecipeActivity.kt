@@ -97,6 +97,7 @@ import com.watb.chefmate.data.TagData
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.database.entities.IngredientEntity
 import com.watb.chefmate.database.entities.TagEntity
+import com.watb.chefmate.helper.CommonHelper
 import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import com.watb.chefmate.viewmodel.UserViewModel
@@ -769,18 +770,18 @@ fun AddOrEditRecipeScreen(
                                         val cookingStepItems = mutableListOf<CookingStepAddRecipeData>()
                                         val tagItems = mutableListOf<TagData>()
                                         ingredients.forEach { ingredient ->
-                                            ingredientItems.add(IngredientItem(ingredientName = ingredient.name, weight = ingredient.weight.toIntOrNull() ?: 0, unit = ingredient.unit))
+                                            ingredientItems.add(IngredientItem(ingredientName = ingredient.name.trim(), weight = ingredient.weight.toIntOrNull() ?: 0, unit = ingredient.unit))
                                         }
                                         steps.forEach { cookingStep ->
-                                            cookingStepItems.add(CookingStepAddRecipeData(content = cookingStep.content))
+                                            cookingStepItems.add(CookingStepAddRecipeData(content = cookingStep.content.trim()))
                                         }
                                         tags.forEach { tag ->
-                                            tagItems.add(TagData(tagName = tag))
+                                            tagItems.add(TagData(tagName = tag.trim()))
                                         }
 
                                         val recipe = CreateRecipeData(
-                                            recipeName = nameRecipe.value,
-                                            image = imageUri?.toString() ?: "",
+                                            recipeName = nameRecipe.value.trim(),
+                                            image = imageUri?.toString()?.trim() ?: "",
                                             userId = user!!.userId,
                                             cookingTime = "${cookTime.value} ${selectedUnit.value}",
                                             ration = parsedRation,
@@ -794,13 +795,13 @@ fun AddOrEditRecipeScreen(
                                                 recipeViewModel.addRecipe(
                                                     recipeName = nameRecipe.value,
                                                     imageUri = imageUri.toString(),
-                                                    userName = "Thanh",
+                                                    userName = user?.fullName ?: "Người dùng",
                                                     isPublic = isPublic,
                                                     likeQuantity = 0,
                                                     cookingTime = "${cookTime.value} ${selectedUnit.value}",
                                                     ration = parsedRation,
                                                     viewCount = 0,
-                                                    createdAt = "",
+                                                    createdAt = CommonHelper.parseTime(Date().toString()),
                                                     ingredients = ingredientsToSave,
                                                     steps = stepsToSave,
                                                     tags = tagsToSave
