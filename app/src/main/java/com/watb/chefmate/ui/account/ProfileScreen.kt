@@ -301,7 +301,9 @@ fun ProfileInformationCard(
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .clickable { /*TODO*/ }
+                            .clickable {
+                                navController.navigate("editProfile")
+                            }
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_edit),
