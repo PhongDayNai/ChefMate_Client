@@ -51,7 +51,7 @@ fun RecipeListScreen(
             ) {
                 Text("Chưa có công thức nào.", style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Nhấn nút '+' để thêm công thức mới!", style = MaterialTheme.typography.bodyMedium)
+                Text("Nhấn 'Thêm công thức' để thêm công thức mới!", style = MaterialTheme.typography.bodyMedium)
             }
         } else {
             LazyColumn(
@@ -78,6 +78,9 @@ fun RecipeListScreen(
                         modifier = Modifier
                     )
                     Spacer(modifier = Modifier.height(8.dp))
+                }
+                item {
+                    Spacer(modifier = Modifier.height(28.dp))
                 }
             }
             if (isShowDialog) {
