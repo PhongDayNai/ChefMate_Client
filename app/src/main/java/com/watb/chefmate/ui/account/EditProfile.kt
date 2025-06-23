@@ -1,24 +1,344 @@
 package com.watb.chefmate.ui.account
 
+import android.content.Context
+import android.util.Log
+import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-
+import androidx.navigation.compose.rememberNavController
+import com.watb.chefmate.R
+import com.watb.chefmate.ui.theme.PrimaryTextButtonTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 @Composable
 fun EditProfileScreen(
     navController: NavController
 ) {
-
+    Box {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = Color(0xFFF8F8FC))
+                .safeDrawingPadding()
+        ) {
+            Box(
+                modifier = Modifier
+                    .padding(top = 16.dp, bottom = 32.dp)
+                    .fillMaxWidth(0.9f)
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .border(width = 1.dp, color = Color(0xFFE1E1E3), shape = CircleShape)
+                        .align(Alignment.CenterStart)
+                ) {
+                    IconButton(
+                        onClick = { navController.popBackStack() }
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_back),
+                            contentDescription = null,
+                            tint = Color(0xFF5A5A60),
+                            modifier = Modifier
+                                .size(12.dp)
+                        )
+                    }
+                }
+                Text(
+                    text = "Chỉnh sửa thông tin",
+                    textAlign = TextAlign.Center,
+                    color = Color(0xFF1B1B1D),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight(600),
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                )
+            }
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFFFFFFF)
+                ),
+                shape = CircleShape,
+                border = BorderStroke(width = 4.dp, color = Color(0xFFFFFFFF)),
+                elevation = CardDefaults.elevatedCardElevation(
+                    defaultElevation = 6.dp
+                ),
+                modifier = Modifier
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_common_avatar),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(130.dp)
+                        .clip(CircleShape)
+                )
+            }
+        }
+    }
 }
 
 @Composable
 fun EditPersonalInformation(
-
+    context: Context,
+    hasChanges: Boolean,
+    displayNameNew: String,
+    onChangeDisplayName: (String) -> Unit,
+    emailNew: String,
+    onChangeEmail: (String) -> Unit,
+    phoneNumberNew: String,
+    onChangePhoneNumber: (String) -> Unit,
+    onChangePassword: () -> Unit,
+    onChangeLoading: (Boolean) -> Unit,
 ) {
+    val coroutineScope = rememberCoroutineScope()
 
+    Column {
+        Text(
+            text = "Họ và tên",
+            color = Color(0xFF5A5A60),
+            fontSize = 14.sp,
+            fontWeight = FontWeight(400),
+            fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+            modifier = Modifier
+                .padding(top = 20.dp, bottom = 12.dp)
+                .fillMaxWidth(0.9f)
+        )
+        OutlinedTextField(
+            value = displayNameNew,
+            onValueChange = { newValue ->
+                onChangeDisplayName(newValue)
+            },
+            textStyle = TextStyle(
+                fontSize = 16.sp,
+                fontWeight = FontWeight(400),
+                fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
+            ),
+            colors = TextFieldDefaults.colors(
+                focusedTextColor = Color(0xFF1B1B1D),
+                unfocusedTextColor = Color(0xFF1B1B1D),
+                focusedContainerColor = Color(0xFFF8F8FC),
+                unfocusedContainerColor = Color(0xFFF8F8FC),
+                focusedIndicatorColor = Color(0xFFDDE7E7),
+                unfocusedIndicatorColor = Color(0xFFDDE7E7),
+            ),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = {
+
+                }
+            ),
+            modifier = Modifier
+                .fillMaxWidth(0.9f),
+        )
+        Text(
+            text = "Địa chỉ email",
+            color = Color(0xFF5A5A60),
+            fontSize = 14.sp,
+            fontWeight = FontWeight(400),
+            fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+            modifier = Modifier
+                .padding(top = 20.dp, bottom = 12.dp)
+                .fillMaxWidth(0.9f)
+        )
+        OutlinedTextField(
+            value = emailNew,
+            onValueChange = { newValue ->
+                onChangeEmail(newValue)
+            },
+            textStyle = TextStyle(
+                fontSize = 16.sp,
+                fontWeight = FontWeight(400),
+                fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
+            ),
+            colors = TextFieldDefaults.colors(
+                focusedTextColor = Color(0xFF1B1B1D),
+                unfocusedTextColor = Color(0xFF1B1B1D),
+                focusedContainerColor = Color(0xFFF8F8FC),
+                unfocusedContainerColor = Color(0xFFF8F8FC),
+                focusedIndicatorColor = Color(0xFFDDE7E7),
+                unfocusedIndicatorColor = Color(0xFFDDE7E7),
+            ),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = {
+
+                }
+            ),
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+        )
+        Text(
+            text = "Số điện thoại",
+            color = Color(0xFF5A5A60),
+            fontSize = 14.sp,
+            fontWeight = FontWeight(400),
+            fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+            modifier = Modifier
+                .padding(top = 20.dp, bottom = 12.dp)
+                .fillMaxWidth(0.9f)
+        )
+        OutlinedTextField(
+            value = phoneNumberNew,
+            onValueChange = { newValue ->
+                onChangePhoneNumber(newValue)
+            },
+            textStyle = TextStyle(
+                fontSize = 16.sp,
+                fontWeight = FontWeight(400),
+                fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
+            ),
+            colors = TextFieldDefaults.colors(
+                focusedTextColor = Color(0xFF1B1B1D),
+                unfocusedTextColor = Color(0xFF1B1B1D),
+                focusedContainerColor = Color(0xFFF8F8FC),
+                unfocusedContainerColor = Color(0xFFF8F8FC),
+                focusedIndicatorColor = Color(0xFFDDE7E7),
+                unfocusedIndicatorColor = Color(0xFFDDE7E7),
+            ),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = {
+
+                }
+            ),
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+        )
+        Text(
+            text = "Đổi mật khẩu",
+            textDecoration = TextDecoration.Underline,
+            color = Color(0xFF5A5A60),
+            fontSize = 14.sp,
+            fontWeight = FontWeight(500),
+            fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+            modifier = Modifier
+                .padding(top = 12.dp, end = 20.dp)
+                .align(Alignment.End)
+                .clickable(
+                    onClick = onChangePassword
+                )
+        )
+        PrimaryTextButtonTheme(
+            onClick = {
+                coroutineScope.launch(Dispatchers.IO) {
+                    withContext(Dispatchers.Main) { onChangeLoading(true) }
+                    try {
+                        if (hasChanges) {
+
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(
+                                    context,
+                                    "Không có thay đổi nào, vui lòng kiểm tra lại",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.d("EditProfile", "Something went wrong when change profile: ${e.message}")
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                context,
+                                "Có lỗi xảy ra, vui lòng thử lại",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    } finally {
+                        withContext(Dispatchers.Main) { onChangeLoading(false) }
+                    }
+                }
+            },
+            text = "Lưu thay đổi",
+            enabled = hasChanges,
+            modifier = Modifier
+                .padding(vertical = 20.dp)
+                .fillMaxWidth(0.9f)
+        )
+    }
 }
 
 @Composable
 fun EditPassword () {
 
+}
+
+@Preview
+@Composable
+fun EditProfileScreenPreview() {
+    val navController = rememberNavController()
+
+    EditProfileScreen(navController = navController)
 }
 
