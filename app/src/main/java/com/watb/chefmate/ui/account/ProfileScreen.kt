@@ -373,6 +373,12 @@ fun ProfileInformationCard(
                                             "Bạn chưa có công thức nào",
                                             Toast.LENGTH_SHORT
                                         ).show()
+                                    } else {
+                                        navController.navigate("personalRecipes") {
+                                            popUpTo("mainAct") {
+                                                inclusive = false
+                                            }
+                                        }
                                     }
                                 }
                         ) {
