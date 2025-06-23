@@ -75,7 +75,12 @@ fun MainAct(
 
     LaunchedEffect(Unit) {
         launch {
-            recipeViewModel.getTopTrending()
+            val isLoggedIn = DataStoreHelper.isLoggedIn(context)
+            var userId: Int? = null
+            if (isLoggedIn) {
+                userId = DataStoreHelper.getUserId(context)
+            }
+            recipeViewModel.getTopTrending(userId)
         }
         launch {
             recipeViewModel.getIATDataFromServer()

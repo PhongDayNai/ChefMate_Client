@@ -96,6 +96,7 @@ import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.database.entities.TagEntity
 import com.watb.chefmate.helper.CommonHelper
+import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import kotlinx.coroutines.FlowPreview
@@ -121,6 +122,8 @@ fun RecipeViewScreen(
 
     val recipeState by recipeViewModel.getRecipeByName(recipe.recipeName).collectAsState(initial = null)
 
+    var isLoggedIn by remember { mutableStateOf(false) }
+    var userId by remember { mutableStateOf<Int?>(null) }
     var markPainter by remember { mutableStateOf(R.drawable.ic_mark) }
     var isLiked by remember { mutableStateOf(recipe.isLiked) }
     var likeQuantity by remember { mutableStateOf(recipe.likeQuantity) }
@@ -155,19 +158,25 @@ fun RecipeViewScreen(
     )
 
     LaunchedEffect(Unit) {
-        if (!isHistory) {
-            recipe.recipeId?.let {
-                val response = ApiClient.increaseViewCount(recipe.recipeId)
-                if (response != null) {
-                    if (response.success) {
-                        if (response.data != null) {
-                            viewQuantity = response.data.count
-                        } else {
-                            Log.e("RecipeViewScreen", "Error: ${response.message}")
+        launch {
+            if (!isHistory) {
+                recipe.recipeId?.let {
+                    val response = ApiClient.increaseViewCount(recipe.recipeId)
+                    if (response != null) {
+                        if (response.success) {
+                            if (response.data != null) {
+                                viewQuantity = response.data.count
+                            } else {
+                                Log.e("RecipeViewScreen", "Error: ${response.message}")
+                            }
                         }
                     }
                 }
             }
+        }
+        launch {
+            isLoggedIn = DataStoreHelper.isLoggedIn(context)
+            userId = DataStoreHelper.getUserId(context)
         }
     }
 
@@ -429,25 +438,31 @@ Tác giả: ${recipe.userName}
                     .clickable {
                         if (!isLiked) {
                             recipe.recipeId?.let {
-                                coroutineScope.launch {
-                                    val response = ApiClient.likeRecipe(recipeId = recipe.recipeId)
-                                    if (response != null) {
-                                        if (response.success) {
-                                            if (response.data != null) {
-                                                isLiked = true
-                                                likeQuantity = response.data.count
+                                if (isLoggedIn) {
+                                    userId?.let {
+                                        coroutineScope.launch {
+                                            val response = ApiClient.likeRecipe(recipeId = recipe.recipeId, userId = userId!!)
+                                            if (response != null) {
+                                                if (response.success) {
+                                                    if (response.data != null) {
+                                                        isLiked = true
+                                                        likeQuantity = response.data.count
+                                                    } else {
+                                                        Log.e("RecipeViewScreen", "Error: ${response.message}")
+                                                        Toast.makeText(context, "Bạn đã yêu thích công thức này", Toast.LENGTH_SHORT).show()
+                                                    }
+                                                } else {
+                                                    Log.e("RecipeViewScreen", "Error: ${response.message}")
+                                                    Toast.makeText(context, "Bạn đã yêu thích công thức này", Toast.LENGTH_SHORT).show()
+                                                }
                                             } else {
-                                                Log.e("RecipeViewScreen", "Error: ${response.message}")
-                                                Toast.makeText(context, "Bạn đã yêu thích công thức này", Toast.LENGTH_SHORT).show()
+                                                Log.e("RecipeViewScreen", "Error: Response is null")
+                                                Toast.makeText(context, "Vui lòng thử lại", Toast.LENGTH_SHORT).show()
                                             }
-                                        } else {
-                                            Log.e("RecipeViewScreen", "Error: ${response.message}")
-                                            Toast.makeText(context, "Bạn đã yêu thích công thức này", Toast.LENGTH_SHORT).show()
                                         }
-                                    } else {
-                                        Log.e("RecipeViewScreen", "Error: Response is null")
-                                        Toast.makeText(context, "Vui lòng thử lại", Toast.LENGTH_SHORT).show()
                                     }
+                                } else {
+                                    Toast.makeText(context, "Vui lòng đăng nhập để sử dụng tính năng này!", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }

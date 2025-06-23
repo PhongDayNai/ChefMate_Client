@@ -26,6 +26,7 @@ import com.watb.chefmate.data.RecipeListResponse
 import com.watb.chefmate.data.SearchRecipeByTagRequest
 import com.watb.chefmate.data.SearchRecipeRequest
 import com.watb.chefmate.data.UpdateUserInformationRequest
+import com.watb.chefmate.data.UserIDRequest
 import com.watb.chefmate.helper.CommonHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -146,10 +147,14 @@ object ApiClient {
     }
 
     @SuppressLint("MemberExtensionConflict")
-    suspend fun getTopTrending(): RecipeListResponse? {
+    suspend fun getTopTrending(userId: Int? = null): RecipeListResponse? {
+        val userIdRequest = UserIDRequest(userId)
+        val json = gson.toJson(userIdRequest)
+
+        val requestBody = json.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
         val request = Request.Builder()
             .url(ApiConstant.TOP_TRENDING_URL)
-            .get()
+            .post(requestBody)
             .build()
 
         return withContext(Dispatchers.IO) {
@@ -462,7 +467,7 @@ object ApiClient {
     }
 
     @SuppressLint("MemberExtensionConflict")
-    suspend fun likeRecipe(userId: Int = 1, recipeId: Int): InteractionResponse? {
+    suspend fun likeRecipe(userId: Int, recipeId: Int): InteractionResponse? {
         val likeRequest = LikeRequest(userId, recipeId)
         val json = gson.toJson(likeRequest)
 
