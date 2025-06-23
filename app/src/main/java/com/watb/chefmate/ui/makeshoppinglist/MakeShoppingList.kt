@@ -1,13 +1,11 @@
 package com.watb.chefmate.ui.makeshoppinglist
 
-import android.net.Uri
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -25,7 +23,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,7 +33,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -45,7 +41,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCompositionContext
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -61,21 +56,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
-import com.google.gson.Gson
 import com.watb.chefmate.R
 import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
-import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.database.entities.ShoppingTimeEntity
 import com.watb.chefmate.helper.CommonHelper
 import com.watb.chefmate.helper.DataStoreHelper
-import com.watb.chefmate.repository.RecipeRepository
-import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.recipe.bottomDashedBorder
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.ui.theme.CustomTextField
@@ -84,17 +72,14 @@ import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
 import kotlinx.coroutines.launch
 import java.util.Date
 
+@SuppressLint("MemberExtensionConflict")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MakeShoppingListScreen(
     navController: NavController,
-    recipeViewModel: RecipeViewModel
+    recipeViewModel: RecipeViewModel,
+    shoppingTimeViewModel: ShoppingTimeViewModel
 ) {
-    val shoppingTimeViewModel: ShoppingTimeViewModel = viewModel(
-        factory = ShoppingTimeViewModel.Factory(
-            ShoppingTimeRepository(AppDatabase.getDatabase(LocalContext.current).shoppingTimeDao())
-        )
-    )
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var isShowManually by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
@@ -216,7 +201,7 @@ fun MakeShoppingListScreen(
                             .padding(vertical = 20.dp),
                         color = Color.Gray,
                         fontSize = 16.sp,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        textAlign = TextAlign.Center
                     )
                 } else {
                     LazyVerticalGrid(
