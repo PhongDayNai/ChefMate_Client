@@ -36,6 +36,7 @@ import com.watb.chefmate.ui.makeshoppinglist.ConsolidatedIngredientsScreen
 import com.watb.chefmate.ui.makeshoppinglist.MakeShoppingListScreen
 import com.watb.chefmate.ui.makeshoppinglist.ShoppingHistoryScreen
 import com.watb.chefmate.ui.recipe.AddOrEditRecipeScreen
+import com.watb.chefmate.ui.recipe.PostedRecipeList
 import com.watb.chefmate.ui.recipe.RecipeViewScreen
 import com.watb.chefmate.ui.recipe.SearchResultScreen
 import com.watb.chefmate.ui.theme.ChefMateTheme
@@ -183,7 +184,14 @@ fun navGraph(
             ShoppingHistoryScreen(navController, shoppingTimeViewModel)
         }
         composable("personalRecipes") {
-
+            PostedRecipeList(
+                navController = navController,
+                onRecipeClick = { selectedRecipe ->
+                    recipe = selectedRecipe
+                    navController.navigate("recipeView")
+                },
+                recipeViewModel = recipeViewModel
+            )
         }
     }
 }
