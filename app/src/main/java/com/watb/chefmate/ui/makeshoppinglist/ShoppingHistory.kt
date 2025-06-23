@@ -1,6 +1,5 @@
 package com.watb.chefmate.ui.makeshoppinglist
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -33,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.watb.chefmate.R
 import com.watb.chefmate.database.entities.ShoppingTimeEntity
+import com.watb.chefmate.helper.CommonHelper
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
 
@@ -129,7 +129,7 @@ fun ShoppingHistoryItem(
                     modifier = Modifier
                 )
                 Text(
-                    text = shoppingTime.createdDate,
+                    text = CommonHelper.parseTimeToDMY(shoppingTime.createdDate).substring(0, 10),
                     color = Color(0xFF000000),
                     fontSize = 16.sp,
                     fontFamily = FontFamily(Font(R.font.roboto_medium)),
@@ -147,7 +147,7 @@ fun ShoppingHistoryItem(
                 Text(
                     text = "Xem chi tiết",
                     color = Color(0xFFF97316),
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily(Font(R.font.roboto_medium)),
                     modifier = Modifier
                 )
