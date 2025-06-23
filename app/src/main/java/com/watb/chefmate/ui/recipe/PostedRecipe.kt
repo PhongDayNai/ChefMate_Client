@@ -45,13 +45,13 @@ fun PostedRecipeList(
 
     val recipes by recipeViewModel.personalRecipes.collectAsState()
     var searchValue by remember { mutableStateOf("") }
+    var filteredRecipes by remember { mutableStateOf(recipes) }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
             .background(color = Color(0xFFFFFFFF))
-            .padding(bottom = 42.dp)
     ) {
         Header(
             text = "Công thức đã đăng",
@@ -73,7 +73,12 @@ fun PostedRecipeList(
         )
         CustomTextField(
             value = searchValue,
-            onValueChange = { searchValue = it },
+            onValueChange = {
+                searchValue = it
+                filteredRecipes = recipes.filter { recipe ->
+                    recipe.recipeName.contains(searchValue, ignoreCase = true)
+                }
+            },
             placeholder = "Tìm kiếm món ăn",
             leadingIcon = {
                 Icon(
@@ -99,10 +104,11 @@ fun PostedRecipeList(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
+                .padding(top = 12.dp)
                 .fillMaxSize()
                 .verticalScroll(state = rememberScrollState())
         ) {
-            recipes.forEach { recipe ->
+            filteredRecipes.forEach { recipe ->
                 RecipeItem(
                     onClick = { selectedRecipe ->
                         onRecipeClick(selectedRecipe)
@@ -111,7 +117,6 @@ fun PostedRecipeList(
                     modifier = Modifier.fillMaxWidth(0.9f)
                 )
             }
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
