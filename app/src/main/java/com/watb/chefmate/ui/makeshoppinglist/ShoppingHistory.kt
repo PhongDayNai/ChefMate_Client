@@ -1,5 +1,6 @@
 package com.watb.chefmate.ui.makeshoppinglist
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -76,7 +77,7 @@ fun ShoppingHistoryScreen(
             shoppingTimes.forEach { shoppingTime ->
                 ShoppingHistoryItem(
                     shoppingTime = shoppingTime,
-                    onClick = {},
+                    onClick = { navController.navigate("shoppingHistory/${shoppingTime.stId}") },
                     modifier = Modifier
                         .padding(top = 16.dp)
                 )

@@ -68,7 +68,6 @@ import com.watb.chefmate.R
 import com.watb.chefmate.data.AppConstant
 import com.watb.chefmate.data.UserData
 import com.watb.chefmate.helper.CommonHelper
-import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.ui.theme.PrimaryTextButtonTheme
 import com.watb.chefmate.ui.theme.SecondaryTextButtonTheme
 import com.watb.chefmate.viewmodel.UserViewModel
@@ -458,6 +457,7 @@ fun Settings(
                     .fillMaxWidth(0.9f)
                     .clickable {
                         when (index) {
+                            0 -> navController.navigate("shoppingHistory")
                             4 -> onRating()
                         }
                     }
