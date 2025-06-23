@@ -59,13 +59,16 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
 import com.watb.chefmate.api.ApiClient
+import com.watb.chefmate.data.UserData
 import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.ui.theme.CircularLoading
 import com.watb.chefmate.ui.theme.PrimaryTextButtonTheme
+import com.watb.chefmate.viewmodel.UserViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -73,13 +76,13 @@ import kotlinx.coroutines.withContext
 @Composable
 fun EditProfileScreen(
     navController: NavController,
+    userViewModel: UserViewModel
 ) {
     val context = LocalContext.current
-
-    val keyboardController = LocalSoftwareKeyboardController.current
     val coroutineScope = rememberCoroutineScope()
 
     var screen by remember { mutableStateOf(0) }
+    var userId by remember { mutableStateOf(-1) }
     var displayNameCurrent by remember { mutableStateOf("") }
     var phoneNumberCurrent by remember { mutableStateOf("") }
     var emailCurrent by remember { mutableStateOf("") }
@@ -91,6 +94,7 @@ fun EditProfileScreen(
     var isLoading by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
+        userId = DataStoreHelper.getUserId(context)
         displayNameCurrent = DataStoreHelper.getUsername(context)
         displayNameNew = displayNameCurrent
         phoneNumberCurrent = DataStoreHelper.getPhoneNumber(context)
@@ -201,6 +205,7 @@ fun EditProfileScreen(
                                 EditPersonalInformation(
                                     context = context,
                                     hasChanges = hasChanges,
+                                    userId = userId,
                                     displayNameNew = displayNameNew,
                                     onChangeDisplayName = { newValue ->
                                         displayNameNew = newValue
@@ -214,14 +219,27 @@ fun EditProfileScreen(
                                         phoneNumberNew = newValue
                                     },
                                     onChangePassword = { screen = 1 },
-                                    onChangeLoading = { isLoading = it }
+                                    onChangeLoading = { isLoading = it },
+                                    onSuccessfulChange = {
+                                        userViewModel.saveLoginState(context, it) {
+                                            coroutineScope.launch {
+                                                displayNameCurrent = DataStoreHelper.getUsername(context)
+                                                displayNameNew = displayNameCurrent
+                                                phoneNumberCurrent = DataStoreHelper.getPhoneNumber(context)
+                                                phoneNumberNew = phoneNumberCurrent
+                                                emailCurrent = DataStoreHelper.getEmail(context)
+                                                emailNew = emailCurrent
+                                            }
+                                        }
+                                    }
                                 )
                             }
                             1 -> {
                                 EditPassword(
                                     context = context,
+                                    phoneNumberCurrent = phoneNumberCurrent,
                                     onChangeLoading = { isLoading = it },
-                                    onChangePersonalInformation = { screen = 0 }
+                                    onChangePersonalInformation = { screen = 0 },
                                 )
                             }
                         }
@@ -239,6 +257,7 @@ fun EditProfileScreen(
 fun EditPersonalInformation(
     context: Context,
     hasChanges: Boolean,
+    userId: Int,
     displayNameNew: String,
     onChangeDisplayName: (String) -> Unit,
     emailNew: String,
@@ -247,6 +266,7 @@ fun EditPersonalInformation(
     onChangePhoneNumber: (String) -> Unit,
     onChangePassword: () -> Unit,
     onChangeLoading: (Boolean) -> Unit,
+    onSuccessfulChange: (UserData) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
 
@@ -394,24 +414,43 @@ fun EditPersonalInformation(
                     withContext(Dispatchers.Main) { onChangeLoading(true) }
                     try {
                         if (hasChanges) {
-
+                            val response = ApiClient.updateUserInformation(
+                                userId = userId,
+                                fullName = displayNameNew,
+                                email = emailNew,
+                                phoneNumber = phoneNumberNew
+                            )
+                            if (response != null) {
+                                if (response.success) {
+                                    if (response.data != null) {
+                                        withContext(Dispatchers.Main) {
+                                            onSuccessfulChange(response.data)
+                                            Toast.makeText(context, "Cập nhật thành công", Toast.LENGTH_SHORT).show()
+                                        }
+                                    } else {
+                                        withContext(Dispatchers.Main) {
+                                            Toast.makeText(context, "Không có thay đổi nào, vui lòng kiểm tra lại", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                } else {
+                                    withContext(Dispatchers.Main) {
+                                        Toast.makeText(context, "Có lỗi xảy ra, vui lòng thử lại", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            } else {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(context, "Có lỗi xảy ra, vui lòng thử lại", Toast.LENGTH_SHORT).show()
+                                }
+                            }
                         } else {
                             withContext(Dispatchers.Main) {
-                                Toast.makeText(
-                                    context,
-                                    "Không có thay đổi nào, vui lòng kiểm tra lại",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                Toast.makeText(context, "Không có thay đổi nào, vui lòng kiểm tra lại", Toast.LENGTH_SHORT).show()
                             }
                         }
                     } catch (e: Exception) {
                         Log.d("EditProfile", "Something went wrong when change profile: ${e.message}")
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(
-                                context,
-                                "Có lỗi xảy ra, vui lòng thử lại",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            Toast.makeText(context, "Có lỗi xảy ra, vui lòng thử lại", Toast.LENGTH_SHORT).show()
                         }
                     } finally {
                         withContext(Dispatchers.Main) { onChangeLoading(false) }
@@ -430,6 +469,7 @@ fun EditPersonalInformation(
 @Composable
 fun EditPassword(
     context: Context,
+    phoneNumberCurrent: String,
     onChangeLoading: (Boolean) -> Unit,
     onChangePersonalInformation: () -> Unit,
 ) {
@@ -631,12 +671,35 @@ fun EditPassword(
         )
         PrimaryTextButtonTheme(
             onClick = {
-                if (newPassword != confirmNewPassword) {
-                    Toast.makeText(context, "Mật khẩu không khớp", Toast.LENGTH_SHORT).show()
+                if (currentPassword == newPassword) {
+                    Toast.makeText(context, "Mật khẩu mới không được trùng với mật khẩu hiện tại", Toast.LENGTH_SHORT).show()
                 } else {
-                    coroutineScope.launch {
-                        onChangeLoading(true)
-                        onChangeLoading(false)
+                    if (newPassword != confirmNewPassword) {
+                        Toast.makeText(context, "Mật khẩu mới và xác nhận mật khẩu không khớp", Toast.LENGTH_SHORT).show()
+                    } else {
+                        coroutineScope.launch {
+                            withContext(Dispatchers.Main) { onChangeLoading(true) }
+                            val response = ApiClient.changePassword(
+                                phone = phoneNumberCurrent,
+                                currentPassword = currentPassword,
+                                newPassword = newPassword
+                            )
+                            if (response != null) {
+                                if (response.success) {
+                                    if (response.data != null) {
+                                        currentPassword = ""
+                                        newPassword = ""
+                                        confirmNewPassword = ""
+                                        Toast.makeText(context, "Đổi mật khẩu thành công", Toast.LENGTH_SHORT).show()
+                                    }
+                                } else {
+                                    Toast.makeText(context, "Đổi mật khẩu thất bại", Toast.LENGTH_SHORT).show()
+                                }
+                            } else {
+                                Toast.makeText(context, "Đổi mật khẩu thất bại", Toast.LENGTH_SHORT).show()
+                            }
+                            withContext(Dispatchers.Main) { onChangeLoading(false) }
+                        }
                     }
                 }
             },
@@ -653,6 +716,7 @@ fun EditPassword(
 @Composable
 fun EditProfileScreenPreview() {
     val navController = rememberNavController()
+    val userViewModel: UserViewModel = viewModel()
 
-    EditProfileScreen(navController = navController)
+    EditProfileScreen(navController = navController, userViewModel)
 }
