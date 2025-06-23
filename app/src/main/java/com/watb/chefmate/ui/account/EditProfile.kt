@@ -62,15 +62,17 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
+import com.watb.chefmate.api.ApiClient
 import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.ui.theme.CircularLoading
 import com.watb.chefmate.ui.theme.PrimaryTextButtonTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
 @Composable
 fun EditProfileScreen(
-    navController: NavController
+    navController: NavController,
 ) {
     val context = LocalContext.current
 
@@ -102,6 +104,7 @@ fun EditProfileScreen(
             displayNameCurrent != displayNameNew || phoneNumberCurrent != phoneNumberNew || emailCurrent != emailNew
         }
     }
+
     Box {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -212,6 +215,13 @@ fun EditProfileScreen(
                                     },
                                     onChangePassword = { screen = 1 },
                                     onChangeLoading = { isLoading = it }
+                                )
+                            }
+                            1 -> {
+                                EditPassword(
+                                    context = context,
+                                    onChangeLoading = { isLoading = it },
+                                    onChangePersonalInformation = { screen = 0 }
                                 )
                             }
                         }
@@ -418,8 +428,225 @@ fun EditPersonalInformation(
 }
 
 @Composable
-fun EditPassword () {
+fun EditPassword(
+    context: Context,
+    onChangeLoading: (Boolean) -> Unit,
+    onChangePersonalInformation: () -> Unit,
+) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val coroutineScope = rememberCoroutineScope()
 
+    Column {
+        var currentPassword by remember { mutableStateOf("") }
+        var newPassword by remember { mutableStateOf("") }
+        var confirmNewPassword by remember { mutableStateOf("") }
+        var isShowPassword by remember { mutableStateOf(false) }
+        var isShowNewPassword by remember { mutableStateOf(false) }
+        var isShowConfirmNewPassword by remember { mutableStateOf(false) }
+
+        Box(
+            modifier = Modifier
+                .padding(top = 20.dp)
+                .fillMaxWidth(0.9f)
+        ) {
+            IconButton(
+                onClick = onChangePersonalInformation,
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .size(20.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_back),
+                    contentDescription = null,
+                    tint = Color(0xFF5A5A60),
+                    modifier = Modifier
+                        .size(16.dp)
+                )
+            }
+        }
+        Text(
+            text = "Mật khẩu hiện tại",
+            color = Color(0xFF5A5A60),
+            fontSize = 14.sp,
+            fontWeight = FontWeight(400),
+            fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+            modifier = Modifier
+                .padding(top = 20.dp, bottom = 12.dp)
+                .fillMaxWidth(0.9f)
+        )
+        OutlinedTextField(
+            value = currentPassword,
+            onValueChange = { newValue ->
+                currentPassword = newValue
+            },
+            textStyle = TextStyle(
+                fontSize = 16.sp,
+                fontWeight = FontWeight(400),
+                fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
+            ),
+            colors = TextFieldDefaults.colors(
+                focusedTextColor = Color(0xFF1B1B1D),
+                unfocusedTextColor = Color(0xFF1B1B1D),
+                focusedContainerColor = Color(0xFFF8F8FC),
+                unfocusedContainerColor = Color(0xFFF8F8FC),
+                focusedIndicatorColor = Color(0xFFDDE7E7),
+                unfocusedIndicatorColor = Color(0xFFDDE7E7),
+            ),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true,
+            trailingIcon = {
+                IconButton(
+                    onClick = { isShowPassword = !isShowPassword }
+                ) {
+                    Icon(
+                        painter = painterResource(id = if (isShowPassword) R.drawable.ic_open_eye else R.drawable.ic_close_eye),
+                        contentDescription = null,
+                        tint = Color(0xFF5A5A60),
+                        modifier = Modifier
+                            .size(18.dp)
+                    )
+                }
+            },
+            visualTransformation = if (isShowPassword) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Next
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = {
+
+                }
+            ),
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+        )
+        Text(
+            text = "Mật khẩu mới",
+            color = Color(0xFF5A5A60),
+            fontSize = 14.sp,
+            fontWeight = FontWeight(400),
+            fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+            modifier = Modifier
+                .padding(top = 20.dp, bottom = 12.dp)
+                .fillMaxWidth(0.9f)
+        )
+        OutlinedTextField(
+            value = newPassword,
+            onValueChange = { newValue ->
+                newPassword = newValue
+            },
+            textStyle = TextStyle(
+                fontSize = 16.sp,
+                fontWeight = FontWeight(400),
+                fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
+            ),
+            colors = TextFieldDefaults.colors(
+                focusedTextColor = Color(0xFF1B1B1D),
+                unfocusedTextColor = Color(0xFF1B1B1D),
+                focusedContainerColor = Color(0xFFF8F8FC),
+                unfocusedContainerColor = Color(0xFFF8F8FC),
+                focusedIndicatorColor = Color(0xFFDDE7E7),
+                unfocusedIndicatorColor = Color(0xFFDDE7E7),
+            ),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true,
+            trailingIcon = {
+                IconButton(
+                    onClick = { isShowNewPassword = !isShowNewPassword }
+                ) {
+                    Icon(
+                        painter = painterResource(id = if (isShowNewPassword) R.drawable.ic_open_eye else R.drawable.ic_close_eye),
+                        contentDescription = null,
+                        tint = Color(0xFF5A5A60),
+                        modifier = Modifier
+                            .size(18.dp)
+                    )
+                }
+            },
+            visualTransformation = if (isShowNewPassword) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    keyboardController?.hide()
+                }
+            ),
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+        )
+        Text(
+            text = "Xác nhận mật khẩu mới",
+            color = Color(0xFF5A5A60),
+            fontSize = 14.sp,
+            fontWeight = FontWeight(400),
+            fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+            modifier = Modifier
+                .padding(top = 20.dp, bottom = 12.dp)
+                .fillMaxWidth(0.9f)
+        )
+        OutlinedTextField(
+            value = confirmNewPassword,
+            onValueChange = { newValue ->
+                confirmNewPassword = newValue
+            },
+            textStyle = TextStyle(
+                fontSize = 16.sp,
+                fontWeight = FontWeight(400),
+                fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
+            ),
+            colors = TextFieldDefaults.colors(
+                focusedTextColor = Color(0xFF1B1B1D),
+                unfocusedTextColor = Color(0xFF1B1B1D),
+                focusedContainerColor = Color(0xFFF8F8FC),
+                unfocusedContainerColor = Color(0xFFF8F8FC),
+                focusedIndicatorColor = Color(0xFFDDE7E7),
+                unfocusedIndicatorColor = Color(0xFFDDE7E7),
+            ),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true,
+            trailingIcon = {
+                IconButton(
+                    onClick = { isShowConfirmNewPassword = !isShowConfirmNewPassword }
+                ) {
+                    Icon(
+                        painter = painterResource(id = if (isShowConfirmNewPassword) R.drawable.ic_open_eye else R.drawable.ic_close_eye),
+                        contentDescription = null,
+                        tint = Color(0xFF5A5A60),
+                        modifier = Modifier
+                            .size(18.dp)
+                    )
+                }
+            },
+            visualTransformation = if (isShowConfirmNewPassword) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    keyboardController?.hide()
+                }
+            ),
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+        )
+        PrimaryTextButtonTheme(
+            onClick = {
+                if (newPassword != confirmNewPassword) {
+                    Toast.makeText(context, "Mật khẩu không khớp", Toast.LENGTH_SHORT).show()
+                } else {
+                    coroutineScope.launch {
+                        onChangeLoading(true)
+                        onChangeLoading(false)
+                    }
+                }
+            },
+            text = "Đổi mật khẩu",
+            enabled = currentPassword != "" && newPassword != "" && confirmNewPassword != "",
+            modifier = Modifier
+                .padding(vertical = 20.dp)
+                .fillMaxWidth(0.9f)
+        )
+    }
 }
 
 @Preview
@@ -429,4 +656,3 @@ fun EditProfileScreenPreview() {
 
     EditProfileScreen(navController = navController)
 }
-
