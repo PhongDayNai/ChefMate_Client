@@ -23,7 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -41,7 +40,15 @@ fun ShoppingHistoryScreen(
     navController: NavController,
     shoppingViewModel: ShoppingTimeViewModel
 ) {
-    Column {
+    val shoppingTimes by shoppingViewModel.shoppingTimes.collectAsState()
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = Color(0xFFFFFFFF))
+            .padding(bottom = 42.dp)
+    ) {
         Header(
             text = "Lịch sử mua sắm",
             leadingIcon = {
@@ -60,6 +67,91 @@ fun ShoppingHistoryScreen(
                 }
             },
         )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
+            shoppingTimes.forEach { shoppingTime ->
+                ShoppingHistoryItem(
+                    shoppingTime = shoppingTime,
+                    onClick = {},
+                    modifier = Modifier
+                        .padding(top = 16.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ShoppingHistoryItem(
+    shoppingTime: ShoppingTimeEntity,
+    onClick: (ShoppingTimeEntity) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFFFFFFF)
+        ),
+        elevation = CardDefaults.elevatedCardElevation(
+            defaultElevation = 4.dp
+        ),
+        modifier = modifier
+            .fillMaxWidth(0.8f)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_history),
+                contentDescription = "History",
+                tint = Color(0xFF000000),
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .size(32.dp)
+            )
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier
+                    .padding(start = 12.dp)
+            ) {
+                Text(
+                    text = "Ngày mua",
+                    color = Color(0xFF555555),
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font(R.font.roboto_regular)),
+                    modifier = Modifier
+                )
+                Text(
+                    text = shoppingTime.createdDate,
+                    color = Color(0xFF000000),
+                    fontSize = 16.sp,
+                    fontFamily = FontFamily(Font(R.font.roboto_medium)),
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                )
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            TextButton(
+                onClick = { onClick(shoppingTime) },
+                contentPadding = PaddingValues(0.dp),
+                modifier = Modifier
+                    .padding(end = 8.dp)
+            ) {
+                Text(
+                    text = "Xem chi tiết",
+                    color = Color(0xFFF97316),
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font(R.font.roboto_medium)),
+                    modifier = Modifier
+                )
+            }
+        }
     }
 }
 
