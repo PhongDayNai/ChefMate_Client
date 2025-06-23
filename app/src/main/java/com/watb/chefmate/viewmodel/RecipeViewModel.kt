@@ -30,6 +30,9 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
     private val _searchResult = MutableStateFlow<List<Recipe>>(emptyList())
     val searchResult: StateFlow<List<Recipe>> = _searchResult
 
+    private val _personalRecipes = MutableStateFlow<List<Recipe>>(emptyList())
+    val personalRecipes: StateFlow<List<Recipe>> = _personalRecipes
+
     val allRecipes: Flow<List<Recipe>> =
         repository.getAllRecipes().map { list ->
             list.map { it.toRecipe() }
@@ -65,6 +68,15 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
                 _searchResult.value = it
             }
             _isLoading.value = false
+        }
+    }
+
+    fun getPersonalRecipes(userId: Int) {
+        viewModelScope.launch {
+            val response = ApiClient.getRecipesByUserId(userId)
+            response?.data?.let {
+                _personalRecipes.value = it
+            }
         }
     }
 
