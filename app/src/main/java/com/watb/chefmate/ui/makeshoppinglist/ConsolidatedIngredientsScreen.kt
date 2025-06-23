@@ -79,7 +79,15 @@ fun ConsolidatedIngredientsScreen(
             text = "Danh sách mua sắm",
             leadingIcon = {
                 IconButton(
-                    onClick = { navController.navigate("mainAct") },
+                    onClick = {
+                        if (!isHistory) {
+                            navController.navigate("mainAct") {
+                                popUpTo("consolidated_ingredients_screen/$shoppingTimeId") { inclusive = true }
+                            }
+                        } else {
+                            navController.popBackStack()
+                        }
+                    },
                     modifier = Modifier
                         .size(24.dp)
                 ) {
