@@ -2,6 +2,9 @@
 
 # I. Client - Ứng dụng di động
 
+- Công nghệ: Kotlin với thư viện Jetpack Compose
+- Cơ sở dữ liệu: RoomDB
+
 ## 1. Tính năng
 
 | User | Recipe | Interaction |
@@ -15,7 +18,7 @@
 |  | Tạo công thức mới |  |
 |  | Chỉnh sửa công thức trong “Kho công thức” |  |
 |  | Xóa khỏi “Kho công thức” |  |
-|  | Lịch sử xem công thức |  |
+|  | Lịch sử đăng công thức |  |
 |  | Lịch sử mua sắm |  |
 |  | Lấy danh sách công thức Top Trending |  |
 |  | Lấy danh sách nguyên liệu sẵn có |  |
@@ -25,9 +28,9 @@
 
 - [x]  Đăng nhập
 - [x]  Đăng ký
-- [ ]  Đổi mật khẩu
+- [x]  Đổi mật khẩu
 - [x]  Đăng xuất
-- [ ]  Chỉnh sửa thông tin cá nhân
+- [x]  Chỉnh sửa thông tin cá nhân
 
 ### b. Recipe
 
@@ -40,8 +43,8 @@
 - [x]  Tạo công thức mới
 - [x]  Chỉnh sửa công thức trong “Kho công thức”
 - [x]  Xóa khỏi “Kho công thức”
-- [ ]  Lịch sử xem công thức
-- [ ]  Lịch sử mua sắm
+- [x]  Lịch sử đăng công thức
+- [x]  Lịch sử mua sắm
 - [x]  Lấy danh sách Top Trending
 - [x]  Lấy danh sách nguyên liệu sẵn có
 - [x]  Lấy danh sách tag sẵn có
@@ -124,4 +127,3 @@
     | `recipeId` | `INT` | `FOREIGN KEY REFERENCES Recipes(recipeId)` | liên kết đến bảng Recipes |
     | `index` | `INT` | `NOT NULL` | STT bước |
     | `content` | `NVARCHAR(500)` | `NOT NULL` | chi tiết bước |
-- Comments
