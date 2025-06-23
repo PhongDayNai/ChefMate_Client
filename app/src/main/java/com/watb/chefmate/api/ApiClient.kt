@@ -248,6 +248,43 @@ object ApiClient {
     }
 
     @SuppressLint("MemberExtensionConflict")
+    suspend fun getRecipesByUserId(userId: Int): RecipeListResponse? {
+        val userIdRequest = UserIDRequest(userId)
+        val json = gson.toJson(userIdRequest)
+
+        val requestBody = json.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
+        val request = Request.Builder()
+            .url(ApiConstant.GET_RECIPES_BY_USER_ID_URL)
+            .post(requestBody)
+            .build()
+
+        return withContext(Dispatchers.IO) {
+            try {
+                client.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val responseBody = response.body?.string()
+                        responseBody?.let {
+                            gson.fromJson(it, RecipeListResponse::class.java)
+                        }
+                    } else {
+                        Log.e(TAG, "Error: ${response.code}")
+                        null
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            } catch (e: TimeoutException) {
+                e.printStackTrace()
+                null
+            } catch (e: SocketTimeoutException) {
+                e.printStackTrace()
+                null
+            }
+        }
+    }
+
+    @SuppressLint("MemberExtensionConflict")
     suspend fun createRecipe(context: Context, recipe: CreateRecipeData): CreateRecipeResponse? {
         val bitmap = if (Build.VERSION.SDK_INT < 28) {
             MediaStore.Images.Media.getBitmap(context.contentResolver, recipe.image.toUri())
