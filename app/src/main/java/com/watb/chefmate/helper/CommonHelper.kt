@@ -45,6 +45,19 @@ object CommonHelper {
         }
     }
 
+    fun parseTimeToDMY(time: String): String {
+        val isoFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+        isoFormat.timeZone = TimeZone.getTimeZone("UTC")
+
+        return try {
+            val date = isoFormat.parse(time)
+            val outputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+            outputFormat.format(date ?: return time)
+        } catch (e: Exception) {
+            time
+        }
+    }
+
     fun toIso8601UTC(date: Date): String {
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
         sdf.timeZone = TimeZone.getTimeZone("UTC")
