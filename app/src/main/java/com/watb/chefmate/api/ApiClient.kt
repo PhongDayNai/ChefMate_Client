@@ -12,6 +12,7 @@ import androidx.core.net.toUri
 import com.google.gson.Gson
 import com.watb.chefmate.data.AllIngredientsResponse
 import com.watb.chefmate.data.AllTagsResponse
+import com.watb.chefmate.data.ChangePasswordRequest
 import com.watb.chefmate.data.CommentRequest
 import com.watb.chefmate.data.CreateRecipeData
 import com.watb.chefmate.data.CreateRecipeResponse
@@ -24,6 +25,7 @@ import com.watb.chefmate.data.RegisterRequest
 import com.watb.chefmate.data.RecipeListResponse
 import com.watb.chefmate.data.SearchRecipeByTagRequest
 import com.watb.chefmate.data.SearchRecipeRequest
+import com.watb.chefmate.data.UpdateUserInformationRequest
 import com.watb.chefmate.helper.CommonHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -102,15 +104,32 @@ object ApiClient {
             try {
                 client.newCall(request).execute().use { response ->
                     Log.d("Login", "Response code: ${response.code}")
-                    if (response.isSuccessful) {
-                        val responseBody = response.body?.string()
-                        responseBody?.let {
-                            Log.d("Login", it)
-                            gson.fromJson(it, LoginResponse::class.java)
+//                    if (response.isSuccessful) {
+//                        val responseBody = response.body?.string()
+//                        responseBody?.let {
+//                            Log.d("Login", it)
+//                            gson.fromJson(it, LoginResponse::class.java)
+//                        }
+//                    } else {
+//                        Log.d("Login", "Response nul or unsuccessful")
+//                        null
+//                    }
+                    Log.d(TAG, "login response code: ${response.code}")
+                    when (response.code) {
+                        in 200..299 -> {
+                            val responseBody = response.body?.string()
+                            responseBody?.let {
+                                gson.fromJson(it, LoginResponse::class.java)
+                            }
                         }
-                    } else {
-                        Log.d("Login", "Response nul or unsuccessful")
-                        null
+                        401 -> {
+                            Log.e(TAG, "SignIn Unauthorized: ${response.message}")
+                            LoginResponse(success = false, data = null, message = "Unauthorized access")
+                        }
+                        else -> {
+                            Log.e(TAG, "SignIn Error: ${response.code} - ${response.message}")
+                            null
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -138,7 +157,7 @@ object ApiClient {
                 client.newCall(request).execute().use { response ->
                     if (response.isSuccessful) {
                         val responseBody = response.body?.string()
-                        Log.d(TAG, "Response Body: $responseBody")
+                        Log.d(TAG, "getTopTrending Response Body: $responseBody")
                         responseBody?.let {
                             gson.fromJson(it, RecipeListResponse::class.java)
                         }
@@ -551,6 +570,80 @@ object ApiClient {
                 null
             }
         }
+    }
+
+    @SuppressLint("MemberExtensionConflict")
+    suspend fun updateUserInformation(userId: Int, fullName: String, phoneNumber: String, email: String): LoginResponse? {
+        val updateRequest = UpdateUserInformationRequest(userId, fullName, phoneNumber, email)
+        val json = gson.toJson(updateRequest)
+
+        val requestBody = json.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
+        val request = Request.Builder()
+            .url(ApiConstant.UPDATE_USER_INFORMATION_URL)
+            .post(requestBody)
+            .build()
+
+        return withContext(Dispatchers.IO) {
+            try {
+                client.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val responseBody = response.body?.string()
+                        responseBody?.let {
+                            gson.fromJson(it, LoginResponse::class.java)
+                        }
+                    } else {
+                        Log.e(TAG, "Error: ${response.code}")
+                        null
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            } catch (e: TimeoutException) {
+                e.printStackTrace()
+                null
+            } catch (e: SocketTimeoutException) {
+                e.printStackTrace()
+                null
+            }
+        }
+    }
+
+    @SuppressLint("MemberExtensionConflict")
+    suspend fun changePassword(phone: String, currentPassword: String, newPassword: String): LoginResponse? {
+        val changePasswordRequest = ChangePasswordRequest(phone, currentPassword, newPassword)
+        val json = gson.toJson(changePasswordRequest)
+
+        val requestBody = json.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
+        val request = Request.Builder()
+            .url(ApiConstant.CHANGE_PASSWORD_URL)
+            .post(requestBody)
+            .build()
+
+        return withContext(Dispatchers.IO) {
+            try {
+                client.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val responseBody = response.body?.string()
+                        responseBody?.let {
+                            gson.fromJson(it, LoginResponse::class.java)
+                        }
+                    } else {
+                        Log.e(TAG, "Error: ${response.code}")
+                        null
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            } catch (e: TimeoutException) {
+                e.printStackTrace()
+                null
+            } catch (e: SocketTimeoutException) {
+                e.printStackTrace()
+                null
+            }
+            }
     }
 
     private const val TAG = "ApiClient"

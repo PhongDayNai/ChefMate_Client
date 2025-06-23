@@ -72,6 +72,19 @@ data class LoginRequest(
     val password: String
 )
 
+data class UpdateUserInformationRequest(
+    val userId: Int,
+    val fullName: String,
+    val phone: String,
+    val email: String
+)
+
+data class ChangePasswordRequest(
+    val phone: String,
+    val currentPassword: String,
+    val newPassword: String
+)
+
 data class LoginResponse(
     val success: Boolean,
     val data: LoginData? = null,
@@ -83,7 +96,7 @@ data class LoginData(
     val fullName: String,
     val phone: String,
     val email: String,
-    val passwordHash: String,
+    val passwordHash: String? = null,
     val followCount: Int,
     val recipeCount: Int,
     val createdAt: String
