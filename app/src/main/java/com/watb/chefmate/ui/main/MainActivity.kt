@@ -170,6 +170,13 @@ fun navGraph(
             val shoppingTimeId = backStackEntry.arguments?.getInt("shoppingTimeId") ?: 0
             ConsolidatedIngredientsScreen(navController, shoppingTimeId, shoppingTimeViewModel = shoppingTimeViewModel)
         }
+        composable("shoppingHistory/{shoppingTimeId}") { backStackEntry ->
+            val shoppingTimeId = backStackEntry.arguments?.getInt("shoppingTimeId") ?: 0
+            ConsolidatedIngredientsScreen(navController, shoppingTimeId, true, shoppingTimeViewModel)
+        }
+        composable("personalRecipes") {
+
+        }
     }
 }
 
