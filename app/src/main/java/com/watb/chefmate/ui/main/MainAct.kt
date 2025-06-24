@@ -1,6 +1,8 @@
 package com.watb.chefmate.ui.main
 
+import android.app.Activity
 import android.content.Context
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -61,9 +63,11 @@ import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
 import com.watb.chefmate.viewmodel.UserViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlin.system.exitProcess
 
 @Composable
 fun MainAct(
+    activity: Activity,
     navController: NavController,
     onRecipeClick: (Recipe, Boolean) -> Unit,
     userViewModel: UserViewModel,
@@ -93,6 +97,11 @@ fun MainAct(
             recipeViewModel.getIATDataFromServer()
         }
         shoppingTimeViewModel.getAllShoppingTimes()
+    }
+
+    BackHandler {
+        activity.finishAffinity()
+        exitProcess(0)
     }
 
     Box(
