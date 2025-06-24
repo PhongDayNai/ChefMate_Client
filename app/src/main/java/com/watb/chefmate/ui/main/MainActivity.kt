@@ -1,5 +1,6 @@
 package com.watb.chefmate.ui.main
 
+import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,6 +36,7 @@ import com.watb.chefmate.ui.account.SignUpScreen
 import com.watb.chefmate.ui.makeshoppinglist.ConsolidatedIngredientsScreen
 import com.watb.chefmate.ui.makeshoppinglist.MakeShoppingListScreen
 import com.watb.chefmate.ui.makeshoppinglist.ShoppingHistoryScreen
+import com.watb.chefmate.ui.network.NetworkStatusWrapper
 import com.watb.chefmate.ui.recipe.AddOrEditRecipeScreen
 import com.watb.chefmate.ui.recipe.PostedRecipeList
 import com.watb.chefmate.ui.recipe.RecipeViewScreen
@@ -50,14 +52,14 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ChefMateTheme {
-                MainScreen()
+                MainScreen(this)
             }
         }
     }
 }
 
 @Composable
-fun MainScreen() {
+fun MainScreen(activity: Activity) {
     val context = LocalContext.current
     val appDatabase = AppDatabase.getDatabase(context)
     val recipeRepository = RecipeRepository(appDatabase.recipeDao(), appDatabase.ingredientDao(), appDatabase.tagDao())
@@ -72,11 +74,16 @@ fun MainScreen() {
             .statusBarsPadding()
             .systemBarsPadding()
     ) {
-        NavHost(navController = navController, graph = navGraph(navController, userViewModel, recipeRepository, shoppingTimeRepository))
+        NetworkStatusWrapper(
+            activity = activity,
+        ) {
+            NavHost(navController = navController, graph = navGraph(activity, navController, userViewModel, recipeRepository, shoppingTimeRepository))
+        }
     }
 }
 
 fun navGraph(
+    activity: Activity,
     navController: NavController,
     userViewModel: UserViewModel,
     recipeRepository: RecipeRepository,
@@ -115,6 +122,7 @@ fun navGraph(
         }
         composable("mainAct") {
             MainAct(
+                activity = activity,
                 navController = navController,
                 onRecipeClick = { selectedRecipe, isHistory ->
                     recipe = selectedRecipe
@@ -199,5 +207,5 @@ fun navGraph(
 @Preview
 @Composable
 fun MainScreenPreview() {
-    MainScreen()
+//    MainScreen()
 }
