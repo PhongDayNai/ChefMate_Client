@@ -56,7 +56,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
@@ -174,7 +173,7 @@ fun MakeShoppingListScreen(
                     Text("Chưa có công thức nào để lựa chọn.", style = MaterialTheme.typography.bodyLarge)
                     Text("Thêm công thức mới từ màn hình chính.", style = MaterialTheme.typography.bodyMedium)
                 }
-            } else if (allRecipes.isNotEmpty() && searchQuery.isEmpty()) {
+            } else if (searchQuery.isEmpty()) {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
                     verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -197,7 +196,7 @@ fun MakeShoppingListScreen(
                         )
                     }
                 }
-            } else if (searchQuery.isNotEmpty() && filteredRecipes.isNotEmpty()) {
+            } else if (searchQuery.isNotEmpty()) {
                 if (filteredRecipes.isEmpty()) {
                     Text(
                         text = "Không tìm thấy công thức nào.",
@@ -279,7 +278,9 @@ fun MakeShoppingListScreen(
                     }
                 }
                 LazyColumn {
-                    items(manualIngredients.size) { index ->
+                    val manualIngredientsList = CommonHelper.consolidateIngredients(manualIngredients = manualIngredients)
+//                    manualIngredients = CommonHelper.consolidateIngredients(manualIngredients)
+                    items(manualIngredientsList.size) { index ->
                         Row(
                             Modifier
                                 .padding(8.dp)
@@ -287,12 +288,7 @@ fun MakeShoppingListScreen(
                                 .bottomDashedBorder()
                         ) {
                             Text(
-                                text = manualIngredients[index].ingredientName,
-                                modifier = Modifier
-                                    .padding(end = 4.dp)
-                            )
-                            Text(
-                                text = "${manualIngredients[index].weight} ${manualIngredients[index].unit}"
+                                text = "${manualIngredientsList[index].ingredientName} ${manualIngredientsList[index].weight} ${manualIngredientsList[index].unit}"
                             )
                         }
                     }
@@ -349,8 +345,8 @@ fun MakeShoppingListScreen(
             Spacer(modifier = Modifier.weight(1f))
             Button(
                 onClick = {
-                    val consolidatedIngredients = consolidateIngredients(selectedRecipes).values.toMutableList()
-                    consolidatedIngredients.addAll(manualIngredients)
+                    Log.d("MakeShoppingList", "selectedRecipes: $selectedRecipes")
+                    val consolidatedIngredients = CommonHelper.consolidateIngredients(recipes = selectedRecipes, manualIngredients = manualIngredients)
 
                     val ingredientNames = consolidatedIngredients.joinToString(";;;") { it.ingredientName }
                     val ingredientWeights = consolidatedIngredients.joinToString(";;;") { it.weight.toString() }
@@ -379,7 +375,10 @@ fun MakeShoppingListScreen(
                 shape = RoundedCornerShape(10.dp),
             ) {
                 Text(
-                    text = "Hoàn thành"
+                    text = "Hoàn thành",
+                    color = Color(0xFFFFFFFF),
+                    fontSize = 16.sp,
+                    fontFamily = FontFamily(Font(R.font.roboto_bold))
                 )
             }
         }
@@ -457,24 +456,6 @@ fun RecipeSelectedItem(
         }
     }
 }
-
-fun consolidateIngredients(recipes: List<Recipe>): Map<String, IngredientItem> {
-    val consolidated = mutableMapOf<String, IngredientItem>()
-
-    recipes.forEach { recipe ->
-        recipe.ingredients.forEach { ingredient ->
-            val key = "${ingredient.ingredientName}-${ingredient.unit}"
-            val current = consolidated[key]
-            if (current == null) {
-                consolidated[key] = ingredient
-            } else {
-                consolidated[key] = current.copy(weight = current.weight + ingredient.weight)
-            }
-        }
-    }
-    return consolidated
-}
-
 
 @SuppressLint("ViewModelConstructorInComposable")
 @Preview
