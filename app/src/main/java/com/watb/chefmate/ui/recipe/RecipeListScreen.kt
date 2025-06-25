@@ -1,5 +1,6 @@
 package com.watb.chefmate.ui.recipe
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,14 +15,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.data.Recipe
+import com.watb.chefmate.database.AppDatabase
+import com.watb.chefmate.repository.RecipeRepository
+import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.theme.CustomDialog
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.ui.theme.RecipeItem
 import com.watb.chefmate.viewmodel.RecipeViewModel
+import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
 
 @Composable
 fun RecipeListScreen(
@@ -107,13 +114,14 @@ fun RecipeListScreen(
     }
 }
 
+@SuppressLint("ViewModelConstructorInComposable")
 @Preview(showBackground = true)
 @Composable
 fun RecipeListScreensPreview() {
-//    val viewModel: RecipeViewModel = viewModel(
-//        factory = RecipeViewModel.Factory(
-//            repository = RecipeRepository(AppDatabase.getDatabase(LocalContext.current).recipeDao())
-//        )
-//    )
-//    RecipeListScreen(navController = rememberNavController(), {}, viewModel)
+    val navController = rememberNavController()
+    val database = AppDatabase.getDatabase(LocalContext.current)
+    val recipeRepository = RecipeRepository(database.recipeDao(), database.ingredientDao(), database.tagDao())
+    val recipeViewModel = RecipeViewModel(recipeRepository)
+
+    RecipeListScreen(navController, {}, recipeViewModel)
 }

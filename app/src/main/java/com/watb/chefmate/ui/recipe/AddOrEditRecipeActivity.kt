@@ -83,6 +83,7 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
 import com.watb.chefmate.api.ApiClient
@@ -97,6 +98,7 @@ import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.database.entities.IngredientEntity
 import com.watb.chefmate.database.entities.TagEntity
 import com.watb.chefmate.repository.RecipeRepository
+import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import com.watb.chefmate.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
@@ -375,28 +377,6 @@ fun AddOrEditRecipeScreen(
                     .padding(top = 12.dp)
                     .fillMaxWidth()
             )
-//            OutlinedTextField(
-//                value = tagsInput.value,
-//                onValueChange = { tagsInput.value = it },
-//                label = { Text(text = "Thể loại") },
-//                colors = OutlinedTextFieldDefaults.colors(
-//                    focusedBorderColor = Color(0xFFE0E0E0),
-//                    unfocusedBorderColor = Color(0xFFE0E0E0)
-//                ),
-//                shape = RoundedCornerShape(10.dp),
-//                maxLines = 1,
-//                keyboardOptions = KeyboardOptions(
-//                    imeAction = ImeAction.Next
-//                ),
-//                keyboardActions = KeyboardActions(
-//                    onNext = {
-//                        cookTimeFocusRequester.requestFocus()
-//                    }
-//                ),
-//                modifier = Modifier
-//                    .padding(top = 12.dp)
-//                    .fillMaxWidth()
-//            )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1195,8 +1175,6 @@ fun TagDropdown(
                 expanded.value = tags.isNotEmpty()
             }
         },
-        modifier = modifier
-//            .heightIn(max = 200.dp)
     ) {
         OutlinedTextField(
             value = selectedTag,
@@ -1263,29 +1241,18 @@ fun TagDropdown(
     }
 }
 
+@SuppressLint("ViewModelConstructorInComposable")
 @Preview
 @Composable
 fun AddRecipeScreensPreview() {
-//    val navController = rememberNavController()
+    val navController = rememberNavController()
+    val userViewModel: UserViewModel = viewModel()
+
     val database = AppDatabase.getDatabase(LocalContext.current)
-    val viewModel: RecipeViewModel = viewModel(
-        factory = RecipeViewModel.Factory(
-            repository = RecipeRepository(database.recipeDao(), database.ingredientDao(), database.tagDao())
-        )
-    )
-//    AddOrEditRecipeScreen(navController, recipeViewModel = viewModel)
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        AddTagDialog(
-            onDismiss = { },
-            selectedTag = "Thịt",
-            tags = listOf("Thịt", "Cá", "Trứng", "Hạt"),
-            onTagSelected = { },
-            onAddNewTag = { },
-            recipeViewModel = viewModel
-        )
-    }
+    val recipeRepository = RecipeRepository(database.recipeDao(), database.ingredientDao(), database.tagDao())
+
+    val recipeViewModel = RecipeViewModel(recipeRepository)
+
+    AddOrEditRecipeScreen(navController, userViewModel = userViewModel, recipeViewModel = recipeViewModel)
 }
 

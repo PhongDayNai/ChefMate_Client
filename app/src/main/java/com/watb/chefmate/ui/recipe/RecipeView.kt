@@ -1011,17 +1011,15 @@ fun Modifier.bottomDashedBorder(
     }
 )
 
+@SuppressLint("ViewModelConstructorInComposable")
 @Preview
 @Composable
 fun RecipeViewPreview() {
     val navController = rememberNavController()
-    val database = AppDatabase.getDatabase(LocalContext.current)
     val userViewModel: UserViewModel = viewModel()
-    val viewModel: RecipeViewModel = viewModel(
-        factory = RecipeViewModel.Factory(
-            repository = RecipeRepository(database.recipeDao(), database.ingredientDao(), database.tagDao())
-        )
-    )
+    val database = AppDatabase.getDatabase(LocalContext.current)
+    val recipeRepository = RecipeRepository(database.recipeDao(), database.ingredientDao(), database.tagDao())
+    val recipeViewModel = RecipeViewModel(recipeRepository)
     
     val comments = listOf(
         CommentItem(
@@ -1073,14 +1071,5 @@ fun RecipeViewPreview() {
         userId = 0
     )
 
-    RecipeViewScreen(navController, recipe, false, userViewModel, recipeViewModel = viewModel)
-//    Column(
-//        horizontalAlignment = Alignment.CenterHorizontally,
-//        modifier = Modifier
-//            .fillMaxSize()
-//            .background(color = Color(0xFFFFFFFF))
-//    ) {
-////            StepsView(recipe)
-////            CommentsView(comments, 390)
-//    }
+    RecipeViewScreen(navController, recipe, false, userViewModel, recipeViewModel = recipeViewModel)
 }

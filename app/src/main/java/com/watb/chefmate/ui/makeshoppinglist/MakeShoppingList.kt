@@ -56,14 +56,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
 import com.watb.chefmate.data.IngredientItem
 import com.watb.chefmate.data.Recipe
+import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.database.entities.ShoppingTimeEntity
 import com.watb.chefmate.helper.CommonHelper
 import com.watb.chefmate.helper.DataStoreHelper
+import com.watb.chefmate.repository.RecipeRepository
+import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.recipe.bottomDashedBorder
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.ui.theme.CustomTextField
@@ -471,25 +476,19 @@ fun consolidateIngredients(recipes: List<Recipe>): Map<String, IngredientItem> {
 }
 
 
+@SuppressLint("ViewModelConstructorInComposable")
 @Preview
 @Composable
 fun MakeShoppingListScreenPreview() {
-//    val navController = rememberNavController()
-//    MakeShoppingListScreen(navController)
-//    val recipe = Recipe(
-//        1,
-//        "",
-//        "soup",
-//        "Thanh",
-//        13,
-//        15,
-//        emptyList(),
-//        emptyList(),
-//        "12m",
-//        1,
-//        false,
-//        emptyList(),
-//        ""
-//    )
-//    RecipeSelectedItem(recipe, true, {})
+    val navController = rememberNavController()
+
+    val database = AppDatabase.getDatabase(LocalContext.current)
+
+    val recipeRepository = RecipeRepository(database.recipeDao(), database.ingredientDao(), database.tagDao())
+    val shoppingTimeRepository = ShoppingTimeRepository(database.shoppingTimeDao())
+
+    val recipeViewModel = RecipeViewModel(recipeRepository)
+    val shoppingTimeViewModel = ShoppingTimeViewModel(shoppingTimeRepository)
+
+    MakeShoppingListScreen(navController, recipeViewModel, shoppingTimeViewModel)
 }
