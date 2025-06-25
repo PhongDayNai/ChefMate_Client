@@ -1,6 +1,7 @@
 package com.watb.chefmate.helper
 
 import android.annotation.SuppressLint
+import android.util.Log
 import java.text.Normalizer
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -19,7 +20,7 @@ object CommonHelper {
 
     fun parseTime(time: String): String {
         val isoFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
-        isoFormat.timeZone = TimeZone.getTimeZone("UTC")
+        isoFormat.timeZone = TimeZone.getTimeZone("Asia/Bangkok")
         val dateTime = isoFormat.parse(time) ?: return ""
 
         val now = Date()
@@ -81,4 +82,6 @@ object CommonHelper {
             .lowercase()
             .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
     }
+
+    private const val TAG = "CommonHelper"
 }
