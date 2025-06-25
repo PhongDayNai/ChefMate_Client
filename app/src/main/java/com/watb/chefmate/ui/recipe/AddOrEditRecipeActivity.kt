@@ -734,7 +734,7 @@ fun AddOrEditRecipeScreen(
                                         cookingTime = "${cookTime.value} ${selectedUnit.value}",
                                         ration = parsedRation,
                                         viewCount = 0,
-                                        createdAt = "",
+                                        createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).format(Date()),
                                         ingredients = ingredientsToSave,
                                         steps = stepsToSave,
                                         tags = tagsToSave

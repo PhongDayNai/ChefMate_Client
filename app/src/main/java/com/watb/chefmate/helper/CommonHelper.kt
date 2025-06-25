@@ -2,6 +2,9 @@ package com.watb.chefmate.helper
 
 import android.annotation.SuppressLint
 import android.util.Log
+import androidx.compose.ui.text.toLowerCase
+import com.watb.chefmate.data.IngredientItem
+import com.watb.chefmate.data.Recipe
 import java.text.Normalizer
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -81,6 +84,43 @@ object CommonHelper {
         return this.trim()
             .lowercase()
             .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+    }
+
+    fun consolidateIngredients(
+        recipes: List<Recipe>? = null,
+        manualIngredients: List<IngredientItem>? = null
+    ): List<IngredientItem> {
+        val consolidated = mutableListOf<IngredientItem>()
+
+        recipes?.let { recipeList ->
+            recipeList.forEach { recipe ->
+                recipe.ingredients.forEach { recipeIngredient ->
+                    val existingIngredient = consolidated.find { it.ingredientName.lowercase(Locale.ROOT) == recipeIngredient.ingredientName.lowercase(Locale.ROOT) }
+                    if (existingIngredient != null) {
+                        val newWeight = existingIngredient.weight + recipeIngredient.weight
+                        consolidated.remove(existingIngredient)
+                        consolidated.add(existingIngredient.copy(weight = newWeight))
+                    } else {
+                        consolidated.add(recipeIngredient)
+                    }
+                }
+            }
+        }
+
+        manualIngredients?.let { manualIngredientList ->
+            manualIngredientList.forEach { manualIngredient ->
+                val existingIngredient = consolidated.find { it.ingredientName.lowercase(Locale.ROOT) == manualIngredient.ingredientName.lowercase(Locale.ROOT) }
+                if (existingIngredient != null) {
+                    val newWeight = existingIngredient.weight + manualIngredient.weight
+                    consolidated.remove(existingIngredient)
+                    consolidated.add(existingIngredient.copy(weight = newWeight))
+                } else {
+                    consolidated.add(manualIngredient)
+                }
+            }
+        }
+
+        return consolidated
     }
 
     private const val TAG = "CommonHelper"
