@@ -33,7 +33,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -46,7 +45,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -98,7 +96,7 @@ import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.database.entities.IngredientEntity
 import com.watb.chefmate.database.entities.TagEntity
 import com.watb.chefmate.repository.RecipeRepository
-import com.watb.chefmate.repository.ShoppingTimeRepository
+import com.watb.chefmate.ui.theme.CircularLoading
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import com.watb.chefmate.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
@@ -162,7 +160,7 @@ fun AddOrEditRecipeScreen(
                 recipe?.let {
                     nameRecipe.value = it.recipeName
                     imageUri = it.image.toUri()
-                    cookTime.value = it.cookingTime
+                    cookTime.value = it.cookingTime.replace(" Phút", "").replace(" Giờ", "")
                     ration.value = it.ration.toString()
                     isPublic = false
                     userName.value = it.userName
@@ -437,39 +435,41 @@ fun AddOrEditRecipeScreen(
                     .focusRequester(rationFocusRequester)
             )
 
-            Column(
-                modifier = Modifier
-                    .padding(top = 20.dp)
-                    .fillMaxWidth()
-            ) {
-                Text(
-                    text = "Trạng thái",
-                    fontWeight = FontWeight(600),
-                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
-                    fontSize = 16.sp
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(
-                        selected = isPublic,
-                        onClick = {
-                            if (!isLoggedIn) {
-                                Toast.makeText(context, "Vui lòng đăng nhập để sử dụng tính năng này!", Toast.LENGTH_SHORT).show()
-                            } else {
-                                isPublic = true
-                            }
-                        },
-                        colors = RadioButtonDefaults.colors(selectedColor = Color(0xFFFB923C))
+            if (recipeId != -1) {
+                Column(
+                    modifier = Modifier
+                        .padding(top = 20.dp)
+                        .fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Trạng thái",
+                        fontWeight = FontWeight(600),
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                        fontSize = 16.sp
                     )
-                    Text(text = "Công khai")
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(
+                            selected = isPublic,
+                            onClick = {
+                                if (!isLoggedIn) {
+                                    Toast.makeText(context, "Vui lòng đăng nhập để sử dụng tính năng này!", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    isPublic = true
+                                }
+                            },
+                            colors = RadioButtonDefaults.colors(selectedColor = Color(0xFFFB923C))
+                        )
+                        Text(text = "Công khai")
 
-                    RadioButton(
-                        selected = !isPublic,
-                        onClick = { isPublic = false },
-                        colors = RadioButtonDefaults.colors(selectedColor = Color(0xFFFB923C)),
-                        modifier = Modifier
-                            .padding(start = 20.dp)
-                    )
-                    Text(text = "Riêng tư")
+                        RadioButton(
+                            selected = !isPublic,
+                            onClick = { isPublic = false },
+                            colors = RadioButtonDefaults.colors(selectedColor = Color(0xFFFB923C)),
+                            modifier = Modifier
+                                .padding(start = 20.dp)
+                        )
+                        Text(text = "Riêng tư")
+                    }
                 }
             }
 
@@ -719,7 +719,7 @@ fun AddOrEditRecipeScreen(
                             val stepsToSave = steps.filter { it.content.isNotBlank() }.map {
                                 Pair(it.index, it.content)
                             }
-                            val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                            val currentDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).format(Date())
                             val tagsToSave = tagsInput.value.split(",").map { it.trim() }.filter { it.isNotBlank() }
 
                             if (recipeId == -1) {
@@ -833,18 +833,7 @@ fun AddOrEditRecipeScreen(
             }
         }
         if (isLoading) {
-            Surface(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f))
-            ) {
-                CircularProgressIndicator(
-                    color = Color(0xFFFB923C),
-                    strokeWidth = 4.dp,
-                    modifier = Modifier
-                        .size(100.dp)
-                )
-            }
+            CircularLoading()
         }
         if (isShownAddTagDialog) {
             AddTagDialog(
@@ -1175,6 +1164,7 @@ fun TagDropdown(
                 expanded.value = tags.isNotEmpty()
             }
         },
+        modifier = modifier
     ) {
         OutlinedTextField(
             value = selectedTag,
