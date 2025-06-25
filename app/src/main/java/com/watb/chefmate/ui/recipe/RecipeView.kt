@@ -379,17 +379,28 @@ Tác giả: ${recipe.userName}
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(32.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                    .size(40.dp)
+                    .clip(CircleShape)
             )
-            Text(
-                text = recipe.userName,
-                color = Color(0xFF555555),
-                fontSize = 16.sp,
-                fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+            Column(
                 modifier = Modifier
                     .padding(start = 8.dp)
-            )
+            ) {
+                Text(
+                    text = recipe.userName,
+                    color = Color(0xFF555555),
+                    fontSize = 16.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                    modifier = Modifier
+                )
+                Text(
+                    text = CommonHelper.parseTime(recipe.createdAt),
+                    color = Color(0xFF6B7280),
+                    fontSize = 12.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                    modifier = Modifier
+                )
+            }
             if (!isHistory) {
                 Button(
                     onClick = {},
