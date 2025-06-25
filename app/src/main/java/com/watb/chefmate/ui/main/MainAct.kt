@@ -139,7 +139,7 @@ fun MainAct(
                                 onRecipeClick(selectedRecipe, false)
                             },
                             navController = navController,
-//                            recipes = topTrendingRecipes,
+                            userViewModel = userViewModel,
                             recipeViewModel = recipeViewModel,
                         )
                         1 -> RecipeListScreen(
