@@ -50,6 +50,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.watb.chefmate.R
 import com.watb.chefmate.data.Recipe
@@ -60,16 +61,20 @@ import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.ui.theme.RecipeItem
 import com.watb.chefmate.ui.theme.CustomTextField
 import com.watb.chefmate.viewmodel.RecipeViewModel
+import com.watb.chefmate.viewmodel.UserViewModel
 
 @SuppressLint("MemberExtensionConflict")
 @Composable
 fun HomeScreen(
     onRecipeClick: (Recipe) -> Unit,
     navController: NavController,
+    userViewModel: UserViewModel,
     recipeViewModel: RecipeViewModel
 ) {
     val scrollState = rememberScrollState()
     val showPopular = remember { derivedStateOf { scrollState.value == 0 } }
+    val isLoggedIn by userViewModel.isLoggedIn.collectAsState()
+    val user by userViewModel.user.collectAsState()
     val recipes by recipeViewModel.topTrending.collectAsState()
 
     var searchType by remember { mutableStateOf(SearchType.NAME.value) }
@@ -120,9 +125,9 @@ fun HomeScreen(
                 onSearch = {
                     navController.navigate("searchRecipe/${searchType}/$searchValue")
                     if (searchType == SearchType.NAME.value) {
-                        recipeViewModel.searchRecipe(searchValue, userId = null)
+                        recipeViewModel.searchRecipe(searchValue, userId = if (isLoggedIn) user?.userId else null)
                     } else {
-                        recipeViewModel.searchRecipeByTag(searchValue, userId = null)
+                        recipeViewModel.searchRecipeByTag(searchValue, userId = if (isLoggedIn) user?.userId else null)
                     }
                 }
             ),
@@ -237,7 +242,7 @@ fun HomeScreen(
                             onClick = {
                                 val value = recipesTypeLeft[index].replace("Công thức\n", "")
                                 navController.navigate("searchRecipe/tag/$value")
-                                recipeViewModel.searchRecipeByTag(value, userId = null)
+                                recipeViewModel.searchRecipeByTag(value, userId = if (isLoggedIn) user?.userId else null)
                             },
                             text = recipesTypeLeft[index],
                             image = image,
@@ -249,7 +254,7 @@ fun HomeScreen(
                             onClick = {
                                 val value = recipesTypeRight[index].replace("Công thức\n", "")
                                 navController.navigate("searchRecipe/tag/$value")
-                                recipeViewModel.searchRecipeByTag(value, userId = null)
+                                recipeViewModel.searchRecipeByTag(value, userId = if (isLoggedIn) user?.userId else null)
                             },
                             text = recipesTypeRight[index],
                             image = imageRight[index],
@@ -338,12 +343,13 @@ fun SearchTypeItem(onClick: () -> Unit, text: String, @DrawableRes image: Int, m
 fun HomeScreenPreview() {
     val context = LocalContext.current
     val appDatabase = AppDatabase.getDatabase(context)
+    val userViewModel: UserViewModel = viewModel()
     val recipeRepository = RecipeRepository(appDatabase.recipeDao(), appDatabase.ingredientDao(), appDatabase.tagDao())
 
     HomeScreen(
         onRecipeClick = {},
         navController = NavController(LocalContext.current),
-//        recipes = listOf(),
+        userViewModel = userViewModel,
         recipeViewModel = RecipeViewModel(recipeRepository)
     )
 //    Column(

@@ -54,6 +54,7 @@ import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.ui.theme.RecipeItem
 import com.watb.chefmate.ui.theme.CustomTextField
 import com.watb.chefmate.viewmodel.RecipeViewModel
+import com.watb.chefmate.viewmodel.UserViewModel
 
 @SuppressLint("MemberExtensionConflict")
 @Composable
@@ -62,9 +63,12 @@ fun SearchResultScreen(
     searchTypeValue: String,
     search: String,
     onRecipeClick: (Recipe) -> Unit,
+    userViewModel: UserViewModel,
     recipeViewModel: RecipeViewModel
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
+    val isLoggedIn by userViewModel.isLoggedIn.collectAsState()
+    val user by userViewModel.user.collectAsState()
     val isLoading by recipeViewModel.isLoading.collectAsState()
     val searchResultRecipes by recipeViewModel.searchResult.collectAsState()
 
@@ -117,9 +121,9 @@ fun SearchResultScreen(
             keyboardActions = KeyboardActions(
                 onSearch = {
                     if (searchType == SearchType.NAME.value) {
-                        recipeViewModel.searchRecipe(searchValue, userId = null)
+                        recipeViewModel.searchRecipe(searchValue, userId = if (isLoggedIn) user?.userId else null)
                     } else {
-                        recipeViewModel.searchRecipeByTag(searchValue, userId = null)
+                        recipeViewModel.searchRecipeByTag(searchValue, userId = if (isLoggedIn) user?.userId else null)
                     }
                     keyboardController?.hide()
                 }
@@ -210,9 +214,9 @@ fun SearchResultScreen(
                 Button(
                     onClick = {
                         if (searchType == SearchType.NAME.value) {
-                            recipeViewModel.searchRecipe(searchValue, userId = null)
+                            recipeViewModel.searchRecipe(searchValue, userId = if (isLoggedIn) user?.userId else null)
                         } else {
-                            recipeViewModel.searchRecipeByTag(searchValue, userId = null)
+                            recipeViewModel.searchRecipeByTag(searchValue, userId = if (isLoggedIn) user?.userId else null)
                         }
                         keyboardController?.hide()
                     },
@@ -223,7 +227,14 @@ fun SearchResultScreen(
                         .padding(top = 16.dp)
                         .fillMaxWidth(0.9f)
                 ) {
-                    Text(text = "Thử lại")
+                    Text(
+                        text = "Thử lại",
+                        color = Color(0xFFFFFFFF),
+                        fontSize = 16.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                    )
                 }
             } else {
                 Column(

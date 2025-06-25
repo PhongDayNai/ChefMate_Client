@@ -166,6 +166,7 @@ fun navGraph(
                             recipe = selectedRecipe
                             navController.navigate("recipeView")
                         },
+                        userViewModel = userViewModel,
                         recipeViewModel = recipeViewModel
                     )
                 }
