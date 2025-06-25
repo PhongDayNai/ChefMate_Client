@@ -83,7 +83,6 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
 import com.watb.chefmate.api.ApiClient
@@ -97,7 +96,6 @@ import com.watb.chefmate.data.TagData
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.database.entities.IngredientEntity
 import com.watb.chefmate.database.entities.TagEntity
-import com.watb.chefmate.helper.CommonHelper
 import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import com.watb.chefmate.viewmodel.UserViewModel
@@ -741,9 +739,7 @@ fun AddOrEditRecipeScreen(
                             val stepsToSave = steps.filter { it.content.isNotBlank() }.map {
                                 Pair(it.index, it.content)
                             }
-                            val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(
-                                Date()
-                            )
+                            val currentDate = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
                             val tagsToSave = tagsInput.value.split(",").map { it.trim() }.filter { it.isNotBlank() }
 
                             if (recipeId == -1) {
@@ -752,7 +748,7 @@ fun AddOrEditRecipeScreen(
                                     recipeViewModel.addRecipe(
                                         recipeName = nameRecipe.value,
                                         imageUri = imageUri?.toString() ?: "",
-                                        userName = "Thanh",
+                                        userName = user?.fullName ?: "Người dùng",
                                         isPublic = isPublic,
                                         likeQuantity = 0,
                                         cookingTime = "${cookTime.value} ${selectedUnit.value}",
@@ -793,15 +789,15 @@ fun AddOrEditRecipeScreen(
                                         if (response != null) {
                                             if (response.success) {
                                                 recipeViewModel.addRecipe(
-                                                    recipeName = nameRecipe.value,
-                                                    imageUri = imageUri.toString(),
+                                                    recipeName = nameRecipe.value.trim(),
+                                                    imageUri = imageUri.toString().trim(),
                                                     userName = user?.fullName ?: "Người dùng",
                                                     isPublic = isPublic,
                                                     likeQuantity = 0,
                                                     cookingTime = "${cookTime.value} ${selectedUnit.value}",
                                                     ration = parsedRation,
                                                     viewCount = 0,
-                                                    createdAt = CommonHelper.parseTime(Date().toString()),
+                                                    createdAt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).format(Date()),
                                                     ingredients = ingredientsToSave,
                                                     steps = stepsToSave,
                                                     tags = tagsToSave
@@ -820,9 +816,9 @@ fun AddOrEditRecipeScreen(
                             } else {
                                 recipeViewModel.updateRecipe(
                                     recipeId = recipeId,
-                                    recipeName = nameRecipe.value,
-                                    imageUri = imageUri.toString(),
-                                    userName = userName.value,
+                                    recipeName = nameRecipe.value.trim(),
+                                    imageUri = imageUri.toString().trim(),
+                                    userName = userName.value.trim(),
                                     isPublic = false,
                                     likeQuantity = 0,
                                     cookingTime = "${cookTime.value} ${selectedUnit.value}",
@@ -1270,7 +1266,7 @@ fun TagDropdown(
 @Preview
 @Composable
 fun AddRecipeScreensPreview() {
-    val navController = rememberNavController()
+//    val navController = rememberNavController()
     val database = AppDatabase.getDatabase(LocalContext.current)
     val viewModel: RecipeViewModel = viewModel(
         factory = RecipeViewModel.Factory(
