@@ -221,19 +221,7 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         return repository.getRecipeByName(name).map { it?.toRecipe() }
     }
 
-    fun parseIngredientsJson(jsonString: String): List<Pair<String, Pair<Int, String>>> {
-        val gson = Gson()
-        val type = object : TypeToken<List<Pair<String, Pair<Int, String>>>>() {}.type
-        return gson.fromJson(jsonString, type) ?: emptyList()
-    }
-
-    fun parseStepsJson(jsonString: String): List<Pair<Int, String>> {
-        val gson = Gson()
-        val type = object : TypeToken<List<Pair<Int, String>>>() {}.type
-        return gson.fromJson(jsonString, type) ?: emptyList()
-    }
-
-    fun insertIngredient(ingredient: IngredientEntity) {
+    private fun insertIngredient(ingredient: IngredientEntity) {
         viewModelScope.launch {
             repository.insertIngredient(ingredient)
         }
@@ -243,21 +231,13 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         return repository.getAllIngredients()
     }
 
-    fun getIngredientByName(name: String): Flow<IngredientEntity?> {
-        return repository.getIngredientByName(name)
-    }
-
-    fun getIngredientById(ingredientId: Int): Flow<IngredientEntity?> {
-        return repository.getIngredientById(ingredientId)
-    }
-
-    fun deleteAllIngredients() {
+    private fun deleteAllIngredients() {
         viewModelScope.launch {
             repository.deleteAllIngredients()
         }
     }
 
-    fun insertTag(tag: TagEntity) {
+    private fun insertTag(tag: TagEntity) {
         viewModelScope.launch {
             repository.insertTag(tag)
         }
@@ -267,27 +247,9 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         return repository.getAllTags()
     }
 
-    fun getTagByName(name: String): Flow<TagEntity?> {
-        return repository.getTagByName(name)
-    }
-
-    fun getTagById(tagId: Int): Flow<TagEntity?> {
-        return repository.getTagById(tagId)
-    }
-
-    fun deleteAllTags() {
+    private fun deleteAllTags() {
         viewModelScope.launch {
             repository.deleteAllTags()
-        }
-    }
-
-    class Factory(private val repository: RecipeRepository) : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            if (modelClass.isAssignableFrom(RecipeViewModel::class.java)) {
-                @Suppress("UNCHECKED_CAST")
-                return RecipeViewModel(repository) as T
-            }
-            throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
 
