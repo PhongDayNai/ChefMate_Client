@@ -3,11 +3,9 @@ package com.watb.chefmate.database
 import android.content.Context
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
 import com.watb.chefmate.database.dao.*
 import com.watb.chefmate.database.entities.*
 import androidx.room.Room
-import com.watb.chefmate.database.converter.DateConverter
 
 @Database(
     entities = [
@@ -19,7 +17,6 @@ import com.watb.chefmate.database.converter.DateConverter
     version = 5,
     exportSchema = false
 )
-@TypeConverters(DateConverter::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun recipeDao(): RecipeDao
