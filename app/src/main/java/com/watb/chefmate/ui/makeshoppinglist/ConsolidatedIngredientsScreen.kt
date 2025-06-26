@@ -30,14 +30,18 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.watb.chefmate.R
-import com.watb.chefmate.data.StatusShopping
+import com.watb.chefmate.data.Recipe
+import com.watb.chefmate.data.ShoppingStatus
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.helper.CommonHelper.parseIngredientName
 import com.watb.chefmate.helper.DataStoreHelper
+import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.recipe.bottomDashedBorder
 import com.watb.chefmate.ui.theme.CustomDialog
 import com.watb.chefmate.ui.theme.Header
+import com.watb.chefmate.ui.theme.RecipeSelectedItem
+import com.watb.chefmate.viewmodel.RecipeViewModel
 import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
 import kotlinx.coroutines.launch
 
@@ -46,6 +50,7 @@ fun ConsolidatedIngredientsScreen(
     navController: NavController,
     shoppingTimeId: Int,
     isHistory: Boolean = false,
+    recipeViewModel: RecipeViewModel,
     shoppingTimeViewModel: ShoppingTimeViewModel
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -61,16 +66,29 @@ fun ConsolidatedIngredientsScreen(
     var addWeight by remember { mutableStateOf("") }
     var addUnit by remember { mutableStateOf("") }
 
-    val ingredientStatus by shoppingTimeViewModel.shoppingIngredientStatuses.collectAsState()
+    val recipeNames by shoppingTimeViewModel.shoppingRecipeNames.collectAsState()
     val ingredientNames by shoppingTimeViewModel.shoppingIngredientNames.collectAsState()
     val ingredientWeights by shoppingTimeViewModel.shoppingIngredientWeights.collectAsState()
     val ingredientUnits by shoppingTimeViewModel.shoppingIngredientUnits.collectAsState()
+    val ingredientStatus by shoppingTimeViewModel.shoppingIngredientStatuses.collectAsState()
+    val historyRecipes = remember { mutableStateListOf<Recipe>() }
 
     LaunchedEffect(shoppingTimeId) {
         shoppingTimeViewModel.getShoppingTimeById(shoppingTimeId)
     }
+    
+    LaunchedEffect(recipeNames) {
+        recipeNames.forEach { recipeNames ->
+            recipeViewModel.getRecipeByName(recipeNames).collect { recipe ->
+                if (recipe != null) {
+                    historyRecipes.add(recipe)
+                }
+            }
+        }
+    }
 
     Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFFFFFFF))
@@ -116,6 +134,20 @@ fun ConsolidatedIngredientsScreen(
                 )
             })
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(0.95f)
+                    .height(112.dp)
+                    .align(Alignment.End)
+            ) {
+                historyRecipes.forEach { recipe ->
+                    RecipeSelectedItem(
+                        recipe = recipe,
+                        isHistory = true,
+                    )
+                }
+            }
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -136,7 +168,7 @@ fun ConsolidatedIngredientsScreen(
                         status = status,
                         isHistory = isHistory,
                         onCheckedChange = {
-                            val newStatus = if (status == StatusShopping.BOUGHT.value) StatusShopping.WAITING.value else StatusShopping.BOUGHT.value
+                            val newStatus = if (status == ShoppingStatus.BOUGHT.value) ShoppingStatus.WAITING.value else ShoppingStatus.BOUGHT.value
 
                             val newNames = ingredientNames.toMutableList()
                             val newWeights = ingredientWeights.toMutableList()
@@ -156,7 +188,7 @@ fun ConsolidatedIngredientsScreen(
                             )
                         },
                         onCouldNotBuyClick = {
-                            val newStatus = if (status == StatusShopping.COULD_NOT_BUY.value) StatusShopping.WAITING.value else StatusShopping.COULD_NOT_BUY.value
+                            val newStatus = if (status == ShoppingStatus.COULD_NOT_BUY.value) ShoppingStatus.WAITING.value else ShoppingStatus.COULD_NOT_BUY.value
 
                             val newNames = ingredientNames.toMutableList()
                             val newWeights = ingredientWeights.toMutableList()
@@ -244,7 +276,7 @@ fun ConsolidatedIngredientsScreen(
                         newNames.add(newNames.size, addName)
                         newWeights.add(newWeights.size, addWeight)
                         newUnits.add(newUnits.size, addUnit)
-                        newStatuses.add(newStatuses.size, StatusShopping.WAITING.value)
+                        newStatuses.add(newStatuses.size, ShoppingStatus.WAITING.value)
 
                         val newIngredientNamesString = newNames.joinToString(";;;")
                         val newIngredientWeightsString = newWeights.joinToString(";;;")
@@ -326,9 +358,9 @@ fun ConsolidatedIngredientsScreen(
 }
 
 fun statusOrder(status: String): Int = when (status) {
-    StatusShopping.WAITING.value -> 0
-    StatusShopping.BOUGHT.value -> 1
-    StatusShopping.COULD_NOT_BUY.value -> 2
+    ShoppingStatus.WAITING.value -> 0
+    ShoppingStatus.BOUGHT.value -> 1
+    ShoppingStatus.COULD_NOT_BUY.value -> 2
     else -> 0
 }
 
@@ -351,9 +383,9 @@ fun IngredientItem(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Checkbox(
-            checked = status == StatusShopping.BOUGHT.value,
+            checked = status == ShoppingStatus.BOUGHT.value,
             onCheckedChange = { onCheckedChange() },
-            enabled = if (isHistory) false else status != StatusShopping.COULD_NOT_BUY.value,
+            enabled = if (isHistory) false else status != ShoppingStatus.COULD_NOT_BUY.value,
             colors = CheckboxDefaults.colors(
                 checkedColor = Color(0xFFFFFFFF),
                 uncheckedColor = Color(0xFF4E4E4E),
@@ -368,15 +400,15 @@ fun IngredientItem(
             fontSize = 16.sp,
             fontFamily = FontFamily(Font(R.font.roboto_medium)),
             fontWeight = FontWeight.Medium,
-            color = if (status == StatusShopping.COULD_NOT_BUY.value) Color.Gray else Color.Black,
-            textDecoration = if (status == StatusShopping.COULD_NOT_BUY.value) TextDecoration.LineThrough else TextDecoration.None,
+            color = if (status == ShoppingStatus.COULD_NOT_BUY.value) Color.Gray else Color.Black,
+            textDecoration = if (status == ShoppingStatus.COULD_NOT_BUY.value) TextDecoration.LineThrough else TextDecoration.None,
         )
 
         Spacer(modifier = Modifier.weight(1f))
 
         IconButton(
             onClick = { onEditClick() },
-            enabled = if (isHistory) false else status == StatusShopping.WAITING.value
+            enabled = if (isHistory) false else status == ShoppingStatus.WAITING.value
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_editingredirnt),
@@ -389,7 +421,7 @@ fun IngredientItem(
 
         IconButton(
             onClick = { onCouldNotBuyClick() },
-            enabled = if (isHistory) false else status != StatusShopping.BOUGHT.value
+            enabled = if (isHistory) false else status != ShoppingStatus.BOUGHT.value
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_couldn_tbuy),
@@ -408,12 +440,14 @@ fun IngredientItem(
 fun CustomEditIngredientDialogPreview() {
     val context = LocalContext.current
     val appDatabase = AppDatabase.getDatabase(context)
+    val recipeViewModel = RecipeViewModel(RecipeRepository(appDatabase.recipeDao(), appDatabase.ingredientDao(), appDatabase.tagDao()))
     val shoppingTimeRepository = ShoppingTimeRepository(appDatabase.shoppingTimeDao())
     val shoppingTimeViewModel = ShoppingTimeViewModel(shoppingTimeRepository)
     val navController = rememberNavController()
     ConsolidatedIngredientsScreen(
         navController = navController,
         shoppingTimeId = 1,
+        recipeViewModel = recipeViewModel,
         shoppingTimeViewModel = shoppingTimeViewModel
     )
 }
