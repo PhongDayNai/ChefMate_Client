@@ -68,7 +68,7 @@ fun RecipeListScreen(
                     .padding(horizontal = 8.dp),
                 contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp)
             ) {
-                items(recipes) { recipe ->
+                items(recipes.asReversed()) { recipe ->
                     RecipeItem(
                         onClick = {
                             onRecipeClick(recipe)
