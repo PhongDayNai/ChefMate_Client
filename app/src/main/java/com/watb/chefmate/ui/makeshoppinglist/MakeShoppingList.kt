@@ -3,14 +3,12 @@ package com.watb.chefmate.ui.makeshoppinglist
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,7 +24,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,7 +43,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
@@ -58,10 +54,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
 import com.watb.chefmate.data.IngredientItem
-import com.watb.chefmate.data.Recipe
+import com.watb.chefmate.data.ShoppingStatus
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.database.entities.ShoppingTimeEntity
 import com.watb.chefmate.helper.CommonHelper
@@ -71,6 +66,7 @@ import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.recipe.bottomDashedBorder
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.ui.theme.CustomTextField
+import com.watb.chefmate.ui.theme.RecipeSelectedItem
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
 import kotlinx.coroutines.launch
@@ -152,7 +148,7 @@ fun MakeShoppingListScreen(
         )
         Text(
             text = "Thêm nguyên liệu qua công thức",
-            fontSize = 15.sp,
+            fontSize = 16.sp,
             fontWeight = FontWeight(600),
             fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
             modifier = Modifier
@@ -244,6 +240,7 @@ fun MakeShoppingListScreen(
                 .height(160.dp)
         ) {
             Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(10.dp)
@@ -251,7 +248,7 @@ fun MakeShoppingListScreen(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxWidth(0.95f)
                 ) {
                     Text(
                         text = "Thêm nguyên liệu thủ công",
@@ -259,7 +256,6 @@ fun MakeShoppingListScreen(
                         fontWeight = FontWeight(600),
                         fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
                         modifier = Modifier
-                            .padding(top = 10.dp, start = 10.dp)
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     IconButton(
@@ -269,27 +265,44 @@ fun MakeShoppingListScreen(
                                 sheetState.show()
                                 sheetState.expand()
                             }
-                        }
+                        },
+                        modifier = Modifier
+                            .size(24.dp)
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_addingredient),
                             contentDescription = "add manually",
+                            modifier = Modifier
+                                .size(20.dp)
                         )
                     }
                 }
                 LazyColumn {
                     val manualIngredientsList = CommonHelper.consolidateIngredients(manualIngredients = manualIngredients)
-//                    manualIngredients = CommonHelper.consolidateIngredients(manualIngredients)
+
                     items(manualIngredientsList.size) { index ->
                         Row(
                             Modifier
-                                .padding(8.dp)
-                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                                .fillMaxWidth(0.9f)
                                 .bottomDashedBorder()
                         ) {
                             Text(
                                 text = "${manualIngredientsList[index].ingredientName} ${manualIngredientsList[index].weight} ${manualIngredientsList[index].unit}"
                             )
+                        }
+                    }
+
+                    if (manualIngredients.size < 3) {
+                        val emptyRowTarget = 3 - manualIngredientsList.size
+                        items(emptyRowTarget) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(vertical = 8.dp)
+                                    .height(20.dp)
+                                    .fillMaxWidth(0.9f)
+                                    .bottomDashedBorder()
+                            ) { /*NOTHING*/ }
                         }
                     }
                 }
@@ -351,7 +364,7 @@ fun MakeShoppingListScreen(
                     val ingredientNames = consolidatedIngredients.joinToString(";;;") { it.ingredientName }
                     val ingredientWeights = consolidatedIngredients.joinToString(";;;") { it.weight.toString() }
                     val ingredientUnits = consolidatedIngredients.joinToString(";;;") { it.unit }
-                    val buyingStatuses = consolidatedIngredients.joinToString(";;;") { "waiting" }
+                    val buyingStatuses = consolidatedIngredients.joinToString(";;;") { ShoppingStatus.WAITING.value }
 
                     val shoppingTime = ShoppingTimeEntity(
                         recipeNames = selectedRecipes.joinToString(";;;") { it.recipeName },
@@ -381,78 +394,6 @@ fun MakeShoppingListScreen(
                     fontFamily = FontFamily(Font(R.font.roboto_bold))
                 )
             }
-        }
-    }
-}
-@Composable
-fun RecipeSelectedItem(
-    recipe: Recipe,
-    isSelected: Boolean,
-    onToggleSelect: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFFAFAFA)
-        ),
-        modifier = modifier
-            .padding(top = 10.dp, end = 5.dp, bottom = 10.dp)
-            .size(150.dp, 100.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .weight(2f)
-                    .fillMaxHeight()
-                    .padding(top = 6.dp, end = 8.dp)
-            ) {
-                Checkbox(
-                    checked = isSelected,
-                    onCheckedChange = onToggleSelect,
-                    modifier = Modifier
-                        .padding(top = 4.dp, bottom = 4.dp)
-                        .size(16.dp)
-                )
-                Text(
-                    text = recipe.recipeName,
-                    color = Color(0xFF231F20),
-                    fontSize = 14.sp,
-                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
-                    fontWeight = FontWeight(700),
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = recipe.userName, // Đã đổi userName thành author trong Recipe
-                    color = Color(0xFFFB923C),
-                    fontSize = 10.sp,
-                    fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
-                    fontWeight = FontWeight(400),
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .background(color = Color(0xFFFFEDD5), RoundedCornerShape(4.dp))
-                        .padding(4.dp)
-                )
-            }
-            val painter = if (recipe.image == "") {
-                painterResource(R.drawable.placeholder_image)
-            } else {
-                rememberAsyncImagePainter(recipe.image)
-            }
-            Image(
-                painter = painter,
-                contentDescription = "",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .weight(3f)
-                    .fillMaxHeight()
-            )
         }
     }
 }
