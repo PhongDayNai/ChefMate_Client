@@ -1,8 +1,6 @@
 package com.watb.chefmate.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.watb.chefmate.database.entities.ShoppingTimeEntity
 import com.watb.chefmate.repository.ShoppingTimeRepository
@@ -14,18 +12,20 @@ class ShoppingTimeViewModel(private val repository: ShoppingTimeRepository) : Vi
     val shoppingTimes: MutableStateFlow<List<ShoppingTimeEntity>> = _shoppingTimes
 
     private val _shoppingTime = MutableStateFlow(ShoppingTimeEntity(0,"", "", "", "", "", ""))
-    val shoppingTime: MutableStateFlow<ShoppingTimeEntity> = _shoppingTime
 
-    private var _shoppingIngredientNames = MutableStateFlow<List<String>>(emptyList())
+    private val _shoppingRecipeNames = MutableStateFlow<List<String>>(emptyList())
+    val shoppingRecipeNames: MutableStateFlow<List<String>> = _shoppingRecipeNames
+
+    private val _shoppingIngredientNames = MutableStateFlow<List<String>>(emptyList())
     val shoppingIngredientNames: MutableStateFlow<List<String>> = _shoppingIngredientNames
 
-    private var _shoppingIngredientWeights = MutableStateFlow<List<String>>(emptyList())
+    private val _shoppingIngredientWeights = MutableStateFlow<List<String>>(emptyList())
     val shoppingIngredientWeights: MutableStateFlow<List<String>> = _shoppingIngredientWeights
 
-    private var _shoppingIngredientUnits = MutableStateFlow<List<String>>(emptyList())
+    private val _shoppingIngredientUnits = MutableStateFlow<List<String>>(emptyList())
     val shoppingIngredientUnits: MutableStateFlow<List<String>> = _shoppingIngredientUnits
 
-    private var _shoppingIngredientStatuses = MutableStateFlow<List<String>>(emptyList())
+    private val _shoppingIngredientStatuses = MutableStateFlow<List<String>>(emptyList())
     val shoppingIngredientStatuses: MutableStateFlow<List<String>> = _shoppingIngredientStatuses
 
     fun getAllShoppingTimes() {
@@ -45,6 +45,7 @@ class ShoppingTimeViewModel(private val repository: ShoppingTimeRepository) : Vi
 
     suspend fun getShoppingTimeById(id: Int) {
         _shoppingTime.value = repository.getShoppingTimeById(id)
+        _shoppingRecipeNames.value = _shoppingTime.value.recipeNames.split(";;;")
         _shoppingIngredientNames.value = _shoppingTime.value.ingredientNames.split(";;;")
         _shoppingIngredientWeights.value = _shoppingTime.value.ingredientWeights.split(";;;")
         _shoppingIngredientUnits.value = _shoppingTime.value.ingredientUnits.split(";;;")
