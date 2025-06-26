@@ -3,6 +3,7 @@ package com.watb.chefmate.ui.theme
 import android.annotation.SuppressLint
 import android.icu.text.SimpleDateFormat
 import android.os.Build
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,6 +31,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,6 +64,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -388,6 +392,73 @@ fun RecipeItem(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun RecipeSelectedItem(
+    recipe: Recipe,
+    isSelected: Boolean = false,
+    isHistory: Boolean = false,
+    onToggleSelect: (Boolean) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFFAFAFA)
+        ),
+        border = BorderStroke(width = 1.dp, color = Color(0xFFE5E7EB)),
+        modifier = modifier
+            .padding(top = 10.dp, end = 5.dp, bottom = 10.dp)
+            .size(150.dp, 100.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .weight(2f)
+                    .fillMaxHeight()
+                    .padding(8.dp)
+            ) {
+                if (!isHistory) {
+                    Checkbox(
+                        checked = isSelected,
+                        onCheckedChange = onToggleSelect,
+                        modifier = Modifier
+                            .padding(top = 4.dp, bottom = 8.dp)
+                            .size(16.dp)
+                    )
+                }
+                Text(
+                    text = recipe.recipeName,
+                    color = Color(0xFF231F20),
+                    fontSize = 12.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                    fontWeight = FontWeight(700),
+                    textAlign = TextAlign.Center,
+                    lineHeight = 16.sp
+                )
+            }
+            val painter = if (recipe.image == "") {
+                painterResource(R.drawable.placeholder_image)
+            } else {
+                rememberAsyncImagePainter(recipe.image)
+            }
+            Image(
+                painter = painter,
+                contentDescription = "",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .weight(3f)
+                    .fillMaxHeight()
+            )
         }
     }
 }
