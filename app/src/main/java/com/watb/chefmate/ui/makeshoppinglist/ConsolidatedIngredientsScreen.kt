@@ -138,7 +138,7 @@ fun ConsolidatedIngredientsScreen(
         } else {
             val orderedIndices = ingredientNames.indices.sortedWith(compareBy {
                 statusOrder(
-                    ingredientStatus.getOrNull(it) ?: ""
+                    ingredientStatus[it]
                 )
             })
 
@@ -169,9 +169,9 @@ fun ConsolidatedIngredientsScreen(
             ) {
                 items(orderedIndices) { index ->
                     val name = ingredientNames[index]
-                    val weight = ingredientWeights.getOrNull(index) ?: ""
-                    val unit = ingredientUnits.getOrNull(index) ?: ""
-                    val status = ingredientStatus.getOrNull(index) ?: ""
+                    val weight = ingredientWeights[index]
+                    val unit = ingredientUnits[index]
+                    val status = ingredientStatus[index]
 
                     IngredientItem(
                         name = name.parseIngredientName(),
@@ -182,41 +182,29 @@ fun ConsolidatedIngredientsScreen(
                         onCheckedChange = {
                             val newStatus = if (status == ShoppingStatus.BOUGHT.value) ShoppingStatus.WAITING.value else ShoppingStatus.BOUGHT.value
 
-                            val newNames = ingredientNames.toMutableList()
-                            val newWeights = ingredientWeights.toMutableList()
-                            val newUnits = ingredientUnits.toMutableList()
                             val newStatuses = ingredientStatus.toMutableList()
                             newStatuses[index] = newStatus
-                            val newIngredientNamesString = newNames.joinToString(";;;")
-                            val newIngredientWeightsString = newWeights.joinToString(";;;")
-                            val newIngredientUnitsString = newUnits.joinToString(";;;")
-                            val newIngredientStatusesString = newStatuses.joinToString(";;;")
+
                             shoppingTimeViewModel.updateShoppingTimeById(
                                 shoppingTimeId,
-                                newIngredientNamesString,
-                                newIngredientWeightsString,
-                                newIngredientUnitsString,
-                                newIngredientStatusesString
+                                ingredientNames.joinToString(";;;"),
+                                ingredientWeights.joinToString(";;;"),
+                                ingredientUnits.joinToString(";;;"),
+                                newStatuses.joinToString(";;;")
                             )
                         },
                         onCouldNotBuyClick = {
                             val newStatus = if (status == ShoppingStatus.COULD_NOT_BUY.value) ShoppingStatus.WAITING.value else ShoppingStatus.COULD_NOT_BUY.value
 
-                            val newNames = ingredientNames.toMutableList()
-                            val newWeights = ingredientWeights.toMutableList()
-                            val newUnits = ingredientUnits.toMutableList()
                             val newStatuses = ingredientStatus.toMutableList()
                             newStatuses[index] = newStatus
-                            val newIngredientNamesString = newNames.joinToString(";;;")
-                            val newIngredientWeightsString = newWeights.joinToString(";;;")
-                            val newIngredientUnitsString = newUnits.joinToString(";;;")
-                            val newIngredientStatusesString = newStatuses.joinToString(";;;")
+
                             shoppingTimeViewModel.updateShoppingTimeById(
                                 shoppingTimeId,
-                                newIngredientNamesString,
-                                newIngredientWeightsString,
-                                newIngredientUnitsString,
-                                newIngredientStatusesString
+                                ingredientNames.joinToString(";;;"),
+                                ingredientWeights.joinToString(";;;"),
+                                ingredientUnits.joinToString(";;;"),
+                                newStatuses.joinToString(";;;")
                             )
                         },
                         onEditClick = {
@@ -248,16 +236,12 @@ fun ConsolidatedIngredientsScreen(
                         newWeights[idx] = editWeight
                         newUnits[idx] = editUnit
 
-                        val newIngredientNamesString = newNames.joinToString(";;;")
-                        val newIngredientWeightsString = newWeights.joinToString(";;;")
-                        val newIngredientUnitsString = newUnits.joinToString(";;;")
-                        val newIngredientStatusesString = newStatuses.joinToString(";;;")
                         shoppingTimeViewModel.updateShoppingTimeById(
                             shoppingTimeId,
-                            newIngredientNamesString,
-                            newIngredientWeightsString,
-                            newIngredientUnitsString,
-                            newIngredientStatusesString
+                            newNames.joinToString(";;;"),
+                            newWeights.joinToString(";;;"),
+                            newUnits.joinToString(";;;"),
+                            newStatuses.joinToString(";;;")
                         )
 
                         editIndex = null
@@ -290,16 +274,12 @@ fun ConsolidatedIngredientsScreen(
                         newUnits.add(newUnits.size, addUnit)
                         newStatuses.add(newStatuses.size, ShoppingStatus.WAITING.value)
 
-                        val newIngredientNamesString = newNames.joinToString(";;;")
-                        val newIngredientWeightsString = newWeights.joinToString(";;;")
-                        val newIngredientUnitsString = newUnits.joinToString(";;;")
-                        val newIngredientStatusesString = newStatuses.joinToString(";;;")
                         shoppingTimeViewModel.updateShoppingTimeById(
                             shoppingTimeId,
-                            newIngredientNamesString,
-                            newIngredientWeightsString,
-                            newIngredientUnitsString,
-                            newIngredientStatusesString
+                            newNames.joinToString(";;;"),
+                            newWeights.joinToString(";;;"),
+                            newUnits.joinToString(";;;"),
+                            newStatuses.joinToString(";;;")
                         )
 
                         addName = ""
