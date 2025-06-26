@@ -95,7 +95,10 @@ object CommonHelper {
         recipes?.let { recipeList ->
             recipeList.forEach { recipe ->
                 recipe.ingredients.forEach { recipeIngredient ->
-                    val existingIngredient = consolidated.find { it.ingredientName.lowercase(Locale.ROOT) == recipeIngredient.ingredientName.lowercase(Locale.ROOT) }
+                    val existingIngredient = consolidated.find {
+                        it.ingredientName.lowercase(Locale.ROOT) == recipeIngredient.ingredientName.lowercase(Locale.ROOT)
+                        && it.unit.trim().lowercase() == recipeIngredient.unit.trim().lowercase()
+                    }
                     if (existingIngredient != null) {
                         val newWeight = existingIngredient.weight + recipeIngredient.weight
                         consolidated.remove(existingIngredient)
@@ -109,7 +112,10 @@ object CommonHelper {
 
         manualIngredients?.let { manualIngredientList ->
             manualIngredientList.forEach { manualIngredient ->
-                val existingIngredient = consolidated.find { it.ingredientName.lowercase(Locale.ROOT) == manualIngredient.ingredientName.lowercase(Locale.ROOT) }
+                val existingIngredient = consolidated.find {
+                    it.ingredientName.lowercase(Locale.ROOT) == manualIngredient.ingredientName.lowercase(Locale.ROOT)
+                    && it.unit.trim().lowercase() == manualIngredient.unit.trim().lowercase()
+                }
                 if (existingIngredient != null) {
                     val newWeight = existingIngredient.weight + manualIngredient.weight
                     consolidated.remove(existingIngredient)
