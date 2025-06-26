@@ -1,10 +1,13 @@
 package com.watb.chefmate.ui.makeshoppinglist
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -43,6 +46,8 @@ import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.ui.theme.RecipeSelectedItem
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 
 @Composable
@@ -78,13 +83,16 @@ fun ConsolidatedIngredientsScreen(
     }
     
     LaunchedEffect(recipeNames) {
-        recipeNames.forEach { recipeNames ->
-            recipeViewModel.getRecipeByName(recipeNames).collect { recipe ->
-                if (recipe != null) {
-                    historyRecipes.add(recipe)
+        historyRecipes.clear()
+        recipeNames.map { recipeName ->
+            async {
+                recipeViewModel.getRecipeByName(recipeName).collect { recipe ->
+                    if (recipe != null) {
+                        historyRecipes.add(recipe)
+                    }
                 }
             }
-        }
+        }.awaitAll()
     }
 
     Column(
@@ -136,14 +144,18 @@ fun ConsolidatedIngredientsScreen(
 
             Row(
                 modifier = Modifier
-                    .fillMaxWidth(0.95f)
+                    .padding(top = 16.dp)
+                    .fillMaxWidth()
                     .height(112.dp)
                     .align(Alignment.End)
+                    .horizontalScroll(rememberScrollState())
             ) {
                 historyRecipes.forEach { recipe ->
                     RecipeSelectedItem(
                         recipe = recipe,
                         isHistory = true,
+                        modifier = Modifier
+                            .padding(start = 8.dp)
                     )
                 }
             }
