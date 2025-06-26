@@ -180,14 +180,14 @@ fun navGraph(
             arguments = listOf(navArgument("shoppingTimeId") { type = NavType.IntType })
         ) { backStackEntry ->
             val shoppingTimeId = backStackEntry.arguments?.getInt("shoppingTimeId") ?: 0
-            ConsolidatedIngredientsScreen(navController, shoppingTimeId, shoppingTimeViewModel = shoppingTimeViewModel)
+            ConsolidatedIngredientsScreen(navController, shoppingTimeId, recipeViewModel = recipeViewModel, shoppingTimeViewModel = shoppingTimeViewModel)
         }
         composable(
             route = "shoppingHistory/{shoppingTimeId}",
             arguments = listOf(navArgument("shoppingTimeId") { type = NavType.IntType })
         ) { backStackEntry ->
             val shoppingTimeId = backStackEntry.arguments?.getInt("shoppingTimeId") ?: 0
-            ConsolidatedIngredientsScreen(navController, shoppingTimeId, true, shoppingTimeViewModel)
+            ConsolidatedIngredientsScreen(navController, shoppingTimeId, true, recipeViewModel, shoppingTimeViewModel)
         }
         composable("shoppingHistory") {
             ShoppingHistoryScreen(navController, shoppingTimeViewModel)
