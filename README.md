@@ -1,5 +1,9 @@
 # Hệ thống ứng dụng công thức nấu ăn - ChefMate
 
+
+<img width="561" height="561" alt="image" src="https://github.com/user-attachments/assets/27a0601d-2a7a-48ce-97c7-0703575f12e4" />
+
+
 # I. Client - Ứng dụng di động
 
 ## 1. Công nghệ
@@ -79,7 +83,25 @@
 
 - [x]  Kiểm tra kết nối Internet
 
+<img width="815" height="605" alt="image" src="https://github.com/user-attachments/assets/c1ae3c67-bf09-48a8-99f4-a7d21bb5ab3b" />
+
+<img width="544" height="605" alt="image" src="https://github.com/user-attachments/assets/8abdc188-6ba6-4932-a22c-ce37bbc68f68" />
+
+<img width="544" height="605" alt="image" src="https://github.com/user-attachments/assets/f5ef50e3-ec90-4854-93d6-b5f4b3875509" />
+
+<img width="544" height="604" alt="image" src="https://github.com/user-attachments/assets/c12b70b6-a034-44c4-8835-1deb894d968a" />
+
+<img width="544" height="604" alt="image" src="https://github.com/user-attachments/assets/1db4f2fa-a225-42ff-9c52-4360684df8e9" />
+
+<img width="1084" height="604" alt="image" src="https://github.com/user-attachments/assets/a61a6468-fbaf-4c5f-9844-13cde700814a" />
+
+<img width="814" height="605" alt="image" src="https://github.com/user-attachments/assets/3368697d-3a24-4d07-ba5c-8f6feae992bc" />
+
+<img width="281" height="619" alt="image" src="https://github.com/user-attachments/assets/a924d1d3-f858-4b70-9438-2cef7ce7574c" />
+
 ## 4. Cơ sở dữ liệu
+
+<img width="852" height="540" alt="image" src="https://github.com/user-attachments/assets/3172ba07-46dc-4192-afa2-fb8d799a8ce2" />
 
 - Bảng Recipes
 
