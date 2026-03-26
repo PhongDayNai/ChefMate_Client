@@ -24,10 +24,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -57,8 +62,12 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -327,29 +336,13 @@ fun BepesChatScreen(
                     ChatBubble(message)
                 }
 
-                item { Spacer(modifier = Modifier.height(10.dp)) }
-            }
-
-            if (chatState.sending) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                ) {
-                    CircularProgressIndicator(
-                        color = Color(0xFFF97316),
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp
-                    )
-                    Text(
-                        text = "Bepes đang trả lời...",
-                        color = Color(0xFF6B7280),
-                        fontSize = 13.sp,
-                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
+                if (chatState.sending) {
+                    item(key = "typing_indicator") {
+                        TypingIndicatorBubble()
+                    }
                 }
+
+                item { Spacer(modifier = Modifier.height(10.dp)) }
             }
 
             Row(
@@ -650,6 +643,92 @@ fun BepesChatScreen(
             dismissButton = {}
         )
     }
+}
+
+@Composable
+private fun TypingIndicatorBubble() {
+    val infinite = rememberInfiniteTransition(label = "bepes_typing")
+    val dot1 = infinite.animateFloat(
+        initialValue = 0.25f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 900
+                1f at 150
+                0.25f at 450
+                0.25f at 900
+            }
+        ),
+        label = "dot1"
+    )
+    val dot2 = infinite.animateFloat(
+        initialValue = 0.25f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 900
+                0.25f at 0
+                1f at 300
+                0.25f at 600
+                0.25f at 900
+            }
+        ),
+        label = "dot2"
+    )
+    val dot3 = infinite.animateFloat(
+        initialValue = 0.25f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 900
+                0.25f at 0
+                0.25f at 300
+                1f at 450
+                0.25f at 900
+            }
+        ),
+        label = "dot3"
+    )
+
+    Row(
+        horizontalArrangement = Arrangement.Start,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        Card(
+            shape = RoundedCornerShape(14.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEDD5)),
+            modifier = Modifier.fillMaxWidth(0.56f)
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp)) {
+                Text(
+                    text = "Bepes",
+                    color = Color(0xFFF97316),
+                    fontSize = 12.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 4.dp)
+                ) {
+                    TypingDot(alpha = dot1.value)
+                    TypingDot(alpha = dot2.value)
+                    TypingDot(alpha = dot3.value)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TypingDot(alpha: Float) {
+    Box(
+        modifier = Modifier
+            .size(7.dp)
+            .background(Color(0xFFF97316).copy(alpha = alpha.coerceIn(0f, 1f)), CircleShape)
+    )
 }
 
 @Composable
@@ -1344,25 +1423,87 @@ private fun ChatBubble(message: ChatUiMessage) {
                         fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
                     )
                 }
-                Text(
-                    text = message.text,
+                MarkdownText(
+                    markdown = message.text,
                     color = textColor,
                     fontSize = 14.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                     modifier = Modifier.padding(top = if (isUser) 0.dp else 3.dp)
                 )
-                if (message.isPending) {
-                    Text(
-                        text = "Đang gửi...",
-                        color = if (isUser) Color.White.copy(alpha = 0.85f) else Color(0xFF6B7280),
-                        fontSize = 11.sp,
-                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
             }
         }
     }
+}
+
+@Composable
+private fun MarkdownText(
+    markdown: String,
+    color: Color,
+    fontSize: androidx.compose.ui.unit.TextUnit,
+    fontFamily: FontFamily,
+    modifier: Modifier = Modifier
+) {
+    val annotated = remember(markdown) { markdownToAnnotatedString(markdown) }
+    Text(
+        text = annotated,
+        color = color,
+        fontSize = fontSize,
+        fontFamily = fontFamily,
+        modifier = modifier
+    )
+}
+
+private fun markdownToAnnotatedString(raw: String): AnnotatedString {
+    val lines = raw.replace("\r\n", "\n").split('\n')
+    return buildAnnotatedString {
+        lines.forEachIndexed { index, line ->
+            appendMarkdownLine(line)
+            if (index < lines.lastIndex) append('\n')
+        }
+    }
+}
+
+private fun AnnotatedString.Builder.appendMarkdownLine(rawLine: String) {
+    var line = rawLine.trimEnd()
+    line = line.replace(Regex("^\\s{0,3}#{1,6}\\s+"), "")
+    line = line.replace(Regex("^\\s*[-*]\\s+"), "• ")
+    line = line.replace(Regex("^\\s*>\\s?"), "")
+
+    val boldRegex = Regex("(\\*\\*|__)(.+?)(\\1)")
+    var cursor = 0
+    boldRegex.findAll(line).forEach { match ->
+        val start = match.range.first
+        val end = match.range.last + 1
+
+        if (start > cursor) {
+            append(stripLooseMarkdown(line.substring(cursor, start)))
+        }
+
+        val content = match.groupValues.getOrNull(2).orEmpty()
+        if (content.isNotBlank()) {
+            val styleStart = length
+            append(content)
+            addStyle(
+                style = SpanStyle(fontWeight = FontWeight.SemiBold),
+                start = styleStart,
+                end = length
+            )
+        }
+        cursor = end
+    }
+
+    if (cursor < line.length) {
+        append(stripLooseMarkdown(line.substring(cursor)))
+    }
+}
+
+private fun stripLooseMarkdown(input: String): String {
+    return input
+        .replace(Regex("\\*(\\S(?:.*?\\S)?)\\*"), "$1")
+        .replace(Regex("_(\\S(?:.*?\\S)?)_"), "$1")
+        .replace("**", "")
+        .replace("__", "")
+        .replace(Regex("(^|\\s)#(?=\\S)"), "$1")
 }
 
 @Composable
