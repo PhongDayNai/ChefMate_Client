@@ -5,10 +5,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -33,15 +34,20 @@ import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.account.EditProfileScreen
 import com.watb.chefmate.ui.account.SignInScreen
 import com.watb.chefmate.ui.account.SignUpScreen
+import com.watb.chefmate.ui.appflow.BepesChatScreen
+import com.watb.chefmate.ui.appflow.DietNotesScreen
+import com.watb.chefmate.ui.appflow.PantryScreen
 import com.watb.chefmate.ui.makeshoppinglist.ConsolidatedIngredientsScreen
 import com.watb.chefmate.ui.makeshoppinglist.MakeShoppingListScreen
 import com.watb.chefmate.ui.makeshoppinglist.ShoppingHistoryScreen
 import com.watb.chefmate.ui.network.NetworkStatusWrapper
 import com.watb.chefmate.ui.recipe.AddOrEditRecipeScreen
 import com.watb.chefmate.ui.recipe.PostedRecipeList
+import com.watb.chefmate.ui.recipe.RecipeListScreen
 import com.watb.chefmate.ui.recipe.RecipeViewScreen
 import com.watb.chefmate.ui.recipe.SearchResultScreen
 import com.watb.chefmate.ui.theme.ChefMateTheme
+import com.watb.chefmate.viewmodel.AppFlowViewModel
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
 import com.watb.chefmate.viewmodel.UserViewModel
@@ -50,10 +56,26 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        hideSystemNavigation()
         setContent {
             ChefMateTheme {
                 MainScreen(this)
             }
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            hideSystemNavigation()
+        }
+    }
+
+    private fun hideSystemNavigation() {
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            hide(WindowInsetsCompat.Type.navigationBars())
         }
     }
 }
@@ -66,18 +88,28 @@ fun MainScreen(activity: Activity) {
     val shoppingTimeRepository = ShoppingTimeRepository(appDatabase.shoppingTimeDao())
     val navController = rememberNavController()
     val userViewModel: UserViewModel = viewModel()
+    val appFlowViewModel: AppFlowViewModel = viewModel()
     userViewModel.isLoggedIn(context)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
-            .systemBarsPadding()
     ) {
         NetworkStatusWrapper(
             activity = activity,
         ) {
-            NavHost(navController = navController, graph = navGraph(activity, navController, userViewModel, recipeRepository, shoppingTimeRepository))
+            NavHost(
+                navController = navController,
+                graph = navGraph(
+                    activity = activity,
+                    navController = navController,
+                    userViewModel = userViewModel,
+                    appFlowViewModel = appFlowViewModel,
+                    recipeRepository = recipeRepository,
+                    shoppingTimeRepository = shoppingTimeRepository
+                )
+            )
         }
     }
 }
@@ -86,6 +118,7 @@ fun navGraph(
     activity: Activity,
     navController: NavController,
     userViewModel: UserViewModel,
+    appFlowViewModel: AppFlowViewModel,
     recipeRepository: RecipeRepository,
     shoppingTimeRepository: ShoppingTimeRepository
 ): NavGraph {
@@ -133,8 +166,44 @@ fun navGraph(
                     }
                 },
                 userViewModel = userViewModel,
+                appFlowViewModel = appFlowViewModel,
                 recipeViewModel = recipeViewModel,
                 shoppingTimeViewModel = shoppingTimeViewModel
+            )
+        }
+        composable("dietNotes") {
+            DietNotesScreen(
+                navController = navController,
+                userViewModel = userViewModel,
+                appFlowViewModel = appFlowViewModel
+            )
+        }
+        composable("pantry") {
+            PantryScreen(
+                navController = navController,
+                userViewModel = userViewModel,
+                appFlowViewModel = appFlowViewModel
+            )
+        }
+        composable(
+            route = "bepesChat?recipeId={recipeId}",
+            arguments = listOf(
+                navArgument("recipeId") {
+                    type = NavType.IntType
+                    defaultValue = -1
+                }
+            )
+        ) { backStackEntry ->
+            val recipeId = backStackEntry.arguments?.getInt("recipeId") ?: -1
+            BepesChatScreen(
+                navController = navController,
+                userViewModel = userViewModel,
+                appFlowViewModel = appFlowViewModel,
+                recipeId = recipeId,
+                onOpenRecipe = { selectedRecipe ->
+                    recipe = selectedRecipe
+                    navController.navigate("recipeView")
+                }
             )
         }
         composable("recipeView") {
@@ -142,6 +211,16 @@ fun navGraph(
         }
         composable("recipeViewHistory") {
             RecipeViewScreen(navController, recipe, true, userViewModel, recipeViewModel)
+        }
+        composable("recipeStorage") {
+            RecipeListScreen(
+                navController = navController,
+                onRecipeClick = { selectedRecipe ->
+                    recipe = selectedRecipe
+                    navController.navigate("recipeViewHistory")
+                },
+                viewModel = recipeViewModel
+            )
         }
         composable(
             route = "add_edit_recipe/{recipeId}",

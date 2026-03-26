@@ -170,9 +170,10 @@ fun CustomTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None,
+    focusRequester: FocusRequester? = null,
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier
 ) {
-    val focusRequester = remember { FocusRequester() }
+    val resolvedFocusRequester = focusRequester ?: remember { FocusRequester() }
     val isFocused = remember { mutableStateOf(false) }
 
     Row(
@@ -228,7 +229,7 @@ fun CustomTextField(
                 visualTransformation = visualTransformation,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .focusRequester(focusRequester)
+                    .focusRequester(resolvedFocusRequester)
                     .onFocusChanged { focusState ->
                         isFocused.value = focusState.isFocused
                     }

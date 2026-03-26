@@ -19,3 +19,21 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Keep annotations/signatures for Gson generic parsing.
+-keepattributes Signature,*Annotation*,InnerClasses,EnclosingMethod
+
+# Gson uses reflection; obfuscating field names in API models can break mapping.
+-keep class com.watb.chefmate.data.** { *; }
+
+# Keep entities that may be read by reflection/serialization.
+-keep class com.watb.chefmate.database.entities.** { *; }
+
+# Keep generic type tokens used by Gson.
+-keep class * extends com.google.gson.reflect.TypeToken { *; }
+
+# Keep enum helper methods.
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}

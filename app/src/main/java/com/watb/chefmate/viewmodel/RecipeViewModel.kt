@@ -26,6 +26,12 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
 
     private val _topTrending = MutableStateFlow<List<Recipe>>(emptyList())
     val topTrending: StateFlow<List<Recipe>> = _topTrending
+    private val _topTrendingPage = MutableStateFlow(0)
+    val topTrendingPage: StateFlow<Int> = _topTrendingPage
+    private val _topTrendingHasMore = MutableStateFlow(true)
+    val topTrendingHasMore: StateFlow<Boolean> = _topTrendingHasMore
+    private val _topTrendingLoading = MutableStateFlow(false)
+    val topTrendingLoading: StateFlow<Boolean> = _topTrendingLoading
 
     private val _searchResult = MutableStateFlow<List<Recipe>>(emptyList())
     val searchResult: StateFlow<List<Recipe>> = _searchResult
@@ -39,11 +45,47 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         }
 
     suspend fun getTopTrending(userId: Int? = null) {
-        val response = ApiClient.getTopTrending(userId)
-        response?.let {
-            response.data?.let {
-                _topTrending.value = it
+        if (_topTrendingLoading.value) return
+        _topTrendingLoading.value = true
+        val response = ApiClient.getTopTrending(
+            userId = userId,
+            page = 1,
+            limit = TOP_TRENDING_PAGE_LIMIT,
+            period = "all"
+        )
+        if (response?.success == true) {
+            _topTrending.value = response.data ?: emptyList()
+            _topTrendingPage.value = response.pagination?.page ?: 1
+            _topTrendingHasMore.value = response.pagination?.hasMore ?: false
+        }
+        _topTrendingLoading.value = false
+    }
+
+    fun loadMoreTopTrending(userId: Int? = null) {
+        if (_topTrendingLoading.value || !_topTrendingHasMore.value) return
+        if (_topTrendingPage.value <= 0) return
+
+        viewModelScope.launch {
+            _topTrendingLoading.value = true
+            val nextPage = _topTrendingPage.value + 1
+            val response = ApiClient.getTopTrending(
+                userId = userId,
+                page = nextPage,
+                limit = TOP_TRENDING_PAGE_LIMIT,
+                period = "all"
+            )
+
+            if (response?.success == true) {
+                val incoming = response.data ?: emptyList()
+                if (incoming.isNotEmpty()) {
+                    _topTrending.value = (_topTrending.value + incoming)
+                        .distinctBy { recipe -> recipe.recipeId ?: "${recipe.recipeName}_${recipe.createdAt}" }
+                }
+                _topTrendingPage.value = response.pagination?.page ?: nextPage
+                _topTrendingHasMore.value = response.pagination?.hasMore ?: incoming.isNotEmpty()
             }
+
+            _topTrendingLoading.value = false
         }
     }
 
@@ -255,5 +297,6 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
 
     companion object {
         private const val TAG = "RecipeViewModel"
+        private const val TOP_TRENDING_PAGE_LIMIT = 20
     }
 }

@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,7 +13,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -27,13 +32,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
@@ -56,15 +65,20 @@ fun SignInScreen(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
 
     var isLoading by remember { mutableStateOf(false) }
     var identifier by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val identifierRequester = remember { FocusRequester() }
+    val passwordRequester = remember { FocusRequester() }
 
     ConstraintLayout(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFFFFFFFF))
+            .verticalScroll(rememberScrollState())
+            .imePadding()
     ) {
         val (headRef, contentRef, btnRef) = createRefs()
         Card(
@@ -102,7 +116,7 @@ fun SignInScreen(
                         .padding(bottom = 15.dp)
                 )
                 Text(
-                    text = "Chào mừng trở lại ChefMate",
+                    text = "Chào mừng trở lại BepTroLy - Bepes",
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                     color = Color(0xFFFFFFFF),
                     fontSize = 18.sp,
@@ -127,7 +141,15 @@ fun SignInScreen(
                 label = "Số điện thoại hoặc email",
                 onValueChange = { identifier = it },
                 valueTextField = identifier,
-                placeholderText = "Nhập số điện thoại hoặc email"
+                placeholderText = "Nhập số điện thoại hoặc email",
+                focusRequester = identifierRequester,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { passwordRequester.requestFocus() }
+                )
             )
 
             InputField(
@@ -148,6 +170,14 @@ fun SignInScreen(
                     }
                 },
                 visualTransformation = if(isShowPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                focusRequester = passwordRequester,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                ),
                 modifier = Modifier
                     .padding(top = 12.dp)
             )

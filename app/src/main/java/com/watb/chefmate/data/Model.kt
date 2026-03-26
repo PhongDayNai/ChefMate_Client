@@ -2,6 +2,7 @@ package com.watb.chefmate.data
 
 import com.watb.chefmate.database.entities.IngredientEntity
 import com.watb.chefmate.database.entities.TagEntity
+import com.google.gson.annotations.JsonAdapter
 
 data class Recipe(
     val recipeId: Int? = null,
@@ -39,6 +40,7 @@ data class TagData(
 data class IngredientItem(
     val ingredientId: Int? = null,
     val ingredientName: String,
+    @field:JsonAdapter(SafeIntAdapter::class)
     val weight: Int,
     val unit: String,
 )
@@ -125,6 +127,30 @@ data class UserIDRequest(
 data class RecipeListResponse(
     val success: Boolean,
     val data: List<Recipe>? = null,
+    val message: String? = null,
+    val pagination: PaginationMeta? = null,
+    val period: String? = null,
+    val apiVersion: String? = null
+)
+
+data class PaginationMeta(
+    val page: Int = 1,
+    val limit: Int = 10,
+    val total: Int = 0,
+    val totalPages: Int = 0,
+    val hasMore: Boolean = false
+)
+
+data class TrendingV2Data(
+    val items: List<Recipe> = emptyList(),
+    val pagination: PaginationMeta? = null,
+    val period: String? = null,
+    val apiVersion: String? = null
+)
+
+data class TrendingV2Response(
+    val success: Boolean,
+    val data: TrendingV2Data? = null,
     val message: String? = null
 )
 
