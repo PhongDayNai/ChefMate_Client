@@ -27,6 +27,7 @@ import com.watb.chefmate.data.SearchRecipeByTagRequest
 import com.watb.chefmate.data.SearchRecipeRequest
 import com.watb.chefmate.data.UpdateUserInformationRequest
 import com.watb.chefmate.data.UserIDRequest
+import com.watb.chefmate.data.TrendingV2Response
 import com.watb.chefmate.helper.CommonHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -136,14 +137,19 @@ object ApiClient {
     }
 
     @SuppressLint("MemberExtensionConflict")
-    suspend fun getTopTrending(userId: Int? = null): RecipeListResponse? {
-        val userIdRequest = UserIDRequest(userId)
-        val json = gson.toJson(userIdRequest)
+    suspend fun getTopTrending(
+        userId: Int? = null,
+        page: Int = 1,
+        limit: Int = 20,
+        period: String = "all"
+    ): RecipeListResponse? {
+        val resolvedUserId = userId ?: 0
+        val requestUrl =
+            "${ApiConstant.TOP_TRENDING_V2_URL}?userId=$resolvedUserId&page=$page&limit=$limit&period=$period"
 
-        val requestBody = json.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
         val request = Request.Builder()
-            .url(ApiConstant.TOP_TRENDING_URL)
-            .post(requestBody)
+            .url(requestUrl)
+            .get()
             .build()
 
         return withContext(Dispatchers.IO) {
@@ -153,7 +159,19 @@ object ApiClient {
                         val responseBody = response.body?.string()
                         Log.d(TAG, "getTopTrending Response Body: $responseBody")
                         responseBody?.let {
-                            gson.fromJson(it, RecipeListResponse::class.java)
+                            val v2 = runCatching { gson.fromJson(it, TrendingV2Response::class.java) }.getOrNull()
+                            if (v2 != null) {
+                                RecipeListResponse(
+                                    success = v2.success,
+                                    data = v2.data?.items ?: emptyList(),
+                                    message = v2.message,
+                                    pagination = v2.data?.pagination,
+                                    period = v2.data?.period,
+                                    apiVersion = v2.data?.apiVersion
+                                )
+                            } else {
+                                gson.fromJson(it, RecipeListResponse::class.java)
+                            }
                         }
                     } else {
                         Log.e(TAG, "Error: ${response.code}")

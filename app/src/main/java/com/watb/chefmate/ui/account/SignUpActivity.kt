@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -31,9 +34,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -41,6 +46,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
@@ -65,6 +72,7 @@ fun SignUpScreen(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
 
     var isLoading by remember { mutableStateOf(false) }
     val fullName = remember { mutableStateOf("") }
@@ -72,11 +80,17 @@ fun SignUpScreen(
     val email = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
     val confirmPassword = remember { mutableStateOf("") }
+    val fullNameRequester = remember { FocusRequester() }
+    val phoneRequester = remember { FocusRequester() }
+    val emailRequester = remember { FocusRequester() }
+    val passwordRequester = remember { FocusRequester() }
+    val confirmPasswordRequester = remember { FocusRequester() }
 
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxSize()
+            .imePadding()
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -116,7 +130,7 @@ fun SignUpScreen(
                             .padding(bottom = 15.dp)
                     )
                     Text(
-                        text = "Chào mừng đến với ChefMate",
+                        text = "Chào mừng đến với BepTroLy - Bepes",
                         fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                         color = Color(0xFFFFFFFF),
                         fontSize = 18.sp,
@@ -143,6 +157,13 @@ fun SignUpScreen(
                         onValueChange = { fullName.value = it },
                         valueTextField = fullName.value,
                         placeholderText = "Vui lòng nhập họ và tên",
+                        focusRequester = fullNameRequester,
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = { phoneRequester.requestFocus() }
+                        ),
                         modifier = Modifier
                             .padding(top = 12.dp)
                     )
@@ -151,6 +172,14 @@ fun SignUpScreen(
                         onValueChange = { phoneNumber.value = it },
                         valueTextField = phoneNumber.value,
                         placeholderText = "Vui lòng nhập số điện thoại",
+                        focusRequester = phoneRequester,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Phone,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = { emailRequester.requestFocus() }
+                        ),
                         modifier = Modifier
                             .padding(top = 12.dp)
                     )
@@ -159,6 +188,14 @@ fun SignUpScreen(
                         onValueChange = { email.value = it },
                         valueTextField = email.value,
                         placeholderText = "Vui lòng nhập email",
+                        focusRequester = emailRequester,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = { passwordRequester.requestFocus() }
+                        ),
                         modifier = Modifier
                             .padding(top = 12.dp)
                     )
@@ -169,16 +206,24 @@ fun SignUpScreen(
                         placeholderText = "Vui lòng nhập mật khẩu",
                         trailingIcon = {
                             IconButton(
-                                onClick = {isShowConfirmPassword = !isShowConfirmPassword}
+                                onClick = { isShowPassword = !isShowPassword }
                             ) {
                                 Icon(
-                                    painter = if (isShowConfirmPassword) painterResource(R.drawable.ic_open_eye) else painterResource(R.drawable.ic_close_eye),
+                                    painter = if (isShowPassword) painterResource(R.drawable.ic_open_eye) else painterResource(R.drawable.ic_close_eye),
                                     tint = Color(0xFF777779),
                                     contentDescription = ""
                                 )
                             }
                         },
-                        visualTransformation = if (isShowConfirmPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        visualTransformation = if (isShowPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        focusRequester = passwordRequester,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = { confirmPasswordRequester.requestFocus() }
+                        ),
                         modifier = Modifier
                             .padding(top = 12.dp)
                     )
@@ -189,16 +234,24 @@ fun SignUpScreen(
                         placeholderText = "Vui lòng xác nhận mật khẩu",
                         trailingIcon = {
                             IconButton(
-                                onClick = {isShowPassword = !isShowPassword}
+                                onClick = { isShowConfirmPassword = !isShowConfirmPassword }
                             ) {
                                 Icon(
-                                    if (isShowPassword) painterResource(R.drawable.ic_open_eye) else painterResource(R.drawable.ic_close_eye),
+                                    if (isShowConfirmPassword) painterResource(R.drawable.ic_open_eye) else painterResource(R.drawable.ic_close_eye),
                                     tint = Color(0xFF777779),
                                     contentDescription = ""
                                 )
                             }
                         },
-                        visualTransformation = if(isShowPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        visualTransformation = if (isShowConfirmPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        focusRequester = confirmPasswordRequester,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = { focusManager.clearFocus() }
+                        ),
                         modifier = Modifier
                             .padding(top = 12.dp, bottom = 24.dp)
                     )
@@ -212,7 +265,7 @@ fun SignUpScreen(
                     withStyle(style = SpanStyle(color = Color(0xFFB4B4B4), fontWeight = FontWeight.Bold)) {
                         append("Chính sách bảo mật")
                     }
-                    append(" của ChefMate.")
+                    append(" của BepTroLy - Bepes.")
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -331,6 +384,9 @@ fun InputField(
     onValueChange: (String) -> Unit,
     trailingIcon: @Composable (() -> Unit)? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    focusRequester: FocusRequester? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -349,6 +405,9 @@ fun InputField(
             placeholder = placeholderText,
             trailingIcon = trailingIcon,
             visualTransformation = visualTransformation,
+            keyboardOptions = keyboardOptions,
+            keyboardActions = keyboardActions,
+            focusRequester = focusRequester,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp)

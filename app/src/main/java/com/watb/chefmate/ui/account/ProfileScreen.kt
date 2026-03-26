@@ -424,6 +424,7 @@ fun Settings(
     onRating: () -> Unit
 ) {
     val icons = listOf(
+        R.drawable.ic_recipe,
         R.drawable.ic_shopping_history,
         R.drawable.ic_privacy_policy,
         R.drawable.ic_terms_of_use,
@@ -431,6 +432,7 @@ fun Settings(
         R.drawable.ic_rate,
     )
     val labels = listOf(
+        "Kho công thức",
         "Lịch sử mua sắm",
         "Chính sách bảo mật",
         "Điều khoản sử dụng",
@@ -463,8 +465,9 @@ fun Settings(
                     .fillMaxWidth(0.9f)
                     .clickable {
                         when (index) {
-                            0 -> navController.navigate("shoppingHistory")
-                            4 -> onRating()
+                            0 -> navController.navigate("recipeStorage")
+                            1 -> navController.navigate("shoppingHistory")
+                            5 -> onRating()
                         }
                     }
             ) {

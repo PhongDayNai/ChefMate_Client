@@ -1,7 +1,8 @@
 package com.watb.chefmate.api
 
 object ApiConstant {
-    var MAIN_URL = ""
+    const val DEFAULT_MAIN_URL = "https://api.phongdaynai.id.vn"
+    var MAIN_URL = DEFAULT_MAIN_URL
 
     // account
     val LOGIN_URL: String
@@ -18,6 +19,8 @@ object ApiConstant {
     // recipe
     val TOP_TRENDING_URL: String
         get() = "$MAIN_URL/api/recipes/top-trending"
+    val TOP_TRENDING_V2_URL: String
+        get() = "$MAIN_URL/api/recipes/trending-v2"
     val SEARCH_URL: String
         get() = "$MAIN_URL/api/recipes/search"
     val SEARCH_BY_TAG_URL: String
@@ -40,6 +43,6 @@ object ApiConstant {
         get() = "$MAIN_URL/api/interactions/increase-view-count"
 
     fun setMainUrl(url: String) {
-        MAIN_URL = "https://${url.trim()}.loca.lt"
+        MAIN_URL = url.trim().trimEnd('/')
     }
 }

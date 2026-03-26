@@ -55,8 +55,9 @@ import com.watb.chefmate.R
 import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.ui.account.ProfileScreen
+import com.watb.chefmate.ui.appflow.PantryScreen
 import com.watb.chefmate.ui.home.HomeScreen
-import com.watb.chefmate.ui.recipe.RecipeListScreen
+import com.watb.chefmate.viewmodel.AppFlowViewModel
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
 import com.watb.chefmate.viewmodel.UserViewModel
@@ -70,6 +71,7 @@ fun MainAct(
     navController: NavController,
     onRecipeClick: (Recipe, Boolean) -> Unit,
     userViewModel: UserViewModel,
+    appFlowViewModel: AppFlowViewModel,
     recipeViewModel: RecipeViewModel,
     shoppingTimeViewModel: ShoppingTimeViewModel
 ) {
@@ -122,11 +124,11 @@ fun MainAct(
                     }
                 )
             }
-        ) { _ ->
+        ) { innerPadding ->
             HorizontalPager(
                 state = pagerState,
                 userScrollEnabled = true,
-                modifier = Modifier
+                modifier = Modifier.padding(innerPadding)
             ) { page ->
                 Box(
                     modifier = Modifier
@@ -140,13 +142,12 @@ fun MainAct(
                             navController = navController,
                             userViewModel = userViewModel,
                             recipeViewModel = recipeViewModel,
+                            appFlowViewModel = appFlowViewModel
                         )
-                        1 -> RecipeListScreen(
+                        1 -> PantryScreen(
                             navController = navController,
-                            onRecipeClick = { selectedRecipe ->
-                                onRecipeClick(selectedRecipe, true)
-                            },
-                            viewModel = recipeViewModel
+                            userViewModel = userViewModel,
+                            appFlowViewModel = appFlowViewModel
                         )
                         2 -> ProfileScreen(navController, userViewModel)
                     }
@@ -172,8 +173,8 @@ fun BottomNavigationBar(
         label = "Options background"
     )
 
-    val items = listOf("Trang chủ", "Kho công thức", "Tài khoản")
-    val icons = listOf(R.drawable.ic_home, R.drawable.ic_marker, R.drawable.ic_profile)
+    val items = listOf("Trang chủ", "Tủ lạnh", "Tài khoản")
+    val icons = listOf(R.drawable.ic_home, R.drawable.ic_shopping, R.drawable.ic_profile)
 
     ConstraintLayout(
         modifier
@@ -194,7 +195,8 @@ fun BottomNavigationBar(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp)
+                    .height(70.dp)
+                    .padding(top = 4.dp, bottom = 8.dp)
             ) {
                 items.forEachIndexed { index, item ->
                     Column(
