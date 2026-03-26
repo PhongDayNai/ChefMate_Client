@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.util.UUID
 
 private const val DEFAULT_CHAT_LIMIT = 30
@@ -568,6 +569,7 @@ class AppFlowViewModel : ViewModel() {
             chatSessionId = currentSessionId,
             role = ChatRole.USER,
             text = trimmed,
+            createdAt = nowIsoString(),
             isPending = true
         )
 
@@ -616,13 +618,27 @@ class AppFlowViewModel : ViewModel() {
             }
 
             val session = parsePrimarySession(result.data)
-            val assistantMessages = parseMessages(result.data)
+            val responseMessages = parseMessages(result.data)
+            val assistantMessages = responseMessages
                 .filter { it.role == ChatRole.ASSISTANT || it.role == ChatRole.SYSTEM }
+            val echoedUserMessage = responseMessages
+                .filter {
+                    it.role == ChatRole.USER &&
+                        it.messageId != null &&
+                        it.text.trim() == trimmed
+                }
+                .maxByOrNull { it.messageId ?: Int.MIN_VALUE }
             val hasPaging = hasPagingInfo(result.data)
 
             _chatState.update {
-                val mergedTimeline = if (assistantMessages.isNotEmpty()) {
-                    deduplicateAndSort(it.timeline + assistantMessages)
+                val baseTimeline = if (echoedUserMessage != null) {
+                    it.timeline.filterNot { message -> message.localId == optimisticLocalId }
+                } else {
+                    it.timeline
+                }
+
+                val mergedTimeline = if (assistantMessages.isNotEmpty() || echoedUserMessage != null) {
+                    deduplicateAndSort(baseTimeline + listOfNotNull(echoedUserMessage) + assistantMessages)
                 } else {
                     val fallbackText = if (result.success) {
                         "Bepes đã nhận tin nhắn của bạn."
@@ -630,11 +646,12 @@ class AppFlowViewModel : ViewModel() {
                         result.message ?: "Bepes hiện chưa thể phản hồi, vui lòng thử lại."
                     }
                     deduplicateAndSort(
-                        it.timeline + ChatUiMessage(
+                        baseTimeline + ChatUiMessage(
                             localId = UUID.randomUUID().toString(),
                             chatSessionId = session?.chatSessionId ?: it.currentSessionId,
                             role = ChatRole.ASSISTANT,
                             text = fallbackText,
+                            createdAt = nowIsoString(),
                             isPending = false
                         )
                     )
@@ -688,6 +705,7 @@ class AppFlowViewModel : ViewModel() {
                             chatSessionId = resolvedSessionId,
                             role = ChatRole.USER,
                             text = carriedMessage,
+                            createdAt = nowIsoString(),
                             isPending = false
                         )
                     )
@@ -955,7 +973,8 @@ class AppFlowViewModel : ViewModel() {
                             localId = UUID.randomUUID().toString(),
                             chatSessionId = parsePrimarySession(data)?.chatSessionId,
                             role = ChatRole.ASSISTANT,
-                            text = obj.get("assistantMessage").asString
+                            text = obj.get("assistantMessage").asString,
+                            createdAt = nowIsoString()
                         )
                     )
                     obj.get("carriedPendingUserMessage")?.isJsonPrimitive == true -> listOf(
@@ -963,7 +982,8 @@ class AppFlowViewModel : ViewModel() {
                             localId = UUID.randomUUID().toString(),
                             chatSessionId = parsePrimarySession(data)?.chatSessionId,
                             role = ChatRole.USER,
-                            text = obj.get("carriedPendingUserMessage").asString
+                            text = obj.get("carriedPendingUserMessage").asString,
+                            createdAt = nowIsoString()
                         )
                     )
                     hasMessageShape(obj) -> parseChatMessageList(obj)
@@ -1131,10 +1151,17 @@ class AppFlowViewModel : ViewModel() {
 
     private fun sortMessages(messages: List<ChatUiMessage>): List<ChatUiMessage> {
         return messages.sortedWith(
-            compareBy<ChatUiMessage> { it.messageId ?: Int.MAX_VALUE }
-                .thenBy { it.createdAt ?: "" }
+            compareBy<ChatUiMessage> { normalizeCreatedAtForSort(it.createdAt) }
+                .thenBy { it.messageId ?: Int.MAX_VALUE }
                 .thenBy { it.localId }
         )
+    }
+
+    private fun nowIsoString(): String = Instant.now().toString()
+
+    private fun normalizeCreatedAtForSort(createdAt: String?): String {
+        if (createdAt.isNullOrBlank()) return "~~~~"
+        return createdAt.trim().replace(' ', 'T')
     }
 
     private fun JsonObject.stringOrNull(key: String): String? {
