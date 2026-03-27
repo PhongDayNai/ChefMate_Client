@@ -29,10 +29,13 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,7 +49,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -72,6 +74,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -88,6 +91,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.watb.chefmate.R
 import com.watb.chefmate.api.ApiClient
 import com.watb.chefmate.api.ApiConstant
+import com.watb.chefmate.ui.theme.chefMateTextFieldColors
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.data.CommentItem
 import com.watb.chefmate.data.CookingStep
@@ -100,6 +104,7 @@ import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import com.watb.chefmate.viewmodel.UserViewModel
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import java.util.Date
@@ -649,9 +654,11 @@ Tác giả: ${recipe.userName}
         LazyColumn(
             horizontalAlignment = Alignment.CenterHorizontally,
             state = lazyListState,
+            contentPadding = PaddingValues(top = 8.dp, bottom = 20.dp),
             modifier = Modifier
-                .padding(top = 8.dp)
+                .weight(1f)
                 .fillMaxWidth()
+                .imePadding()
         ) {
             item { Spacer(modifier = Modifier.height((1.dp))) }
             item { IngredientsView(recipe) }
@@ -661,10 +668,19 @@ Tác giả: ${recipe.userName}
                     CommentsView(
                         comments = comments.asReversed(),
                         screenWidth = screenWidth,
-                        onComment = { commentContent ->
+                        isLoggedIn = isLoggedIn,
+                        onInputFocus = {
+                            coroutineScope.launch {
+                                lazyListState.animateScrollToItem(index = 3)
+                            }
+                        },
+                        onComment = { content ->
                             recipe.recipeId?.let {
                                 coroutineScope.launch {
-                                    val response = ApiClient.commentRecipe(recipeId = recipe.recipeId, content = commentContent.trim())
+                                    val response = ApiClient.commentRecipe(
+                                        recipeId = recipe.recipeId,
+                                        content = content.trim()
+                                    )
                                     if (response != null) {
                                         if (response.success) {
                                             if (response.data != null) {
@@ -687,7 +703,7 @@ Tác giả: ${recipe.userName}
                                     }
                                 }
                             }
-                        },
+                        }
                     )
                 }
             }
@@ -810,10 +826,14 @@ fun CookingStepItem(cookingStep: CookingStep) {
 fun CommentsView(
     comments: List<CommentItem>,
     screenWidth: Int,
+    isLoggedIn: Boolean,
+    onInputFocus: () -> Unit = {},
     onComment: (String) -> Unit
 ) {
     var isExpanded by remember { mutableStateOf(true) }
     var commentContent by remember { mutableStateOf("") }
+    val coroutineScope = rememberCoroutineScope()
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
 
     val animateIconExpand by animateFloatAsState(
         targetValue = if (isExpanded) 0f else -90f,
@@ -823,7 +843,7 @@ fun CommentsView(
     val animateSendButton by animateFloatAsState(
         targetValue = if (commentContent != "") 1f else 0f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow),
-        label = "Send Button"
+        label = "Comment Send Button"
     )
 
     Column(
@@ -861,67 +881,95 @@ fun CommentsView(
                 )
             }
         }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier
-                .padding(top = 4.dp, bottom = 8.dp)
-                .fillMaxWidth()
-                .padding(horizontal = screenWidth.dp * 0.05f, vertical = 12.dp)
-        ) {
-            Image(
-                painter = painterResource(R.drawable.img_common_avatar),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(42.dp)
-                    .clip(CircleShape)
-                    .align(Alignment.CenterVertically)
-            )
+        if (isLoggedIn) {
             Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
-                    .fillMaxWidth(0.9f)
+                    .padding(top = 4.dp, bottom = 8.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = screenWidth.dp * 0.05f, vertical = 12.dp)
             ) {
-                TextField(
-                    value = commentContent,
-                    onValueChange = { commentContent = it },
-                    placeholder = { Text(text = "Thêm bình luận") },
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFFFFFFFF),
-                        unfocusedContainerColor = Color(0xFFFFFFFF),
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                    ),
-                    shape = CircleShape,
+                Image(
+                    painter = painterResource(R.drawable.img_common_avatar),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
-//                        .padding(bottom = 16.dp)
-//                        .fillMaxWidth()
-                        .weight(1f)
-                        .shadow(
-                            elevation = 8.dp,
-                            shape = CircleShape
-                        )
-                        .animateContentSize()
+                        .size(42.dp)
+                        .clip(CircleShape)
+                        .align(Alignment.CenterVertically)
                 )
-                if (commentContent != "") {
-                    IconButton(
-                        onClick = {
-                            onComment(commentContent)
-                            commentContent = ""
-                        },
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                ) {
+                    TextField(
+                        value = commentContent,
+                        onValueChange = { commentContent = it },
+                        placeholder = { Text(text = "Thêm bình luận") },
+                        colors = chefMateTextFieldColors(
+                            focusedContainerColor = Color(0xFFFFFFFF),
+                            unfocusedContainerColor = Color(0xFFFFFFFF),
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                        ),
+                        shape = CircleShape,
                         modifier = Modifier
-                            .padding(start = 8.dp)
-                            .size(32.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_send),
-                            contentDescription = "Send",
-                            tint = Color(0xFF5164F3),
+                            .weight(1f)
+                            .shadow(
+                                elevation = 8.dp,
+                                shape = CircleShape
+                            )
+                            .bringIntoViewRequester(bringIntoViewRequester)
+                            .onFocusChanged { focusState ->
+                                if (focusState.isFocused) {
+                                    coroutineScope.launch {
+                                        onInputFocus()
+                                        delay(120)
+                                        bringIntoViewRequester.bringIntoView()
+                                    }
+                                }
+                            }
+                            .animateContentSize()
+                    )
+                    if (commentContent != "") {
+                        IconButton(
+                            onClick = {
+                                onComment(commentContent)
+                                commentContent = ""
+                            },
                             modifier = Modifier
-                                .size(24.dp * animateSendButton)
-                        )
+                                .padding(start = 8.dp)
+                                .size(32.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_send),
+                                contentDescription = "Send",
+                                tint = Color(0xFF5164F3),
+                                modifier = Modifier
+                                    .size(24.dp * animateSendButton)
+                            )
+                        }
                     }
                 }
+            }
+        } else {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFFFF7ED)
+                ),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .padding(top = 8.dp, bottom = 12.dp)
+                    .fillMaxWidth(0.9f)
+            ) {
+                Text(
+                    text = "Vui lòng đăng nhập để bình luận công thức này.",
+                    color = Color(0xFF9A3412),
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
+                )
             }
         }
         if (isExpanded) {
