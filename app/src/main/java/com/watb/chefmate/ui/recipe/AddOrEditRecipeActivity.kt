@@ -42,12 +42,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -97,6 +95,8 @@ import com.watb.chefmate.database.entities.IngredientEntity
 import com.watb.chefmate.database.entities.TagEntity
 import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.ui.theme.CircularLoading
+import com.watb.chefmate.ui.theme.chefMateOutlinedTextFieldColors
+import com.watb.chefmate.ui.theme.chefMateTextFieldColors
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import com.watb.chefmate.viewmodel.UserViewModel
 import kotlinx.coroutines.launch
@@ -357,7 +357,7 @@ fun AddOrEditRecipeScreen(
                 value = nameRecipe.value,
                 onValueChange = { nameRecipe.value = it },
                 label = { Text(text = "Tên công thức") },
-                colors = OutlinedTextFieldDefaults.colors(
+                colors = chefMateOutlinedTextFieldColors(
                     focusedBorderColor = Color(0xFFE0E0E0),
                     unfocusedBorderColor = Color(0xFFE0E0E0)
                 ),
@@ -384,7 +384,7 @@ fun AddOrEditRecipeScreen(
                     value = cookTime.value,
                     onValueChange = { cookTime.value = it },
                     label = { Text(text = "Thời gian nấu") },
-                    colors = OutlinedTextFieldDefaults.colors(
+                    colors = chefMateOutlinedTextFieldColors(
                         focusedBorderColor = Color(0xFFE0E0E0),
                         unfocusedBorderColor = Color(0xFFE0E0E0)
                     ),
@@ -416,7 +416,7 @@ fun AddOrEditRecipeScreen(
                     ration.value = cleanInput
                 },
                 label = { Text(text = "Khẩu phần ăn") },
-                colors = OutlinedTextFieldDefaults.colors(
+                colors = chefMateOutlinedTextFieldColors(
                     focusedBorderColor = Color(0xFFE0E0E0),
                     unfocusedBorderColor = Color(0xFFE0E0E0)
                 ),
@@ -550,7 +550,7 @@ fun AddOrEditRecipeScreen(
                                         }
                                     },
                                     label = { Text(text = "Khối lượng", fontSize = 12.sp) },
-                                    colors = OutlinedTextFieldDefaults.colors(
+                                    colors = chefMateOutlinedTextFieldColors(
                                         focusedBorderColor = Color.Transparent,
                                         unfocusedBorderColor = Color.Transparent
                                     ),
@@ -578,7 +578,7 @@ fun AddOrEditRecipeScreen(
                                     value = ingredient.unit,
                                     onValueChange = { ingredients[index] = ingredient.copy(unit = it) },
                                     label = { Text(text = "Đơn vị", fontSize = 12.sp) },
-                                    colors = OutlinedTextFieldDefaults.colors(
+                                    colors = chefMateOutlinedTextFieldColors(
                                         focusedBorderColor = Color.Transparent,
                                         unfocusedBorderColor = Color.Transparent
                                     ),
@@ -651,7 +651,7 @@ fun AddOrEditRecipeScreen(
                             value = step.content,
                             onValueChange = { steps[index] = step.copy(content = it) },
                             label = { Text(text = "Bước ${index + 1}", fontSize = 12.sp) },
-                            colors = OutlinedTextFieldDefaults.colors(
+                            colors = chefMateOutlinedTextFieldColors(
                                 focusedBorderColor = Color(0xFFE0E0E0),
                                 unfocusedBorderColor = Color(0xFFE0E0E0)
                             ),
@@ -884,7 +884,7 @@ fun TimeUnitDropdown(selectedUnit: String, onUnitSelected: (String) -> Unit, mod
                 )
             },
             shape = RoundedCornerShape(10.dp),
-            colors = TextFieldDefaults.colors(
+            colors = chefMateTextFieldColors(
                 focusedContainerColor = Color(0xFFFFFFFF),
                 unfocusedContainerColor = Color(0xFFFFFFFF),
                 focusedIndicatorColor = Color(0xFFE0E0E0),
@@ -963,7 +963,7 @@ fun IngredientDropdown(
                 expanded.value = true
             },
             label = { Text(text = "Tên nguyên liệu", fontSize = 12.sp) },
-            colors = OutlinedTextFieldDefaults.colors(
+            colors = chefMateOutlinedTextFieldColors(
                 focusedBorderColor = Color.Transparent,
                 unfocusedBorderColor = Color.Transparent,
             ),
@@ -1181,7 +1181,7 @@ fun TagDropdown(
                 expanded.value = true
             },
             label = { Text(text = "Tên tag", fontSize = 12.sp) },
-            colors = OutlinedTextFieldDefaults.colors(
+            colors = chefMateOutlinedTextFieldColors(
                 focusedBorderColor = Color(0xFFE0E0E0),
                 unfocusedBorderColor = Color(0xFFE0E0E0),
             ),
@@ -1245,4 +1245,3 @@ fun AddRecipeScreensPreview() {
 
     AddOrEditRecipeScreen(navController, userViewModel = userViewModel, recipeViewModel = recipeViewModel)
 }
-

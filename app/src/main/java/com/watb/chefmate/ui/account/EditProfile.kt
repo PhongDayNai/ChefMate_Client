@@ -30,7 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -68,6 +67,7 @@ import com.watb.chefmate.data.UserData
 import com.watb.chefmate.helper.DataStoreHelper
 import com.watb.chefmate.ui.theme.CircularLoading
 import com.watb.chefmate.ui.theme.PrimaryTextButtonTheme
+import com.watb.chefmate.ui.theme.chefMateTextFieldColors
 import com.watb.chefmate.viewmodel.UserViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -291,7 +291,7 @@ fun EditPersonalInformation(
                 fontWeight = FontWeight(400),
                 fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
             ),
-            colors = TextFieldDefaults.colors(
+            colors = chefMateTextFieldColors(
                 focusedTextColor = Color(0xFF1B1B1D),
                 unfocusedTextColor = Color(0xFF1B1B1D),
                 focusedContainerColor = Color(0xFFF8F8FC),
@@ -332,7 +332,7 @@ fun EditPersonalInformation(
                 fontWeight = FontWeight(400),
                 fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
             ),
-            colors = TextFieldDefaults.colors(
+            colors = chefMateTextFieldColors(
                 focusedTextColor = Color(0xFF1B1B1D),
                 unfocusedTextColor = Color(0xFF1B1B1D),
                 focusedContainerColor = Color(0xFFF8F8FC),
@@ -373,7 +373,7 @@ fun EditPersonalInformation(
                 fontWeight = FontWeight(400),
                 fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
             ),
-            colors = TextFieldDefaults.colors(
+            colors = chefMateTextFieldColors(
                 focusedTextColor = Color(0xFF1B1B1D),
                 unfocusedTextColor = Color(0xFF1B1B1D),
                 focusedContainerColor = Color(0xFFF8F8FC),
@@ -524,7 +524,7 @@ fun EditPassword(
                 fontWeight = FontWeight(400),
                 fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
             ),
-            colors = TextFieldDefaults.colors(
+            colors = chefMateTextFieldColors(
                 focusedTextColor = Color(0xFF1B1B1D),
                 unfocusedTextColor = Color(0xFF1B1B1D),
                 focusedContainerColor = Color(0xFFF8F8FC),
@@ -579,7 +579,7 @@ fun EditPassword(
                 fontWeight = FontWeight(400),
                 fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
             ),
-            colors = TextFieldDefaults.colors(
+            colors = chefMateTextFieldColors(
                 focusedTextColor = Color(0xFF1B1B1D),
                 unfocusedTextColor = Color(0xFF1B1B1D),
                 focusedContainerColor = Color(0xFFF8F8FC),
@@ -634,7 +634,7 @@ fun EditPassword(
                 fontWeight = FontWeight(400),
                 fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
             ),
-            colors = TextFieldDefaults.colors(
+            colors = chefMateTextFieldColors(
                 focusedTextColor = Color(0xFF1B1B1D),
                 unfocusedTextColor = Color(0xFF1B1B1D),
                 focusedContainerColor = Color(0xFFF8F8FC),
