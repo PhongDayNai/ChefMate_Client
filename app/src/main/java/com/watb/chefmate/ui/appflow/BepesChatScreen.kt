@@ -29,10 +29,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -131,6 +140,8 @@ fun BepesChatScreen(
     val selectedRecommendation = remember(currentActiveRecipeId, allRecommendations) {
         allRecommendations.firstOrNull { it.recipeId == currentActiveRecipeId }
     }
+    val hasSelectedRecipe = selectedRecommendation != null || (currentActiveRecipeId != null && currentActiveRecipeId > 0)
+    var showContextActions by remember(hasSelectedRecipe) { mutableStateOf(!hasSelectedRecipe) }
 
     val readyToCook = remember(homeState.readyToCook) {
         homeState.readyToCook.filter { it.recipeId > 0 }.distinctBy { it.recipeId }
@@ -210,6 +221,14 @@ fun BepesChatScreen(
         }
     }
 
+    val openCompleteDialog = {
+        if (chatState.currentSessionId != null) {
+            showCompleteDialog = true
+        } else {
+            Toast.makeText(context, "Chưa có cuộc trò chuyện để hoàn thành", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -228,6 +247,25 @@ fun BepesChatScreen(
                         tint = Color.White,
                         modifier = Modifier.size(24.dp)
                     )
+                }
+            },
+            trailingIcon = {
+                AnimatedVisibility(
+                    visible = !showContextActions,
+                    enter = fadeIn() + scaleIn(initialScale = 0.8f),
+                    exit = fadeOut() + scaleOut(targetScale = 0.8f)
+                ) {
+                    IconButton(
+                        onClick = openCompleteDialog,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_tick_square),
+                            contentDescription = "Hoàn thành",
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
                 }
             }
         )
@@ -250,13 +288,7 @@ fun BepesChatScreen(
                     appFlowViewModel.refreshDietNotes(user!!.userId)
                     showDietNotesSheet = true
                 },
-                onComplete = {
-                    if (chatState.currentSessionId != null) {
-                        showCompleteDialog = true
-                    } else {
-                        Toast.makeText(context, "Chưa có cuộc trò chuyện để hoàn thành", Toast.LENGTH_SHORT).show()
-                    }
-                },
+                onComplete = openCompleteDialog,
                 onOpenRecipe = {
                     val selected = selectedRecommendation
                     if (selected == null || selected.recipeName.isBlank()) {
@@ -282,6 +314,8 @@ fun BepesChatScreen(
                     }
                 },
                 isResolvingRecipe = isResolvingRecipe,
+                showActionButtons = showContextActions,
+                onToggleActionButtons = { showContextActions = !showContextActions },
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
             )
 
@@ -741,6 +775,8 @@ private fun SessionContextSection(
     onOpenRecipe: () -> Unit,
     onComplete: () -> Unit,
     isResolvingRecipe: Boolean,
+    showActionButtons: Boolean,
+    onToggleActionButtons: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -749,73 +785,134 @@ private fun SessionContextSection(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         modifier = modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(10.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(10.dp)
+                .animateContentSize()
+        ) {
             val recipeText = when {
                 selectedRecipe != null -> selectedRecipe.recipeName
                 activeRecipeId != null && activeRecipeId > 0 -> "Món đã chọn #$activeRecipeId"
-                else -> "Chưa chọn món cho cuộc trò chuyện hiện tại"
+                else -> "Chưa chọn món"
             }
-            Text(
-                text = "Món đang chọn: $recipeText",
-                color = Color(0xFF1F2937),
-                fontSize = 13.sp,
-                fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                modifier = Modifier.padding(top = 4.dp)
-            )
 
             val noteSummary = if (activeDietNotes.isEmpty()) "Không có" else "Có"
 
-            Text(
-                text = "Ghi chú ăn uống: $noteSummary",
-                color = Color(0xFF374151),
-                fontSize = 12.sp,
-                fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                modifier = Modifier.padding(top = 4.dp)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.Top,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp)
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Món đang chọn: $recipeText",
+                        color = Color(0xFF1F2937),
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
+                    )
+
+                    Text(
+                        text = "Ghi chú ăn uống: $noteSummary",
+                        color = Color(0xFF374151),
+                        fontSize = 12.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+
+                ContextActionsToggleButton(
+                    expanded = showActionButtons,
+                    onClick = onToggleActionButtons
+                )
+            }
+
+            AnimatedVisibility(
+                visible = showActionButtons,
+                enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+                exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
+            ) {
+                Column {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp)
+                    ) {
+                        ContextActionChip(
+                            text = "Chọn món",
+                            onClick = onOpenPicker,
+                            modifier = Modifier.weight(1f)
+                        )
+                        ContextActionChip(
+                            text = "Ghi chú",
+                            onClick = onOpenNotes,
+                            containerColor = Color(0xFFE0F2FE),
+                            textColor = Color(0xFF0369A1),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 6.dp)
+                    ) {
+                        ContextActionChip(
+                            text = if (isResolvingRecipe) "Đang mở..." else "Xem công thức",
+                            onClick = onOpenRecipe,
+                            enabled = !isResolvingRecipe,
+                            containerColor = Color(0xFFEDE9FE),
+                            textColor = Color(0xFF6D28D9),
+                            modifier = Modifier.weight(1f)
+                        )
+                        ContextActionChip(
+                            text = "Hoàn thành",
+                            onClick = onComplete,
+                            containerColor = Color(0xFFD1FAE5),
+                            textColor = Color(0xFF166534),
+                            borderColor = Color(0xFF86EFAC),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContextActionsToggleButton(
+    expanded: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val rotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        label = "contextToggleRotation"
+    )
+
+    Card(
+        onClick = onClick,
+        shape = CircleShape,
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        border = BorderStroke(1.dp, Color(0xFFFDBA74)),
+        modifier = modifier.size(32.dp)
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_expand),
+                contentDescription = if (expanded) "Ẩn thao tác" else "Hiện thao tác",
+                tint = Color(0xFFF97316),
+                modifier = Modifier
+                    .size(14.dp)
+                    .rotate(rotation)
             )
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-            ) {
-                ContextActionChip(
-                    text = "Chọn món",
-                    onClick = onOpenPicker,
-                    modifier = Modifier.weight(1f)
-                )
-                ContextActionChip(
-                    text = "Ghi chú",
-                    onClick = onOpenNotes,
-                    containerColor = Color(0xFFE0F2FE),
-                    textColor = Color(0xFF0369A1),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 6.dp)
-            ) {
-                ContextActionChip(
-                    text = if (isResolvingRecipe) "Đang mở..." else "Xem công thức",
-                    onClick = onOpenRecipe,
-                    enabled = !isResolvingRecipe,
-                    containerColor = Color(0xFFEDE9FE),
-                    textColor = Color(0xFF6D28D9),
-                    modifier = Modifier.weight(1f)
-                )
-                ContextActionChip(
-                    text = "Hoàn thành",
-                    onClick = onComplete,
-                    containerColor = Color(0xFFD1FAE5),
-                    textColor = Color(0xFF166534),
-                    borderColor = Color(0xFF86EFAC),
-                    modifier = Modifier.weight(1f)
-                )
-            }
         }
     }
 }
