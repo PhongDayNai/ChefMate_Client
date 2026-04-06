@@ -1,191 +1,113 @@
-# Hệ thống ứng dụng công thức nấu ăn - ChefMate
+# ChefMate Android
 
+ChefMate is an Android cooking companion built with Kotlin and Jetpack Compose. The app combines recipe discovery, shopping flows, pantry-aware planning, and `Bepes`, a server-driven cooking assistant that helps users organize and cook one or more dishes in the same session.
 
-<img width="561" height="561" alt="app_logo" src="https://github.com/user-attachments/assets/27a0601d-2a7a-48ce-97c7-0703575f12e4" />
+This repository contains the Android client only.
 
+## What It Does
 
-# I. Client - Ứng dụng di động
+- Browse and search recipes
+- View trending recipes and personalized recommendations
+- Save, create, edit, and manage recipes
+- Build shopping lists from recipes and track shopping history
+- Manage pantry ingredients and diet notes
+- Sign in, register, and edit profile information
+- Chat with `Bepes` to plan and cook meals with session-aware guidance
 
-## 1. Công nghệ
+## App Areas
 
-- **Jetpack Compose**: Framework UI động.
-- **Room Database**: Lưu trữ dữ liệu cục bộ, trừu tượng hóa SQLite.
-- **OkHttp**: Gọi API RESTful đến server.
-- **Coil**: Tải và hiển thị hình ảnh từ URL.
-- **Gson**: Chuyển đổi Java thành JSON và ngược lại.
+- `Auth`: sign in, sign up, profile editing
+- `Home`: discovery, recommendations, and entry points into cooking flows
+- `Recipes`: list, search, detail, create, and personal recipe storage
+- `Shopping`: generate ingredient lists and review shopping history
+- `Pantry & Diet Notes`: manage available ingredients and cooking preferences
+- `Bepes Chat`: server-driven cooking sessions with recipe focus, meal context, and chat history
 
-## 1.1 Cấu hình local API
+## Tech Stack
 
-App Android đọc API config từ `local.properties` và sẽ fail build nếu thiếu:
+- Kotlin
+- Jetpack Compose
+- MVVM architecture
+- Room
+- OkHttp
+- Gson
+- Coil
+- DataStore
+- Android Security Crypto
+
+## Local Setup
+
+### Prerequisites
+
+- Android Studio
+- JDK 11
+- Android SDK with API level `35`
+- A running ChefMate backend environment
+
+### Configure `local.properties`
+
+Copy the sample config and fill in your local values:
+
+```bash
+cp local.properties.example local.properties
+```
+
+Required keys:
 
 ```properties
 CHEFMATE_API_BASE_URL=https://your-api-host.example.com
 CHEFMATE_CHAT_API_KEY=replace-with-chat-api-key
 ```
 
-Mẫu cấu hình nằm ở `local.properties.example`.
+The Android build reads these values in `app/build.gradle.kts` and fails early if either key is missing or empty.
 
-## 2. Kiến trúc: Mô hình MVVM
+Optional local signing keys can also be added in `local.properties`:
 
-- **Model (M)**: Chứa các lớp dữ liệu và logic tương tác với kho dữ liệu.
-    - **RoomDB Entities**: Định nghĩa cấu trúc dữ liệu cục bộ.
-    - **DAOs**: Cung cấp phương thức tương tác với RoomDB.
-    - **Repositories**: Lớp trung gian truy cập dữ liệu, ẩn nguồn (RoomDB hoặc API Server).
-- **View (V)**: Thành phần giao diện người dùng, hiển thị dữ liệu và nhận tương tác.
-    - **Composables (Jetpack Compose)**: Hàm xây dựng giao diện động.
-    - **Hiển thị dữ liệu**: Quan sát dữ liệu từ ViewModel và cập nhật giao diện.
-    - **Xử lý sự kiện**: Gửi sự kiện người dùng (click, nhập liệu) đến ViewModelScope.
-- **ViewModel (VM)**: Xử lý logic nghiệp vụ, quản lý trạng thái giao diện và tương tác với Model.
-    - **Logic nghiệp vụ**: Thêm, sửa, xóa, tìm kiếm công thức, quản lý danh sách mua sắm.
-    - **Cung cấp dữ liệu**: Sử dụng Flow để tự động cập nhật dữ liệu cho View.
-    - **Tương tác với Repository**: Gọi phương thức từ Repository để lấy hoặc lưu dữ liệu.
+```properties
+KEY_ALIAS=projectkey
+KEYSTORE_PASSWORD=
+KEY_PASSWORD=
+```
 
-## 3. Tính năng
+## Build And Run
 
-| User | Recipe | Interaction | Khác |
-| --- | --- | --- | --- |
-| Đăng nhập | Hiển thị công thức nấu ăn | Yêu thích | Kiểm tra kết nối internet |
-| Đăng ký | Tìm kiếm công thức theo tên | Bình luận |  |
-| Đổi mật khẩu | Tìm kiếm công thức theo tag | Chia sẻ |  |
-| Đăng xuất | Lưu vào “Kho công thức” |  |  |
-| Chỉnh sửa thông tin cá nhân | Lập danh sách mua sắm |  |  |
-|  | Quản lý danh sách mua sắm |  |  |
-|  | Tạo công thức mới |  |  |
-|  | Chỉnh sửa công thức trong “Kho công thức” |  |  |
-|  | Xóa khỏi “Kho công thức” |  |  |
-|  | Lịch sử đăng công thức |  |  |
-|  | Lịch sử mua sắm |  |  |
-|  | Lấy danh sách công thức Top Trending |  |  |
-|  | Lấy danh sách nguyên liệu sẵn có |  |  |
-|  | Lấy danh sách tag sẵn có |  |  |
+Install a debug build on a connected device or emulator:
 
-### a. User
+```bash
+./gradlew :app:installDebug
+```
 
-- [x]  Đăng nhập
-- [x]  Đăng ký
-- [x]  Đổi mật khẩu
-- [x]  Đăng xuất
-- [x]  Chỉnh sửa thông tin cá nhân
+Launch the app with `adb`:
 
-### b. Recipe
+```bash
+adb shell am start -n com.watb.chefmate/.ui.main.MainActivity
+```
 
-- [x]  Hiển thị công thức nấu ăn
-- [x]  Tìm kiếm công thức theo tên
-- [x]  Tìm kiếm công thức theo tag
-- [x]  Thêm vào “Kho công thức”
-- [x]  Lập danh sách mua sắm
-- [x]  Quản lý danh sách mua sắm
-- [x]  Tạo công thức mới
-- [x]  Chỉnh sửa công thức trong “Kho công thức”
-- [x]  Xóa khỏi “Kho công thức”
-- [x]  Lịch sử đăng công thức
-- [x]  Lịch sử mua sắm
-- [x]  Lấy danh sách Top Trending
-- [x]  Lấy danh sách nguyên liệu sẵn có
-- [x]  Lấy danh sách tag sẵn có
+If you want to build without installing:
 
-### c. Interaction
+```bash
+./gradlew :app:assembleDebug
+```
 
-- [x]  Yêu thích
-- [x]  Bình luận
-- [x]  Chia sẻ
+## Architecture Notes
 
-### d. Khác
+This project is an Android client that talks to a separate backend. The app uses a Compose-based MVVM structure with local persistence for app data and secure storage for sensitive session data.
 
-- [x]  Kiểm tra kết nối Internet
+`Bepes` is the AI-assisted cooking flow in the app. The current client uses a server-driven chat/session model, where the backend owns meal-session state, message history, focus recipe, and cooking progress while the Android client renders and interacts with that state.
 
-<img width="815" height="605" alt="register_signin_signout_view" src="https://github.com/user-attachments/assets/c1ae3c67-bf09-48a8-99f4-a7d21bb5ab3b" />
+## Repository Layout
 
-<img width="544" height="605" alt="edit_user_info_view" src="https://github.com/user-attachments/assets/f5ef50e3-ec90-4854-93d6-b5f4b3875509" />
+- `app/`: Android application source
+- `gradle/`: Gradle version catalog and wrapper configuration
+- `local.properties.example`: sample local configuration for required API keys
 
-<img width="544" height="604" alt="home_view" src="https://github.com/user-attachments/assets/c12b70b6-a034-44c4-8835-1deb894d968a" />
+## Ecosystem
 
-<img width="544" height="604" alt="ađing_recipe_view" src="https://github.com/user-attachments/assets/1db4f2fa-a225-42ff-9c52-4360684df8e9" />
+- Server: [ChefMate_Server](https://github.com/PhongDayNai/ChefMate_Server)
+- Admin web: [ChefMate_Admin_Web](https://github.com/PhongDayNai/ChefMate_Admin_Web)
 
-<img width="1084" height="604" alt="profile_view" src="https://github.com/user-attachments/assets/a61a6468-fbaf-4c5f-9844-13cde700814a" />
+## Open Source Status
 
-<img width="814" height="605" alt="recipe_view" src="https://github.com/user-attachments/assets/3368697d-3a24-4d07-ba5c-8f6feae992bc" />
+This repository is being cleaned up and documented for public/open-source use. If you find a bug, want to suggest an improvement, or want to contribute a fix, feel free to open an issue or a pull request.
 
-<img width="814" height="606" alt="create_shopping_list" src="https://github.com/user-attachments/assets/9fc6f152-1dc3-4d4d-b306-5aed788aae83" />
-
-<img width="814" height="604" alt="shopping_list_view" src="https://github.com/user-attachments/assets/e6408058-ffe5-4894-bc88-421c2180bb7d" />
-
-<img width="544" height="604" alt="shopping_history" src="https://github.com/user-attachments/assets/ab857583-958c-4041-a61d-179b97fa8c8e" />
-
-<img width="281" height="619" alt="no_internet" src="https://github.com/user-attachments/assets/a924d1d3-f858-4b70-9438-2cef7ce7574c" />
-
-## 4. Cơ sở dữ liệu
-
-- Bảng Recipes
-
-
-    | Tên cột | Kiểu dữ liệu | Khóa/Ràng buộc | Mô tả |
-    | --- | --- | --- | --- |
-    | `recipeId`  | `INT` | `PRIMARY KEY`  | Mã định danh duy nhất |
-    |  |  | `IDENTITY(1, 1)`  | Tự động tăng từ 1 |
-    | `recipeName` | `NVARCHAR(100)` | `NOT NULL` | Tên của công thức |
-    | `image`  | `NVARCHAR(1000)`  | `NOT NULL`  | URL hình ảnh |
-    | `userId` | `INT` | `FOREIGN KEY REFERENCES Users(userId)` | liên kết đến bảng Users |
-    | `isPublic` | `BOOLEAN` | `NOT NULL` |  |
-    | `likeQuantity` | `INT` | `NOT NULL` | lượt yêu thích |
-    | `cookingTime` | `NVARCHAR(20)` | `NOT NULL` | thời gian nấu |
-    | `ration` | `INT` | `NOT NULL` | khẩu phần ăn |
-    | `viewCount` | `INT` | `NOT NULL` | lượt xem |
-    | createAt | DATE | NOT NULL | ngày tạo công thức |
-- Bảng Ingredients
-
-
-    | Tên cột | Kiểu dữ liệu | Khóa/Ràng buộc | Mô tả |
-    | --- | --- | --- | --- |
-    | `ingredientId`  | `INT`  | `PRIMARY KEY`  | Mã định danh duy nhất |
-    |  |  | `IDENTITY(1, 1)`  | Tự động tăng từ 1 |
-    | `ingredientName`  | `NVARCHAR(100)`  | `NOT NULL`  | Tên của nguyên liệu |
-- Bảng RecipesIngredients
-
-
-    | Tên cột | Kiểu dữ liệu | Khóa/Ràng buộc | Mô tả |
-    | --- | --- | --- | --- |
-    | `riId`  | `INT`  | `PRIMARY KEY`  | Mã định danh duy nhất |
-    |  |  | `IDENTITY(1, 1)`  | Tự động tăng từ 1 |
-    | `recipeId`  | `INT`  | `FOREIGN KEY REFERENCES Recipes(recipeId)` | Liên kết dến bảng `Recipes` |
-    | `ingredientId`  | `INT`  | `FOREIGN KEY REFERENCES Ingredients(ingredientId)`  | Liên kết đến bảng `Ingredients` |
-    | `weight`  | `INT`  | `NOT NULL`  | Số lượng/Khối lượng của nguyên liệu |
-    | `unit`  | `NVARCHAR(20)`  | `NOT NULL`  | Đơn vị tính |
-- Bảng ShoppingTimes
-
-
-    | Tên cột | Kiểu dữ liệu | Khóa/Ràng buộc | Mô tả |
-    | --- | --- | --- | --- |
-    | `stId` | `INT` | `PRIMARY KEY` | Mã định danh duy nhất |
-    | `shoppingDate` | `DATE` | `NOT NULL` | Ngày mua sắm |
-- Bảng ShoppingRecipes
-
-
-    | Tên cột | Kiểu dữ liệu | Khóa/Ràng buộc | Mô tả |
-    | --- | --- | --- | --- |
-    | `srId`  | `INT` | `PRIMARY KEY` | Mã định danh duy nhất |
-    | `stId` | `INT` | `FOREIGN KEY REFERENCES ShoppingTimes(stId)` | liên kết đến bảng ShoppingTimes |
-    | `recipeId` | `INT` | `FOREIGN KEY REFERENCES Recipes(recipeId)` | liên kết đến bảng Recipes |
-- Bảng ShoppingIngredients
-
-
-    | Tên cột | Kiểu dữ liệu | Khóa/Ràng buộc | Mô tả |
-    | --- | --- | --- | --- |
-    | `siId` | `INT` | `PRIMARY KEY` | Mã định danh duy nhất |
-    | `stId` | `INT` | `FOREIGN KEY REFERENCES ShoppingTimes(stId)` | liên kết đến bảng ShoppingTimes |
-    | `ingredientId` | `INT` | `FOREIGN KEY REFERENCES Ingredients(ingredientId)`  | liên kết đến bảng Ingredients |
-    | `weight` | `DOUBLE` | **`NOT NULL`** | Khối lượng |
-    | `unit` | `NVARCHAR(10)` | `NOT NULL` | đơn vị |
-    | `isBought` | `BOOLEAN` | `NOT NULL` | trạng thái đã mua |
-- Bảng Steps
-
-
-    | Tên cột | Kiểu dữ liệu | Khóa/Ràng buộc | Mô tả |
-    | --- | --- | --- | --- |
-    | `stepId` | `INT` | `PRIMARY KEY` | Mã định danh duy nhất |
-    | `recipeId` | `INT` | `FOREIGN KEY REFERENCES Recipes(recipeId)` | liên kết đến bảng Recipes |
-    | `index` | `INT` | `NOT NULL` | STT bước |
-    | `content` | `NVARCHAR(500)` | `NOT NULL` | chi tiết bước |
-
-# [II. Server - Máy chủ](https://github.com/PhongDayNai/ChefMate_Server)
-# [III. Client - Admin Web](https://github.com/PhongDayNai/ChefMate_Admin_Web)
+Some project conventions and community files such as a formal license or contribution guide may still be added separately.
