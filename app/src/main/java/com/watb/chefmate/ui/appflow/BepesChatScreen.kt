@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -110,6 +111,10 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -445,6 +450,7 @@ fun BepesChatScreen(
 
                 itemsIndexed(chatState.timeline, key = { _, item -> item.messageId ?: item.localId }) { index, message ->
                     val previous = chatState.timeline.getOrNull(index - 1)
+                    val next = chatState.timeline.getOrNull(index + 1)
                     val showSessionDivider = index > 0 && (
                         message.isSessionStart ||
                             (
@@ -454,6 +460,10 @@ fun BepesChatScreen(
                                     previous.chatSessionId != message.chatSessionId
                                 )
                         )
+                    val showTimestamp = next == null ||
+                        next.chatSessionId != message.chatSessionId ||
+                        next.role != message.role ||
+                        next.kind != message.kind
 
                     if (showSessionDivider) {
                         SessionDivider(text = sessionDividerText(message.createdAt))
@@ -461,6 +471,7 @@ fun BepesChatScreen(
 
                     ChatBubble(
                         message = message,
+                        showTimestamp = showTimestamp,
                         isActionRunning = chatState.sending || chatState.mealSyncing,
                         onRetry = {
                             appFlowViewModel.retryMessage(user!!.userId, message.localId)
@@ -1504,16 +1515,12 @@ private fun SelectedMealRecipeEditorCard(
 ) {
     val statusColors = recipeStatusColors(recipe.status)
     var statusExpanded by remember(recipe.recipeId, recipe.status) { mutableStateOf(false) }
-    val hintText = when {
-        isPrimary -> "Bepes sẽ bám theo món này trước"
-        recipe.status.equals(MealRecipeStatus.DONE, ignoreCase = true) -> "Món này đã hoàn tất"
-        recipe.status.equals(MealRecipeStatus.SKIPPED, ignoreCase = true) -> "Món này đã được bỏ qua"
-        else -> "Có thể chuyển món này lên làm focus"
-    }
 
     Card(
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDFC)),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isPrimary) Color(0xFFFFF9EA) else Color(0xFFFFFDFC)
+        ),
         border = BorderStroke(1.dp, if (isPrimary) Color(0xFFF6B26B) else Color(0xFFE6DED2)),
         modifier = modifier.fillMaxWidth()
     ) {
@@ -1522,21 +1529,6 @@ private fun SelectedMealRecipeEditorCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Card(
-                    shape = CircleShape,
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F5F0)),
-                    modifier = Modifier.size(22.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_options),
-                            contentDescription = null,
-                            tint = Color(0xFFC4B5A5),
-                            modifier = Modifier.size(10.dp)
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.width(10.dp))
                 Card(
                     shape = RoundedCornerShape(999.dp),
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF1F2A44))
@@ -1558,106 +1550,103 @@ private fun SelectedMealRecipeEditorCard(
                     maxLines = 2,
                     modifier = Modifier.weight(1f)
                 )
-                StatusCapsule(
-                    text = if (isPrimary) "Đang ưu tiên" else "Đã chọn",
-                    containerColor = if (isPrimary) Color(0xFFD1FAE5) else Color(0xFFF3F4F6),
-                    textColor = if (isPrimary) Color(0xFF166534) else Color(0xFF6B7280)
-                )
+                if (isPrimary) {
+                    StatusCapsule(
+                        text = "Đang ưu tiên",
+                        containerColor = Color(0xFFD1FAE5),
+                        textColor = Color(0xFF166534)
+                    )
+                }
             }
 
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFCF6)),
-                border = BorderStroke(1.dp, Color(0xFFF3D49A)),
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 12.dp)
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Card(
-                        onClick = { statusExpanded = !statusExpanded },
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = statusColors.background),
-                        border = BorderStroke(1.dp, statusColors.border),
-                        modifier = Modifier.fillMaxWidth()
+                Card(
+                    onClick = { statusExpanded = !statusExpanded },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = statusColors.background),
+                    border = BorderStroke(1.dp, statusColors.border),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
-                        ) {
-                            Text(
-                                text = recipeStatusLabel(recipe.status),
-                                color = statusColors.text,
-                                fontSize = 13.sp,
-                                fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
-                                modifier = Modifier.weight(1f)
-                            )
-                            Icon(
-                                painter = painterResource(R.drawable.ic_expand),
-                                contentDescription = null,
-                                tint = statusColors.text,
-                                modifier = Modifier
-                                    .size(14.dp)
-                                    .rotate(if (statusExpanded) 180f else 0f)
-                            )
-                        }
+                        Text(
+                            text = recipeStatusLabel(recipe.status),
+                            color = statusColors.text,
+                            fontSize = 13.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                            modifier = Modifier.weight(1f)
+                        )
+                        Icon(
+                            painter = painterResource(R.drawable.ic_arrow_recipe_status),
+                            contentDescription = null,
+                            tint = statusColors.text,
+                            modifier = Modifier
+                                .size(14.dp)
+                                .rotate(if (statusExpanded) 180f else 0f)
+                        )
                     }
+                }
 
-                    AnimatedVisibility(
-                        visible = statusExpanded,
-                        enter = fadeIn() + expandVertically(),
-                        exit = fadeOut() + shrinkVertically()
-                    ) {
-                        Column(modifier = Modifier.padding(top = 12.dp)) {
-                            Text(
-                                text = "TRẠNG THÁI MÓN",
-                                color = Color(0xFFB07A37),
-                                fontSize = 10.sp,
-                                fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
-                            )
+                AnimatedVisibility(
+                    visible = statusExpanded,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    Column(modifier = Modifier.padding(top = 12.dp)) {
+                        Text(
+                            text = "TRẠNG THÁI MÓN",
+                            color = Color(0xFFB07A37),
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                        )
 
-                            mealRecipeStatuses().forEach { status ->
-                                val optionColors = recipeStatusColors(status)
-                                val isSelected = recipe.status.equals(status, ignoreCase = true)
-                                Card(
-                                    onClick = {
-                                        statusExpanded = false
-                                        if (!isSelected) {
-                                            onUpdateStatus(status)
-                                        }
-                                    },
-                                    shape = RoundedCornerShape(14.dp),
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = if (isSelected) optionColors.background else Color.White
-                                    ),
-                                    border = if (isSelected) BorderStroke(1.dp, optionColors.border) else null,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 8.dp)
+                        mealRecipeStatuses().forEach { status ->
+                            val optionColors = recipeStatusColors(status)
+                            val isSelected = recipe.status.equals(status, ignoreCase = true)
+                            Card(
+                                onClick = {
+                                    statusExpanded = false
+                                    if (!isSelected) {
+                                        onUpdateStatus(status)
+                                    }
+                                },
+                                shape = RoundedCornerShape(14.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isSelected) optionColors.background else Color.White
+                                ),
+                                border = if (isSelected) BorderStroke(1.dp, optionColors.border) else null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
                                 ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
-                                    ) {
-                                        Text(
-                                            text = recipeStatusLabel(status),
-                                            color = if (isSelected) optionColors.text else Color(0xFF374151),
-                                            fontSize = 13.sp,
-                                            fontFamily = FontFamily(
-                                                Font(
-                                                    resId = if (isSelected) R.font.roboto_bold else R.font.roboto_regular
-                                                )
-                                            ),
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        if (isSelected) {
-                                            Text(
-                                                text = "✓",
-                                                color = optionColors.text,
-                                                fontSize = 14.sp,
-                                                fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                                    Text(
+                                        text = recipeStatusLabel(status),
+                                        color = if (isSelected) optionColors.text else Color(0xFF374151),
+                                        fontSize = 13.sp,
+                                        fontFamily = FontFamily(
+                                            Font(
+                                                resId = if (isSelected) R.font.roboto_bold else R.font.roboto_regular
                                             )
-                                        }
+                                        ),
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    if (isSelected) {
+                                        Text(
+                                            text = "✓",
+                                            color = optionColors.text,
+                                            fontSize = 14.sp,
+                                            fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                                        )
                                     }
                                 }
                             }
@@ -1666,61 +1655,37 @@ private fun SelectedMealRecipeEditorCard(
                 }
             }
 
-            val detailLine = listOfNotNull(
-                recipe.cookingTime?.takeIf { it.isNotBlank() },
-                recipe.ration?.let { "$it phần" }
-            ).joinToString(" • ")
-            if (detailLine.isNotBlank()) {
-                Text(
-                    text = detailLine,
-                    color = Color(0xFF6B7280),
-                    fontSize = 11.sp,
-                    fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                    modifier = Modifier.padding(top = 6.dp)
-                )
-            }
-
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (isPrimary) Color(0xFFFFF6E8) else Color(0xFFF9F5F0)
-                ),
+            ContextActionChip(
+                text = if (isPrimary) "Đang ưu tiên" else "Ưu tiên món này",
+                onClick = {
+                    if (!isPrimary) {
+                        onSetPrimary()
+                    }
+                },
+                enabled = true,
+                containerColor = if (isPrimary) Color(0xFFFFF0CF) else Color(0xFFFFE4B5),
+                textColor = if (isPrimary) Color(0xFFE0A24C) else Color(0xFFB45309),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp)
-            ) {
-                Text(
-                    text = if (isPrimary) "Đang ưu tiên" else "Chọn focus",
-                    color = if (isPrimary) Color(0xFFE58B28) else Color(0xFF0F6CBD),
-                    fontSize = 11.sp,
-                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp)
-                )
-            }
+            )
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp)
             ) {
-                StatusCapsule(
-                    text = hintText,
-                    containerColor = if (isPrimary) Color(0xFFFFF3E0) else Color(0xFFF9F5F0),
-                    textColor = if (isPrimary) Color(0xFFB45309) else Color(0xFF8B7355),
-                    modifier = Modifier.weight(1f, fill = false)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
                 RecipeFooterIconButton(
-                    iconRes = R.drawable.ic_expand,
+                    iconRes = R.drawable.ic_arrow_move_recipe,
                     contentDescription = "Đưa món lên",
                     rotation = 180f,
                     onClick = onMoveUp
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 RecipeFooterIconButton(
-                    iconRes = R.drawable.ic_expand,
+                    iconRes = R.drawable.ic_arrow_move_recipe,
                     contentDescription = "Đưa món xuống",
                     rotation = 0f,
                     onClick = onMoveDown
@@ -1732,18 +1697,6 @@ private fun SelectedMealRecipeEditorCard(
                     onClick = onRemove,
                     containerColor = Color(0xFFFFF1F2),
                     iconTint = Color(0xFFEF4444)
-                )
-            }
-
-            if (!isPrimary) {
-                ContextActionChip(
-                    text = "Bepes sẽ bám theo món này trước",
-                    onClick = onSetPrimary,
-                    containerColor = Color(0xFFE0F2FE),
-                    textColor = Color(0xFF0369A1),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
                 )
             }
         }
@@ -2556,9 +2509,29 @@ private fun sessionDividerText(createdAt: String?): String {
     return "Cuộc trò chuyện mới • $shortTime"
 }
 
+private fun messageTimestampText(createdAt: String?): String? {
+    val raw = createdAt?.takeIf { it.isNotBlank() } ?: return null
+    val zoneId = ZoneId.systemDefault()
+    val instant = runCatching { Instant.parse(raw) }.getOrNull() ?: return null
+    val dateTime = instant.atZone(zoneId)
+    val today = LocalDate.now(zoneId)
+    val date = dateTime.toLocalDate()
+    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+    val shortFormatter = DateTimeFormatter.ofPattern("d/M HH:mm")
+    val fullFormatter = DateTimeFormatter.ofPattern("d/M/yyyy HH:mm")
+
+    return when {
+        date == today -> dateTime.format(timeFormatter)
+        date == today.minusDays(1) -> "Hôm qua ${dateTime.format(timeFormatter)}"
+        date.year == today.year -> dateTime.format(shortFormatter)
+        else -> dateTime.format(fullFormatter)
+    }
+}
+
 @Composable
 private fun ChatBubble(
     message: ChatUiMessage,
+    showTimestamp: Boolean,
     isActionRunning: Boolean,
     onRetry: () -> Unit,
     onPromptAction: (PendingResolveAction) -> Unit
@@ -2566,6 +2539,7 @@ private fun ChatBubble(
     if (message.kind == ChatMessageKind.PROMPT) {
         InlinePromptBubble(
             message = message,
+            showTimestamp = showTimestamp,
             isActionRunning = isActionRunning,
             onPromptAction = onPromptAction
         )
@@ -2575,6 +2549,7 @@ private fun ChatBubble(
     val isUser = message.role == ChatRole.USER
     val bubbleColor = if (isUser) Color(0xFFF97316) else Color(0xFFFFEDD5)
     val textColor = if (isUser) Color.White else Color(0xFF1F2937)
+    val timestamp = remember(message.createdAt) { messageTimestampText(message.createdAt) }
     val retryCountdown by produceState(initialValue = 0L, key1 = message.retryAvailableAt) {
         val target = message.retryAvailableAt
         if (target == null) return@produceState
@@ -2592,59 +2567,75 @@ private fun ChatBubble(
             .fillMaxWidth()
             .padding(vertical = 4.dp)
     ) {
-        Card(
-            shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (message.isFailed) Color(0xFFFEF2F2) else bubbleColor
-            ),
-            modifier = Modifier.fillMaxWidth(0.82f)
+        Column(
+            horizontalAlignment = Alignment.End,
+            modifier = Modifier.widthIn(
+                min = 72.dp,
+                max = if (isUser) 272.dp else 296.dp
+            )
         ) {
-            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp)) {
-                if (!isUser) {
-                    Text(
-                        text = "Bepes",
-                        color = Color(0xFFF97316),
-                        fontSize = 12.sp,
-                        fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
-                    )
-                }
-                MarkdownText(
-                    markdown = message.text,
-                    color = if (message.isFailed) Color(0xFF7F1D1D) else textColor,
-                    fontSize = 14.sp,
-                    fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                    modifier = Modifier.padding(top = if (isUser) 0.dp else 3.dp)
+            Card(
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (message.isFailed) Color(0xFFFEF2F2) else bubbleColor
                 )
-                if (message.isFailed) {
-                    Text(
-                        text = message.errorText ?: "Tin nhắn gửi thất bại.",
-                        color = Color(0xFFB91C1C),
-                        fontSize = 12.sp,
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp)) {
+                    if (!isUser) {
+                        Text(
+                            text = "Bepes",
+                            color = Color(0xFFF97316),
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                        )
+                    }
+                    MarkdownText(
+                        markdown = message.text,
+                        color = if (message.isFailed) Color(0xFF7F1D1D) else textColor,
+                        fontSize = 14.sp,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.padding(top = if (isUser) 0.dp else 3.dp)
                     )
-                    if (message.retryable) {
-                        if (retryCountdown > 0L) {
-                            Text(
-                                text = "Gui lai sau ${retryCountdown / 1000}s",
-                                color = Color(0xFF92400E),
-                                fontSize = 12.sp,
-                                fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-                        } else {
-                            ContextActionChip(
-                                text = "Gui lai",
-                                onClick = onRetry,
-                                containerColor = Color(0xFFF97316),
-                                textColor = Color.White,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 8.dp)
-                            )
+                    if (message.isFailed) {
+                        Text(
+                            text = message.errorText ?: "Tin nhắn gửi thất bại.",
+                            color = Color(0xFFB91C1C),
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                        if (message.retryable) {
+                            if (retryCountdown > 0L) {
+                                Text(
+                                    text = "Gui lai sau ${retryCountdown / 1000}s",
+                                    color = Color(0xFF92400E),
+                                    fontSize = 12.sp,
+                                    fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            } else {
+                                ContextActionChip(
+                                    text = "Gui lai",
+                                    onClick = onRetry,
+                                    containerColor = Color(0xFFF97316),
+                                    textColor = Color.White,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 8.dp)
+                                )
+                            }
                         }
                     }
                 }
+            }
+            if (showTimestamp) timestamp?.let {
+                Text(
+                    text = it,
+                    color = Color(0xFF9CA3AF),
+                    fontSize = 11.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                    modifier = Modifier.padding(top = 4.dp, end = 2.dp)
+                )
             }
         }
     }
@@ -2653,92 +2644,107 @@ private fun ChatBubble(
 @Composable
 private fun InlinePromptBubble(
     message: ChatUiMessage,
+    showTimestamp: Boolean,
     isActionRunning: Boolean,
     onPromptAction: (PendingResolveAction) -> Unit
 ) {
     val status = message.promptStatus ?: PromptStatus.PENDING
+    val timestamp = remember(message.createdAt) { messageTimestampText(message.createdAt) }
     Row(
         horizontalArrangement = Arrangement.Start,
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp)
     ) {
-        Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7ED)),
-            border = BorderStroke(1.dp, Color(0xFFFDBA74)),
+        Column(
+            horizontalAlignment = Alignment.End,
             modifier = Modifier.fillMaxWidth(0.9f)
         ) {
-            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp)) {
-                Text(
-                    text = "Bepes can ban xac nhan",
-                    color = Color(0xFFF97316),
-                    fontSize = 12.sp,
-                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
-                )
-                MarkdownText(
-                    markdown = message.text,
-                    color = Color(0xFF1F2937),
-                    fontSize = 14.sp,
-                    fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-                if (!message.recipeName.isNullOrBlank()) {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7ED)),
+                border = BorderStroke(1.dp, Color(0xFFFDBA74))
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp)) {
                     Text(
-                        text = "Mon: ${message.recipeName}",
-                        color = Color(0xFF6B7280),
+                        text = "Bepes can ban xac nhan",
+                        color = Color(0xFFF97316),
                         fontSize = 12.sp,
-                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                        modifier = Modifier.padding(top = 6.dp)
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
                     )
-                }
-                when (status) {
-                    PromptStatus.RESOLVED -> {
+                    MarkdownText(
+                        markdown = message.text,
+                        color = Color(0xFF1F2937),
+                        fontSize = 14.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                    if (!message.recipeName.isNullOrBlank()) {
                         Text(
-                            text = "Da chon: ${message.selectedActionId.orEmpty()}",
-                            color = Color(0xFF166534),
-                            fontSize = 12.sp,
-                            fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                    }
-                    PromptStatus.ERROR -> {
-                        Text(
-                            text = message.errorText ?: "Khong the xu ly prompt.",
-                            color = Color(0xFFB91C1C),
+                            text = "Mon: ${message.recipeName}",
+                            color = Color(0xFF6B7280),
                             fontSize = 12.sp,
                             fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                            modifier = Modifier.padding(top = 8.dp)
+                            modifier = Modifier.padding(top = 6.dp)
                         )
                     }
-                    else -> Unit
-                }
+                    when (status) {
+                        PromptStatus.RESOLVED -> {
+                            Text(
+                                text = "Da chon: ${message.selectedActionId.orEmpty()}",
+                                color = Color(0xFF166534),
+                                fontSize = 12.sp,
+                                fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
+                        PromptStatus.ERROR -> {
+                            Text(
+                                text = message.errorText ?: "Khong the xu ly prompt.",
+                                color = Color(0xFFB91C1C),
+                                fontSize = 12.sp,
+                                fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
+                        else -> Unit
+                    }
 
-                if (status != PromptStatus.RESOLVED) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 10.dp)
-                    ) {
-                        message.promptActions.forEach { action ->
-                            Button(
-                                onClick = { onPromptAction(action) },
-                                enabled = status != PromptStatus.LOADING && !isActionRunning,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (status == PromptStatus.LOADING) Color(0xFF9CA3AF) else Color(0xFFF97316)
-                                ),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = promptActionLabel(action.id, action.label),
-                                    color = Color.White,
-                                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
-                                )
+                    if (status != PromptStatus.RESOLVED) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 10.dp)
+                        ) {
+                            message.promptActions.forEach { action ->
+                                Button(
+                                    onClick = { onPromptAction(action) },
+                                    enabled = status != PromptStatus.LOADING && !isActionRunning,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (status == PromptStatus.LOADING) Color(0xFF9CA3AF) else Color(0xFFF97316)
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = promptActionLabel(action.id, action.label),
+                                        color = Color.White,
+                                        fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                                    )
+                                }
                             }
                         }
                     }
                 }
+            }
+            if (showTimestamp) timestamp?.let {
+                Text(
+                    text = it,
+                    color = Color(0xFF9CA3AF),
+                    fontSize = 11.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                    modifier = Modifier.padding(top = 4.dp, end = 2.dp)
+                )
             }
         }
     }
