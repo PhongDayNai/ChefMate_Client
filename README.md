@@ -1,5 +1,7 @@
 # ChefMate Android
 
+[Tiếng Việt](README-vi.md)
+
 ChefMate is an Android cooking companion built with Kotlin and Jetpack Compose. The app combines recipe discovery, shopping flows, pantry-aware planning, and `Bepes`, a server-driven cooking assistant that helps users organize and cook one or more dishes in the same session.
 
 This repository contains the Android client only.
