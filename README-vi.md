@@ -106,6 +106,7 @@ Nếu chỉ muốn build mà chưa cài:
 ## Hệ Sinh Thái Dự Án
 
 - Server: [ChefMate_Server](https://github.com/PhongDayNai/ChefMate_Server)
+- Web client: [Chefmate_Web_Client](https://github.com/PhongDayNai/Chefmate_Web_Client)
 - Admin web: [ChefMate_Admin_Web](https://github.com/PhongDayNai/ChefMate_Admin_Web)
 
 ## Trạng Thái Open Source
