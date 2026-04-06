@@ -14,6 +14,17 @@
 - **Coil**: Tải và hiển thị hình ảnh từ URL.
 - **Gson**: Chuyển đổi Java thành JSON và ngược lại.
 
+## 1.1 Cấu hình local API
+
+App Android đọc API config từ `local.properties` và sẽ fail build nếu thiếu:
+
+```properties
+CHEFMATE_API_BASE_URL=https://your-api-host.example.com
+CHEFMATE_CHAT_API_KEY=replace-with-chat-api-key
+```
+
+Mẫu cấu hình nằm ở `local.properties.example`.
+
 ## 2. Kiến trúc: Mô hình MVVM
 
 - **Model (M)**: Chứa các lớp dữ liệu và logic tương tác với kho dữ liệu.

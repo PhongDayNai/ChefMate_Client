@@ -1,5 +1,6 @@
 package com.watb.chefmate.data
 
+import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
 
 data class ApiEnvelope<T>(
@@ -110,8 +111,48 @@ data class ChatSession(
     val userId: Int? = null,
     val title: String? = null,
     val activeRecipeId: Int? = null,
+    val recipes: List<MealRecipeState> = emptyList(),
+    val needsSelection: Boolean = false,
+    val isMealSession: Boolean = false,
+    val uiClosed: Boolean = false,
     val createdAt: String? = null,
     val updatedAt: String? = null
+)
+
+data class MealSessionUiState(
+    val chatSessionId: Int? = null,
+    val activeRecipeId: Int? = null,
+    val needsSelection: Boolean = false,
+    val uiClosed: Boolean = false
+)
+
+data class MealRecipeState(
+    val recipeId: Int,
+    val chatSessionRecipeId: Int? = null,
+    val recipeName: String? = null,
+    val image: String? = null,
+    val cookingTime: String? = null,
+    val ration: Int? = null,
+    val status: String = MealRecipeStatus.PENDING,
+    val isPrimary: Boolean = false,
+    val sortOrder: Int? = null,
+    val note: String? = null,
+    val servingsOverride: Int? = null,
+    val selectedAt: String? = null,
+    val resolvedAt: String? = null
+)
+
+data class MealSessionRecipeInput(
+    val recipeId: Int,
+    val sortOrder: Int,
+    val status: String = MealRecipeStatus.PENDING,
+    val note: String? = null,
+    val servingsOverride: Int? = null
+)
+
+data class PersistedMealSnapshot(
+    val mealSession: MealSessionUiState = MealSessionUiState(),
+    val mealItems: List<MealRecipeState> = emptyList()
 )
 
 data class ChatMessage(
@@ -126,7 +167,8 @@ data class ChatMessage(
     val message: String? = null,
     val text: String? = null,
     val createdAt: String? = null,
-    val senderName: String? = null
+    val senderName: String? = null,
+    val meta: JsonElement? = null
 )
 
 data class ChatSessionDetail(
@@ -142,6 +184,46 @@ data class ChatSessionCreateRequest(
     val model: String? = null
 )
 
+data class MealSessionCreateRequest(
+    val title: String? = null,
+    val recipeIds: List<Int>
+)
+
+data class MealSessionRecipesReplaceRequest(
+    val chatSessionId: Int,
+    val recipes: List<MealSessionRecipeInput>
+)
+
+data class MealRecipeStatusRequest(
+    val chatSessionId: Int,
+    val recipeId: Int,
+    val status: String,
+    val note: String? = null,
+    val confirmSwitchPrimary: Boolean? = null,
+    val nextPrimaryRecipeId: Int? = null,
+    val confirmFieldName: String? = null,
+    val chooseFieldName: String? = null
+)
+
+data class MealPrimaryRecipeRequest(
+    val chatSessionId: Int,
+    val recipeId: Int
+)
+
+data class MealCompletionResolveRequest(
+    val chatSessionId: Int,
+    val action: String,
+    val pendingUserMessage: String? = null,
+    val nextPrimaryRecipeId: Int? = null
+)
+
+data class MealCompleteRequest(
+    val chatSessionId: Int,
+    val completionType: String = MealCompletionType.COMPLETED,
+    val markRemainingStatus: String? = null,
+    val note: String? = null
+)
+
 data class ChatSessionTitleRequest(
     val userId: Int,
     val chatSessionId: Int,
@@ -155,10 +237,12 @@ data class ChatSessionActiveRecipeRequest(
 )
 
 data class ChatSendMessageRequest(
-    val userId: Int,
+    val userId: Int? = null,
     val message: String,
     val stream: Boolean = false,
-    val chatSessionId: Int? = null
+    val chatSessionId: Int? = null,
+    val model: String? = null,
+    val useUnifiedSession: Boolean? = null
 )
 
 data class PendingPreviousRecipePayload(
@@ -175,6 +259,33 @@ data class PendingResolveAction(
     val label: String
 )
 
+data class PendingMealPolicyPrompt(
+    val chatSessionId: Int,
+    val promptCode: String,
+    val actions: List<PendingResolveAction> = emptyList(),
+    val pendingUserMessage: String? = null,
+    val reminderMessage: String? = null,
+    val recipeId: Int? = null,
+    val recipeName: String? = null,
+    val messageLocalId: String,
+    val status: String = PromptStatus.PENDING,
+    val selectedActionId: String? = null,
+    val errorMessage: String? = null
+)
+
+data class PendingPrimaryRecipeSwitchPayload(
+    val chatSessionId: Int,
+    val recipeId: Int,
+    val reason: String? = null,
+    val closedRecipeId: Int? = null,
+    val closedRecipeStatus: String? = null,
+    val currentPrimaryRecipeId: Int? = null,
+    val nextPrimaryCandidates: List<Int> = emptyList(),
+    val suggestedNextPrimaryRecipeId: Int? = null,
+    val confirmField: String? = null,
+    val chooseField: String? = null
+)
+
 data class ResolvePreviousSessionRequest(
     val userId: Int,
     val previousSessionId: Int,
@@ -184,6 +295,7 @@ data class ResolvePreviousSessionRequest(
 
 data class ChatUiMessage(
     val localId: String,
+    val tempId: String? = null,
     val messageId: Int? = null,
     val chatSessionId: Int? = null,
     val sessionTitle: String? = null,
@@ -192,7 +304,20 @@ data class ChatUiMessage(
     val role: String,
     val text: String,
     val createdAt: String? = null,
-    val isPending: Boolean = false
+    val kind: String = ChatMessageKind.TEXT,
+    val promptCode: String? = null,
+    val promptActions: List<PendingResolveAction> = emptyList(),
+    val promptStatus: String? = null,
+    val selectedActionId: String? = null,
+    val pendingUserMessage: String? = null,
+    val recipeId: Int? = null,
+    val recipeName: String? = null,
+    val isPending: Boolean = false,
+    val isFailed: Boolean = false,
+    val retryable: Boolean = false,
+    val retryAfterMs: Long? = null,
+    val retryAvailableAt: Long? = null,
+    val errorText: String? = null
 )
 
 object DietNoteType {
@@ -207,11 +332,16 @@ object DietNoteType {
 object RecommendationType {
     const val READY_TO_COOK = "ready_to_cook"
     const val ALMOST_READY = "almost_ready"
+    const val UNAVAILABLE = "unavailable"
+    const val TRENDING = "trending"
 }
 
 object ChatBusinessCode {
     const val AI_SERVER_BUSY = "AI_SERVER_BUSY"
     const val PENDING_PREVIOUS_RECIPE_COMPLETION = "PENDING_PREVIOUS_RECIPE_COMPLETION"
+    const val PENDING_MEAL_V2_COMPLETION_CHECK = "PENDING_MEAL_V2_COMPLETION_CHECK"
+    const val PENDING_PRIMARY_RECIPE_SWITCH_CONFIRMATION = "PENDING_PRIMARY_RECIPE_SWITCH_CONFIRMATION"
+    const val MEAL_SESSION_READY_TO_COMPLETE = "MEAL_SESSION_READY_TO_COMPLETE"
 }
 
 object ResolveAction {
@@ -220,6 +350,40 @@ object ResolveAction {
     const val CONTINUE_CURRENT_SESSION = "continue_current_session"
 
     val all = listOf(COMPLETE_AND_DEDUCT, SKIP_DEDUCTION, CONTINUE_CURRENT_SESSION)
+}
+
+object MealRecipeStatus {
+    const val PENDING = "pending"
+    const val COOKING = "cooking"
+    const val DONE = "done"
+    const val SKIPPED = "skipped"
+
+    val all = listOf(PENDING, COOKING, DONE, SKIPPED)
+}
+
+object MealCompletionAction {
+    const val MARK_DONE = "mark_done"
+    const val MARK_SKIPPED = "mark_skipped"
+    const val CONTINUE_CURRENT = "continue_current"
+    const val COMPLETE_SESSION = "complete_session"
+    const val KEEP_SESSION_OPEN = "keep_session_open"
+    const val ADD_MORE_RECIPES = "add_more_recipes"
+
+    val all = listOf(
+        MARK_DONE,
+        MARK_SKIPPED,
+        CONTINUE_CURRENT,
+        COMPLETE_SESSION,
+        KEEP_SESSION_OPEN,
+        ADD_MORE_RECIPES
+    )
+}
+
+object MealCompletionType {
+    const val COMPLETED = "completed"
+    const val ABANDONED = "abandoned"
+
+    val all = listOf(COMPLETED, ABANDONED)
 }
 
 object ChatRole {
@@ -235,6 +399,18 @@ object ChatRole {
             else -> USER
         }
     }
+}
+
+object ChatMessageKind {
+    const val TEXT = "text"
+    const val PROMPT = "prompt"
+}
+
+object PromptStatus {
+    const val PENDING = "pending"
+    const val LOADING = "loading"
+    const val RESOLVED = "resolved"
+    const val ERROR = "error"
 }
 
 data class JsonMessageEnvelope(

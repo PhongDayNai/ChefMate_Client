@@ -3,6 +3,8 @@ package com.watb.chefmate.viewmodel
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.watb.chefmate.api.SessionRepository
+import com.watb.chefmate.data.AuthSessionPayload
 import com.watb.chefmate.data.UserData
 import com.watb.chefmate.helper.DataStoreHelper
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,31 +20,36 @@ class UserViewModel : ViewModel() {
 
     fun isLoggedIn(context: Context, onFinished: () -> Unit = {}) {
         viewModelScope.launch {
-            _isLoggedIn.value = DataStoreHelper.isLoggedIn(context)
+            _isLoggedIn.value = SessionRepository.isLoggedIn()
             if (_isLoggedIn.value) {
                 getUserData(context) {
                     onFinished()
                 }
+            } else {
+                _user.value = null
             }
         }
     }
 
     fun saveLoginState(context: Context, userData: UserData, onFinished: () -> Unit = {}) {
         viewModelScope.launch {
-            DataStoreHelper.saveLoginState(
-                context = context,
-                isLoggedIn = true,
-                userId = userData.userId,
-                username = userData.fullName,
-                email = userData.email,
-                phoneNumber = userData.phone,
-                followCount = userData.followCount,
-                recipeCount = userData.recipeCount,
-                createdAt = userData.createdAt
-            )
+            DataStoreHelper.saveUserProfile(context, userData, isLoggedIn = true)
             isLoggedIn(context) {
                 onFinished()
             }
+        }
+    }
+
+    fun saveAuthenticatedSession(
+        context: Context,
+        session: AuthSessionPayload,
+        onFinished: () -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            SessionRepository.saveAuthenticatedSession(session)
+            _user.value = session.user
+            _isLoggedIn.value = true
+            onFinished()
         }
     }
 
@@ -55,7 +62,7 @@ class UserViewModel : ViewModel() {
 
     fun logout(context: Context) {
         viewModelScope.launch {
-            DataStoreHelper.clearLoginState(context)
+            SessionRepository.clearSession()
             _isLoggedIn.value = false
             _user.value = null
         }

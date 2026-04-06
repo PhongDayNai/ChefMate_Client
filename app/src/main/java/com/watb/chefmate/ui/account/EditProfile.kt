@@ -420,26 +420,20 @@ fun EditPersonalInformation(
                                 email = emailNew.trim(),
                                 phoneNumber = phoneNumberNew.trim()
                             )
-                            if (response != null) {
-                                if (response.success) {
-                                    if (response.data != null) {
-                                        withContext(Dispatchers.Main) {
-                                            onSuccessfulChange(response.data)
-                                            Toast.makeText(context, "Cập nhật thành công", Toast.LENGTH_SHORT).show()
-                                        }
-                                    } else {
-                                        withContext(Dispatchers.Main) {
-                                            Toast.makeText(context, "Không có thay đổi nào, vui lòng kiểm tra lại", Toast.LENGTH_SHORT).show()
-                                        }
+                            if (response.success) {
+                                if (response.data != null) {
+                                    withContext(Dispatchers.Main) {
+                                        onSuccessfulChange(response.data)
+                                        Toast.makeText(context, "Cập nhật thành công", Toast.LENGTH_SHORT).show()
                                     }
                                 } else {
                                     withContext(Dispatchers.Main) {
-                                        Toast.makeText(context, "Có lỗi xảy ra, vui lòng thử lại", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, "Không có thay đổi nào, vui lòng kiểm tra lại", Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             } else {
                                 withContext(Dispatchers.Main) {
-                                    Toast.makeText(context, "Có lỗi xảy ra, vui lòng thử lại", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, response.message ?: "Có lỗi xảy ra, vui lòng thử lại", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         } else {
@@ -684,19 +678,13 @@ fun EditPassword(
                                 currentPassword = currentPassword.trim(),
                                 newPassword = newPassword.trim()
                             )
-                            if (response != null) {
-                                if (response.success) {
-                                    if (response.data != null) {
-                                        currentPassword = ""
-                                        newPassword = ""
-                                        confirmNewPassword = ""
-                                        Toast.makeText(context, "Đổi mật khẩu thành công", Toast.LENGTH_SHORT).show()
-                                    }
-                                } else {
-                                    Toast.makeText(context, "Đổi mật khẩu thất bại", Toast.LENGTH_SHORT).show()
-                                }
+                            if (response.success) {
+                                currentPassword = ""
+                                newPassword = ""
+                                confirmNewPassword = ""
+                                Toast.makeText(context, "Đổi mật khẩu thành công", Toast.LENGTH_SHORT).show()
                             } else {
-                                Toast.makeText(context, "Đổi mật khẩu thất bại", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, response.message ?: "Đổi mật khẩu thất bại", Toast.LENGTH_SHORT).show()
                             }
                             withContext(Dispatchers.Main) { onChangeLoading(false) }
                         }

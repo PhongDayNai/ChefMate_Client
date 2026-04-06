@@ -25,6 +25,23 @@ val LAST_SHOPPING_ID = intPreferencesKey("last_shopping_id")
 val IS_FINISHED_SHOPPING = booleanPreferencesKey("is_finished_shopping")
 
 object DataStoreHelper {
+    suspend fun saveUserProfile(
+        context: Context,
+        userData: UserData,
+        isLoggedIn: Boolean = true
+    ) {
+        context.dataStore.edit { preferences ->
+            preferences[IS_LOGGED_IN] = isLoggedIn
+            preferences[USER_ID] = userData.userId
+            preferences[USERNAME] = userData.fullName
+            preferences[EMAIL] = userData.email
+            preferences[PHONE_NUMBER] = userData.phone
+            preferences[FOLLOW_COUNT] = userData.followCount
+            preferences[RECIPE_COUNT] = userData.recipeCount
+            preferences[CREATED_AT] = userData.createdAt
+        }
+    }
+
     suspend fun isLoggedIn(context: Context): Boolean {
         val preferences = context.dataStore.data.first()
         return preferences[IS_LOGGED_IN] ?: false
@@ -41,16 +58,19 @@ object DataStoreHelper {
         recipeCount: Int,
         createdAt: String
     ) {
-        context.dataStore.edit { preferences ->
-            preferences[IS_LOGGED_IN] = isLoggedIn
-            preferences[USER_ID] = userId
-            preferences[USERNAME] = username
-            preferences[EMAIL] = email
-            preferences[PHONE_NUMBER] = phoneNumber
-            preferences[FOLLOW_COUNT] = followCount
-            preferences[RECIPE_COUNT] = recipeCount
-            preferences[CREATED_AT] = createdAt
-        }
+        saveUserProfile(
+            context = context,
+            userData = UserData(
+                userId = userId,
+                fullName = username,
+                phone = phoneNumber,
+                email = email,
+                followCount = followCount,
+                recipeCount = recipeCount,
+                createdAt = createdAt
+            ),
+            isLoggedIn = isLoggedIn
+        )
     }
 
     suspend fun getUserData(context: Context): UserData {

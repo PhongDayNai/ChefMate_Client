@@ -1,5 +1,29 @@
 import java.io.FileInputStream
 import java.util.Properties
+import org.gradle.api.GradleException
+
+val localPropertiesFile = rootProject.file("local.properties")
+val localProperties = Properties().apply {
+    if (localPropertiesFile.exists()) {
+        load(FileInputStream(localPropertiesFile))
+    }
+}
+
+fun requireLocalProperty(name: String): String {
+    val value = localProperties.getProperty(name)?.trim()
+    if (value.isNullOrEmpty()) {
+        throw GradleException("Missing required property `$name` in local.properties")
+    }
+    return value
+}
+
+fun String.asBuildConfigString(): String {
+    val escaped = replace("\\", "\\\\").replace("\"", "\\\"")
+    return "\"$escaped\""
+}
+
+val apiBaseUrl = requireLocalProperty("CHEFMATE_API_BASE_URL")
+val chatApiKey = requireLocalProperty("CHEFMATE_CHAT_API_KEY")
 
 plugins {
     alias(libs.plugins.android.application)
@@ -20,22 +44,18 @@ android {
         versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "API_BASE_URL", apiBaseUrl.asBuildConfigString())
+        buildConfigField("String", "CHAT_API_KEY", chatApiKey.asBuildConfigString())
     }
 
     signingConfigs {
         create("release") {
-            val keystorePropertiesFile = rootProject.file("local.properties")
-            val keystoreProperties = Properties()
-            if (keystorePropertiesFile.exists()) {
-                keystoreProperties.load(FileInputStream(keystorePropertiesFile))
-            }
-
-            val resolvedStorePassword = keystoreProperties.getProperty("KEYSTORE_PASSWORD", "")
-            val resolvedKeyPassword = keystoreProperties.getProperty("KEY_PASSWORD", resolvedStorePassword)
+            val resolvedStorePassword = localProperties.getProperty("KEYSTORE_PASSWORD", "")
+            val resolvedKeyPassword = localProperties.getProperty("KEY_PASSWORD", resolvedStorePassword)
 
             storeFile = file("../defaultprojectkey.jks")
             storePassword = resolvedStorePassword
-            keyAlias = keystoreProperties.getProperty("KEY_ALIAS", "defaultprojectkey")
+            keyAlias = localProperties.getProperty("KEY_ALIAS", "defaultprojectkey")
             keyPassword = resolvedKeyPassword
         }
     }
@@ -60,6 +80,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -86,6 +107,7 @@ dependencies {
 
     implementation(libs.androidx.datastore.core.android)
     implementation("androidx.datastore:datastore-preferences:1.1.7")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

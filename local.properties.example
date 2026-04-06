@@ -1,0 +1,10 @@
+## Copy these keys into your local.properties file before building.
+## Do not commit real values.
+
+CHEFMATE_API_BASE_URL=https\://your-api-host.example.com
+CHEFMATE_CHAT_API_KEY=replace-with-chat-api-key
+
+# Optional local signing config
+KEY_ALIAS=projectkey
+KEYSTORE_PASSWORD=
+KEY_PASSWORD=

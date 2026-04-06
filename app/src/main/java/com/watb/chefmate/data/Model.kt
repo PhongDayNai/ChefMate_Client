@@ -87,9 +87,30 @@ data class ChangePasswordRequest(
     val newPassword: String
 )
 
-data class LoginResponse(
+data class RefreshTokenRequest(
+    val refreshToken: String
+)
+
+data class AuthSessionPayload(
+    val accessToken: String,
+    val refreshToken: String,
+    val user: UserData
+)
+
+data class AuthResponse(
+    val success: Boolean,
+    val data: AuthSessionPayload? = null,
+    val message: String? = null
+)
+
+data class UserProfileResponse(
     val success: Boolean,
     val data: UserData? = null,
+    val message: String? = null
+)
+
+data class SimpleResponse(
+    val success: Boolean,
     val message: String? = null
 )
 

@@ -303,16 +303,31 @@ fun SignUpScreen(
                                             email = email.value.trim(),
                                             password = password.value.trim()
                                         )
-                                        if (response != null) {
-                                            if (response.data != null) {
-                                                userViewModel.saveLoginState(context, response.data)
+                                        if (response.success) {
+                                            val session = response.data ?: ApiClient.login(
+                                                identifier = phoneNumber.value.trim(),
+                                                password = password.value.trim()
+                                            ).data
+
+                                            if (session != null) {
+                                                userViewModel.saveAuthenticatedSession(context, session)
                                                 navController.navigate("mainAct") {
                                                     popUpTo("signUp") {
                                                         inclusive = true
                                                     }
                                                 }
+                                            } else {
+                                                Toast.makeText(context, "Đăng ký thành công, vui lòng đăng nhập lại", Toast.LENGTH_SHORT).show()
+                                                navController.navigate("signIn") {
+                                                    popUpTo("signUp") {
+                                                        inclusive = true
+                                                    }
+                                                }
                                             }
+                                        } else {
+                                            Toast.makeText(context, response.message ?: "Đăng ký thất bại", Toast.LENGTH_SHORT).show()
                                         }
+                                        isLoading = false
                                     }
                                 } else {
                                     isLoading = false

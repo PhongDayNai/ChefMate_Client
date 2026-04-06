@@ -61,6 +61,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -84,11 +85,19 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.watb.chefmate.R
 import com.watb.chefmate.api.ApiClient
+import com.watb.chefmate.data.ChatMessageKind
 import com.watb.chefmate.data.ChatRole
 import com.watb.chefmate.data.ChatUiMessage
 import com.watb.chefmate.data.DietNote
 import com.watb.chefmate.data.DietNoteType
 import com.watb.chefmate.data.DietNoteUpsertRequest
+import com.watb.chefmate.data.MealCompletionAction
+import com.watb.chefmate.data.MealCompletionType
+import com.watb.chefmate.data.MealRecipeState
+import com.watb.chefmate.data.MealRecipeStatus
+import com.watb.chefmate.data.MealSessionUiState
+import com.watb.chefmate.data.PendingResolveAction
+import com.watb.chefmate.data.PromptStatus
 import com.watb.chefmate.data.Recommendation
 import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.data.ResolveAction
@@ -99,6 +108,7 @@ import com.watb.chefmate.viewmodel.UserViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -126,20 +136,39 @@ fun BepesChatScreen(
     var editingDietNote by remember { mutableStateOf<DietNote?>(null) }
     var showDietNoteEditor by remember { mutableStateOf(false) }
     var showCompleteDialog by remember { mutableStateOf(false) }
+    var showRecipeBrowserSheet by remember { mutableStateOf(false) }
+    var selectedRecipePreview by remember { mutableStateOf<Recipe?>(null) }
+    var recipeBrowserItems by remember { mutableStateOf<List<Recipe>>(emptyList()) }
     var selectedRecipeForConfirm by remember { mutableStateOf<Recommendation?>(null) }
     var isResolvingRecipe by remember { mutableStateOf(false) }
+    var completionType by remember { mutableStateOf(MealCompletionType.COMPLETED) }
+    var markRemainingStatus by remember { mutableStateOf<String?>(MealRecipeStatus.DONE) }
+    var completionNote by remember { mutableStateOf("") }
 
-    val allRecommendations = remember(homeState.recommendations, homeState.readyToCook, homeState.almostReady) {
-        val merged = homeState.recommendations + homeState.readyToCook + homeState.almostReady
+    val allRecommendations = remember(
+        homeState.recommendations,
+        homeState.readyToCook,
+        homeState.almostReady,
+        homeState.trendingSuggestions
+    ) {
+        val merged = homeState.recommendations +
+            homeState.readyToCook +
+            homeState.almostReady +
+            homeState.trendingSuggestions
         merged
             .filter { it.recipeId > 0 }
             .distinctBy { it.recipeId }
     }
 
-    val currentActiveRecipeId = chatState.currentSession?.activeRecipeId
+    val currentActiveRecipeId = chatState.mealSession.activeRecipeId ?: chatState.currentSession?.activeRecipeId
+    val mealRecipes = chatState.mealItems.ifEmpty { chatState.currentSession?.recipes.orEmpty() }
+    val activeMealRecipe = remember(currentActiveRecipeId, mealRecipes) {
+        mealRecipes.firstOrNull { it.recipeId == currentActiveRecipeId }
+    }
     val selectedRecommendation = remember(currentActiveRecipeId, allRecommendations) {
         allRecommendations.firstOrNull { it.recipeId == currentActiveRecipeId }
     }
+    val selectedRecipeName = activeMealRecipe?.recipeName ?: selectedRecommendation?.recipeName
     val hasSelectedRecipe = selectedRecommendation != null || (currentActiveRecipeId != null && currentActiveRecipeId > 0)
     var showContextActions by remember(hasSelectedRecipe) { mutableStateOf(!hasSelectedRecipe) }
 
@@ -158,13 +187,14 @@ fun BepesChatScreen(
         homeState.dietNotes.filter { it.isActive }
     }
 
-    LaunchedEffect(isLoggedIn, user?.userId, recipeId) {
+    LaunchedEffect(isLoggedIn, user?.userId, recipeId, chatState.historyMode) {
         if (isLoggedIn && user != null) {
-            appFlowViewModel.refreshHomeContext(user!!.userId)
-            appFlowViewModel.bootstrapUnifiedTimeline(
-                userId = user!!.userId,
-                activeRecipeId = recipeId.takeIf { it > 0 }
-            )
+            if (!chatState.historyMode) {
+                appFlowViewModel.bootstrapUnifiedTimeline(
+                    userId = user!!.userId,
+                    activeRecipeId = recipeId.takeIf { it > 0 }
+                )
+            }
         }
     }
 
@@ -214,6 +244,34 @@ fun BepesChatScreen(
             }
     }
 
+    val composerLockedByPrompt = chatState.pendingMealPolicyPrompt?.status in listOf(
+        PromptStatus.PENDING,
+        PromptStatus.LOADING
+    )
+    val sessionClosed = chatState.mealSession.uiClosed || chatState.currentSession?.uiClosed == true
+    val hasDraftSession = chatState.currentSessionId != null && currentActiveRecipeId != null && currentActiveRecipeId > 0
+    val canCompleteSession = chatState.currentSessionId != null &&
+        chatState.timeline.any { message ->
+            message.chatSessionId == chatState.currentSessionId &&
+                message.role == ChatRole.USER &&
+                message.kind == ChatMessageKind.TEXT &&
+                !message.isPending &&
+                !message.isFailed
+        }
+    val composerEnabled = isLoggedIn &&
+        user != null &&
+        !chatState.historyMode &&
+        hasDraftSession &&
+        !sessionClosed &&
+        !composerLockedByPrompt
+    val composerPlaceholder = when {
+        chatState.historyMode -> "Phiên lịch sử chỉ để xem lại"
+        !hasDraftSession -> "Chọn món xong mới có thể chat"
+        sessionClosed -> "Phiên nấu đã hoàn tất"
+        composerLockedByPrompt -> "Hãy xử lý prompt hiện tại trước"
+        else -> "Nhắn Bepes..."
+    }
+
     chatState.errorMessage?.let { message ->
         LaunchedEffect(message) {
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
@@ -222,7 +280,14 @@ fun BepesChatScreen(
     }
 
     val openCompleteDialog = {
-        if (chatState.currentSessionId != null) {
+        if (chatState.historyMode) {
+            Toast.makeText(context, "Phiên lịch sử chỉ xem lại, không thể cập nhật trực tiếp", Toast.LENGTH_SHORT).show()
+        } else if (!canCompleteSession) {
+            Toast.makeText(context, "Chưa có hội thoại trong phiên này, chưa thể hoàn thành", Toast.LENGTH_SHORT).show()
+        } else if (chatState.currentSessionId != null) {
+            completionType = MealCompletionType.COMPLETED
+            markRemainingStatus = MealRecipeStatus.DONE
+            completionNote = ""
             showCompleteDialog = true
         } else {
             Toast.makeText(context, "Chưa có cuộc trò chuyện để hoàn thành", Toast.LENGTH_SHORT).show()
@@ -257,12 +322,13 @@ fun BepesChatScreen(
                 ) {
                     IconButton(
                         onClick = openCompleteDialog,
+                        enabled = canCompleteSession,
                         modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_tick_square),
                             contentDescription = "Hoàn thành",
-                            tint = Color.White,
+                            tint = if (canCompleteSession) Color.White else Color.White.copy(alpha = 0.45f),
                             modifier = Modifier.size(22.dp)
                         )
                     }
@@ -277,8 +343,8 @@ fun BepesChatScreen(
             )
         } else {
             SessionContextSection(
-                selectedRecipe = selectedRecommendation,
-                activeRecipeId = currentActiveRecipeId,
+                selectedRecipeName = selectedRecipeName,
+                mealRecipes = mealRecipes,
                 activeDietNotes = activeDietNotes,
                 onOpenPicker = {
                     appFlowViewModel.refreshRecommendations(user!!.userId)
@@ -290,23 +356,23 @@ fun BepesChatScreen(
                 },
                 onComplete = openCompleteDialog,
                 onOpenRecipe = {
-                    val selected = selectedRecommendation
-                    if (selected == null || selected.recipeName.isBlank()) {
+                    if (mealRecipes.isEmpty()) {
                         Toast.makeText(context, "Hãy chọn món trước khi mở công thức", Toast.LENGTH_SHORT).show()
                     } else {
                         coroutineScope.launch {
                             isResolvingRecipe = true
-                            val response = ApiClient.searchRecipe(
-                                recipeName = selected.recipeName,
-                                userId = user?.userId
-                            )
-                            val matchedRecipe = response?.data
-                                ?.firstOrNull { recipe -> recipe.recipeId == selected.recipeId }
-                                ?: response?.data?.firstOrNull()
-
+                            val response = ApiClient.getAllRecipes()
                             isResolvingRecipe = false
-                            if (matchedRecipe != null) {
-                                onOpenRecipe(matchedRecipe)
+                            val items = response?.data
+                                ?.filter { recipe -> mealRecipes.any { it.recipeId == recipe.recipeId } }
+                                .orEmpty()
+
+                            if (items.isNotEmpty()) {
+                                recipeBrowserItems = items.sortedBy { recipe ->
+                                    mealRecipes.indexOfFirst { it.recipeId == recipe.recipeId }.takeIf { it >= 0 } ?: Int.MAX_VALUE
+                                }
+                                selectedRecipePreview = null
+                                showRecipeBrowserSheet = true
                             } else {
                                 Toast.makeText(context, "Không tìm thấy công thức phù hợp", Toast.LENGTH_SHORT).show()
                             }
@@ -314,12 +380,24 @@ fun BepesChatScreen(
                     }
                 },
                 isResolvingRecipe = isResolvingRecipe,
-                showActionButtons = showContextActions,
+                canCompleteSession = canCompleteSession,
+                showActionButtons = showContextActions && !chatState.historyMode,
                 onToggleActionButtons = { showContextActions = !showContextActions },
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
             )
 
-            val sendCurrentMessage = {
+            val sendCurrentMessage = send@{
+                if (!composerEnabled) {
+                    val error = when {
+                        chatState.historyMode -> "Phiên lịch sử chỉ xem lại, hãy mở phiên nấu mới để tiếp tục"
+                        !hasDraftSession -> "Chọn món xong mới có thể chat"
+                        sessionClosed -> "Phiên này đã hoàn tất"
+                        composerLockedByPrompt -> "Hãy xử lý prompt hiện tại trước"
+                        else -> "Chưa thể gửi tin nhắn lúc này"
+                    }
+                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                    return@send
+                }
                 val message = messageInput.trim()
                 if (message.isNotEmpty() && !chatState.sending) {
                     appFlowViewModel.sendMessage(user!!.userId, message)
@@ -334,7 +412,7 @@ fun BepesChatScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 14.dp)
             ) {
-                if (chatState.loadingTimeline) {
+                if (chatState.loadingTimeline && chatState.timeline.isEmpty()) {
                     item {
                         Box(
                             contentAlignment = Alignment.Center,
@@ -348,6 +426,20 @@ fun BepesChatScreen(
                                 strokeWidth = 2.dp
                             )
                         }
+                    }
+                }
+
+                if (!chatState.loadingTimeline && chatState.timeline.isEmpty()) {
+                    item(key = "empty_state") {
+                        EmptyTimelineCard(
+                            text = if (sessionClosed) {
+                                "Phiên nấu đã hoàn tất. Bạn có thể xem lại lịch sử ở đây."
+                            } else if (!hasDraftSession) {
+                                "Chọn món để tạo phiên nấu mới, sau đó mới có thể trò chuyện với Bepes."
+                            } else {
+                                "Chưa có tin nhắn nào. Nhấn gửi để bắt đầu trò chuyện với Bepes."
+                            }
+                        )
                     }
                 }
 
@@ -367,10 +459,34 @@ fun BepesChatScreen(
                         SessionDivider(text = sessionDividerText(message.createdAt))
                     }
 
-                    ChatBubble(message)
+                    ChatBubble(
+                        message = message,
+                        isActionRunning = chatState.sending || chatState.mealSyncing,
+                        onRetry = {
+                            appFlowViewModel.retryMessage(user!!.userId, message.localId)
+                        },
+                        onPromptAction = { action ->
+                            when (action.id) {
+                                MealCompletionAction.ADD_MORE_RECIPES -> {
+                                    appFlowViewModel.resolveMealPolicyPrompt(user!!.userId, action.id)
+                                    appFlowViewModel.refreshRecommendations(user!!.userId)
+                                    showRecipePicker = true
+                                }
+                                MealCompletionAction.COMPLETE_SESSION -> {
+                                    openCompleteDialog()
+                                }
+                                else -> {
+                                    appFlowViewModel.resolveMealPolicyPrompt(
+                                        userId = user!!.userId,
+                                        action = action.id
+                                    )
+                                }
+                            }
+                        }
+                    )
                 }
 
-                if (chatState.sending) {
+                if (chatState.sending && !chatState.timeline.any { it.kind == ChatMessageKind.PROMPT && it.promptStatus == PromptStatus.LOADING }) {
                     item(key = "typing_indicator") {
                         TypingIndicatorBubble()
                     }
@@ -388,8 +504,12 @@ fun BepesChatScreen(
             ) {
                 CustomTextField(
                     value = messageInput,
-                    onValueChange = { messageInput = it },
-                    placeholder = "Nhắn Bepes...",
+                    onValueChange = {
+                        if (composerEnabled) {
+                            messageInput = it
+                        }
+                    },
+                    placeholder = composerPlaceholder,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                     keyboardActions = KeyboardActions(onSend = { sendCurrentMessage() }),
                     trailingIcon = {
@@ -399,7 +519,7 @@ fun BepesChatScreen(
                             Icon(
                                 painter = painterResource(R.drawable.ic_send),
                                 contentDescription = "Gửi",
-                                tint = if (chatState.sending) Color(0xFF9CA3AF) else Color(0xFFF97316)
+                                tint = if (composerEnabled && !chatState.sending) Color(0xFFF97316) else Color(0xFF9CA3AF)
                             )
                         }
                     },
@@ -418,9 +538,27 @@ fun BepesChatScreen(
         ) {
             RecipePickerSheet(
                 isLoading = homeState.isLoading || homeState.isRefreshingRecommendations,
+                currentMealRecipes = mealRecipes,
+                activeRecipeId = currentActiveRecipeId,
                 readyToCook = readyToCook,
                 almostReady = almostReady,
                 unavailable = unavailable,
+                onMoveRecipe = { recipeId, direction ->
+                    appFlowViewModel.moveMealRecipe(user!!.userId, recipeId, direction)
+                },
+                onRemoveRecipe = { recipeId ->
+                    appFlowViewModel.removeRecipeFromCurrentSession(user!!.userId, recipeId)
+                },
+                onSetPrimaryRecipe = { recipeId ->
+                    appFlowViewModel.setMealPrimaryRecipe(user!!.userId, recipeId)
+                },
+                onUpdateRecipeStatus = { recipeId, status ->
+                    appFlowViewModel.updateMealRecipeStatus(
+                        userId = user!!.userId,
+                        recipeId = recipeId,
+                        status = status
+                    )
+                },
                 onSelectRecipe = { selected ->
                     selectedRecipeForConfirm = selected
                 },
@@ -565,21 +703,86 @@ fun BepesChatScreen(
             onDismissRequest = { showCompleteDialog = false },
             title = {
                 Text(
-                    text = "Bạn đã nấu xong món này chưa?",
+                    text = "Hoàn tất phiên nấu",
                     fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
                 )
             },
             text = {
-                Text(
-                    text = "Nếu đã xong, Bepes sẽ ghi nhận hoàn thành món và bắt đầu cuộc trò chuyện mới.",
-                    fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "Chọn cách đóng phiên và cách xử lý các món còn lại.",
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
+                    )
+
+                    Text(
+                        text = "Kiểu hoàn tất",
+                        color = Color(0xFF374151),
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ContextActionChip(
+                            text = "Completed",
+                            onClick = { completionType = MealCompletionType.COMPLETED },
+                            containerColor = if (completionType == MealCompletionType.COMPLETED) Color(0xFFD1FAE5) else Color(0xFFF3F4F6),
+                            textColor = if (completionType == MealCompletionType.COMPLETED) Color(0xFF166534) else Color(0xFF6B7280),
+                            modifier = Modifier.weight(1f)
+                        )
+                        ContextActionChip(
+                            text = "Abandoned",
+                            onClick = { completionType = MealCompletionType.ABANDONED },
+                            containerColor = if (completionType == MealCompletionType.ABANDONED) Color(0xFFFEE2E2) else Color(0xFFF3F4F6),
+                            textColor = if (completionType == MealCompletionType.ABANDONED) Color(0xFFB91C1C) else Color(0xFF6B7280),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    Text(
+                        text = "Xử lý món còn lại",
+                        color = Color(0xFF374151),
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf(
+                            "done" to "Đánh dấu tất cả là xong",
+                            "skipped" to "Đánh dấu tất cả là bỏ qua",
+                            null to "Giữ nguyên trạng thái hiện tại"
+                        ).forEach { (value, label) ->
+                            ContextActionChip(
+                                text = label,
+                                onClick = { markRemainingStatus = value },
+                                containerColor = if (markRemainingStatus == value) Color(0xFFFFEDD5) else Color(0xFFF3F4F6),
+                                textColor = if (markRemainingStatus == value) Color(0xFFF97316) else Color(0xFF6B7280),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = "Ghi chú",
+                        color = Color(0xFF374151),
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                    )
+                    CustomTextField(
+                        value = completionNote,
+                        onValueChange = { completionNote = it },
+                        placeholder = "Ví dụ: Đã nấu xong, dọn bếp xong",
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             },
             confirmButton = {
                 Button(
                     onClick = {
                         showCompleteDialog = false
-                        appFlowViewModel.completeCurrentSession(user!!.userId)
+                        appFlowViewModel.completeCurrentSession(
+                            userId = user!!.userId,
+                            completionType = completionType,
+                            markRemainingStatus = markRemainingStatus,
+                            note = completionNote.trim().ifBlank { null }
+                        )
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF97316))
                 ) {
@@ -602,6 +805,83 @@ fun BepesChatScreen(
                     )
                 }
             }
+        )
+    }
+
+    if (showRecipeBrowserSheet && user != null) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = {
+                showRecipeBrowserSheet = false
+                selectedRecipePreview = null
+            },
+            sheetState = sheetState,
+            containerColor = Color(0xFFFFFBF5)
+        ) {
+            RecipeBrowserSheet(
+                recipes = recipeBrowserItems,
+                selectedRecipe = selectedRecipePreview,
+                onSelectRecipe = { recipe ->
+                    selectedRecipePreview = recipe
+                },
+                onBackToList = { selectedRecipePreview = null },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+        }
+    }
+
+    val pendingPrimarySwitch = chatState.pendingPrimaryRecipeSwitch
+    if (pendingPrimarySwitch != null && user != null) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = {
+                Text(
+                    text = "Chọn món tiếp theo",
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Bepes cần xác nhận món focus tiếp theo sau khi bạn hoàn thành món hiện tại.",
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
+                    )
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp)
+                    ) {
+                        pendingPrimarySwitch.nextPrimaryCandidates.forEach { candidateId ->
+                            val label = allRecommendations.firstOrNull { it.recipeId == candidateId }?.recipeName
+                                ?: "Món #$candidateId"
+                            Button(
+                                onClick = {
+                                    appFlowViewModel.updateMealRecipeStatus(
+                                        userId = user!!.userId,
+                                        recipeId = pendingPrimarySwitch.recipeId,
+                                        status = MealRecipeStatus.DONE,
+                                        confirmSwitchPrimary = true,
+                                        nextPrimaryRecipeId = candidateId
+                                    )
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF97316)),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = label,
+                                    color = Color.White,
+                                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {}
         )
     }
 
@@ -767,14 +1047,15 @@ private fun TypingDot(alpha: Float) {
 
 @Composable
 private fun SessionContextSection(
-    selectedRecipe: Recommendation?,
-    activeRecipeId: Int?,
+    selectedRecipeName: String?,
+    mealRecipes: List<MealRecipeState>,
     activeDietNotes: List<DietNote>,
     onOpenPicker: () -> Unit,
     onOpenNotes: () -> Unit,
     onOpenRecipe: () -> Unit,
     onComplete: () -> Unit,
     isResolvingRecipe: Boolean,
+    canCompleteSession: Boolean,
     showActionButtons: Boolean,
     onToggleActionButtons: () -> Unit,
     modifier: Modifier = Modifier
@@ -791,8 +1072,7 @@ private fun SessionContextSection(
                 .animateContentSize()
         ) {
             val recipeText = when {
-                selectedRecipe != null -> selectedRecipe.recipeName
-                activeRecipeId != null && activeRecipeId > 0 -> "Món đã chọn #$activeRecipeId"
+                !selectedRecipeName.isNullOrBlank() -> selectedRecipeName
                 else -> "Chưa chọn món"
             }
 
@@ -820,6 +1100,22 @@ private fun SessionContextSection(
                         fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                         modifier = Modifier.padding(top = 4.dp)
                     )
+
+                    if (mealRecipes.isNotEmpty()) {
+                        Card(
+                            shape = RoundedCornerShape(999.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            modifier = Modifier.padding(top = 8.dp)
+                        ) {
+                            Text(
+                                text = "${mealRecipes.size} món",
+                                color = Color(0xFF374151),
+                                fontSize = 11.sp,
+                                fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
                 }
 
                 ContextActionsToggleButton(
@@ -841,7 +1137,7 @@ private fun SessionContextSection(
                             .padding(top = 8.dp)
                     ) {
                         ContextActionChip(
-                            text = "Chọn món",
+                            text = if (mealRecipes.isEmpty()) "Chọn món" else "Món ăn",
                             onClick = onOpenPicker,
                             modifier = Modifier.weight(1f)
                         )
@@ -871,6 +1167,7 @@ private fun SessionContextSection(
                         ContextActionChip(
                             text = "Hoàn thành",
                             onClick = onComplete,
+                            enabled = canCompleteSession,
                             containerColor = Color(0xFFD1FAE5),
                             textColor = Color(0xFF166534),
                             borderColor = Color(0xFF86EFAC),
@@ -954,38 +1251,150 @@ private fun ContextActionChip(
 }
 
 @Composable
+private fun MiniActionButton(
+    text: String,
+    containerColor: Color = Color(0xFFF3F4F6),
+    textColor: Color = Color(0xFF4B5563),
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        shape = RoundedCornerShape(999.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor)
+    ) {
+        Text(
+            text = text,
+            color = textColor,
+            fontSize = 11.sp,
+            fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+        )
+    }
+}
+
+@Composable
+private fun EmptyTimelineCard(text: String) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7ED)),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 18.dp)
+    ) {
+        Text(
+            text = text,
+            color = Color(0xFF6B7280),
+            fontSize = 14.sp,
+            fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 16.dp)
+        )
+    }
+}
+
+@Composable
 private fun RecipePickerSheet(
     isLoading: Boolean,
+    currentMealRecipes: List<MealRecipeState>,
+    activeRecipeId: Int?,
     readyToCook: List<Recommendation>,
     almostReady: List<Recommendation>,
     unavailable: List<Recommendation>,
     onRefresh: () -> Unit,
+    onMoveRecipe: (Int, Int) -> Unit,
+    onRemoveRecipe: (Int) -> Unit,
+    onSetPrimaryRecipe: (Int) -> Unit,
+    onUpdateRecipeStatus: (Int, String) -> Unit,
     onSelectRecipe: (Recommendation) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var expandReady by remember { mutableStateOf(true) }
-    var expandAlmost by remember { mutableStateOf(true) }
-    var expandUnavailable by remember { mutableStateOf(true) }
+    val scrollState = rememberScrollState()
+    var expandReady by remember(readyToCook.isNotEmpty(), almostReady.isNotEmpty(), unavailable.isNotEmpty()) {
+        mutableStateOf(readyToCook.isNotEmpty() || almostReady.isNotEmpty())
+    }
+    var expandAlmost by remember(readyToCook.isNotEmpty(), almostReady.isNotEmpty(), unavailable.isNotEmpty()) {
+        mutableStateOf(readyToCook.isNotEmpty() || almostReady.isNotEmpty())
+    }
+    var expandUnavailable by remember(readyToCook.isNotEmpty(), almostReady.isNotEmpty(), unavailable.isNotEmpty()) {
+        mutableStateOf(readyToCook.isEmpty() && almostReady.isEmpty() && unavailable.isNotEmpty())
+    }
 
-    Column(modifier = modifier.padding(bottom = 18.dp)) {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+    Column(
+        modifier = modifier
+            .padding(bottom = 18.dp)
+            .verticalScroll(scrollState)
+            .animateContentSize()
+    ) {
+        Card(
+            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(
-                text = "Chọn món cho Bepes",
-                color = Color(0xFF111827),
-                fontSize = 18.sp,
-                fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
-            )
-            Text(
-                text = "Làm mới",
-                color = Color(0xFFF97316),
-                fontSize = 13.sp,
-                fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
-                modifier = Modifier.clickable(onClick = onRefresh)
-            )
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Chọn món cho phiên chat",
+                            color = Color(0xFF111827),
+                            fontSize = 18.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                        )
+                        Text(
+                            text = "Sắp xếp thứ tự auto next, chọn món ưu tiên hiện tại và thêm món từ gợi ý tủ lạnh.",
+                            color = Color(0xFF6B7280),
+                            fontSize = 11.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                    Text(
+                        text = "Làm mới",
+                        color = Color(0xFFF97316),
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                        modifier = Modifier.padding(start = 12.dp).clickable(onClick = onRefresh)
+                    )
+                }
+
+                if (currentMealRecipes.isNotEmpty()) {
+                    HorizontalDivider(
+                        color = Color(0xFFF3E8D6),
+                        modifier = Modifier.padding(top = 14.dp, bottom = 12.dp)
+                    )
+
+                    Text(
+                        text = "Danh sách món đã chọn",
+                        color = Color(0xFF111827),
+                        fontSize = 15.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                    )
+                    Text(
+                        text = "Thứ tự ở đây là thứ tự ưu tiên auto next.",
+                        color = Color(0xFF8B7355),
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+
+                    currentMealRecipes.sortedBy { it.sortOrder }.forEachIndexed { index, recipe ->
+                        val isPrimary = recipe.recipeId == activeRecipeId || recipe.isPrimary
+                        SelectedMealRecipeEditorCard(
+                            index = index,
+                            recipe = recipe,
+                            isPrimary = isPrimary,
+                            onMoveUp = { onMoveRecipe(recipe.recipeId, -1) },
+                            onMoveDown = { onMoveRecipe(recipe.recipeId, 1) },
+                            onRemove = { onRemoveRecipe(recipe.recipeId) },
+                            onSetPrimary = { onSetPrimaryRecipe(recipe.recipeId) },
+                            onUpdateStatus = { status -> onUpdateRecipeStatus(recipe.recipeId, status) },
+                            modifier = Modifier.padding(top = 10.dp)
+                        )
+                    }
+                }
+            }
         }
 
         if (isLoading) {
@@ -1000,9 +1409,56 @@ private fun RecipePickerSheet(
             return
         }
 
+        AddMoreDivider(modifier = Modifier.padding(top = 14.dp))
+
+        Card(
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 14.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp)
+            ) {
+                Card(
+                    shape = CircleShape,
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        Text(
+                            text = "+",
+                            color = Color(0xFFF59E0B),
+                            fontSize = 16.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Text(
+                        text = "Chọn món để bắt đầu nấu",
+                        color = Color(0xFF111827),
+                        fontSize = 14.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                    )
+                    Text(
+                        text = "Ưu tiên các món hợp với nguyên liệu hiện có, nhưng bạn vẫn có thể chọn món từ gợi ý để bắt đầu lên kế hoạch nấu tiếp.",
+                        color = Color(0xFF6B7280),
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
+        }
+
         RecipeGroupSection(
-            title = "Sẵn sàng để nấu",
+            title = "Có thể nấu ngay",
             titleColor = Color(0xFF15803D),
+            subtitle = "Đủ nguyên liệu để bắt đầu ngay lúc này.",
             expanded = expandReady,
             onToggleExpanded = { expandReady = !expandReady },
             items = readyToCook,
@@ -1013,6 +1469,7 @@ private fun RecipePickerSheet(
         RecipeGroupSection(
             title = "Thiếu một chút",
             titleColor = Color(0xFFB45309),
+            subtitle = "Thiếu ít nguyên liệu, có thể cân nhắc thay thế hoặc mua nhanh.",
             expanded = expandAlmost,
             onToggleExpanded = { expandAlmost = !expandAlmost },
             items = almostReady,
@@ -1021,8 +1478,9 @@ private fun RecipePickerSheet(
         )
 
         RecipeGroupSection(
-            title = "Không có sẵn đồ",
+            title = "Món đề xuất",
             titleColor = Color(0xFF6B7280),
+            subtitle = "Các món đáng tham khảo thêm cho bữa hiện tại.",
             expanded = expandUnavailable,
             onToggleExpanded = { expandUnavailable = !expandUnavailable },
             items = unavailable,
@@ -1033,23 +1491,334 @@ private fun RecipePickerSheet(
 }
 
 @Composable
+private fun SelectedMealRecipeEditorCard(
+    index: Int,
+    recipe: MealRecipeState,
+    isPrimary: Boolean,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
+    onRemove: () -> Unit,
+    onSetPrimary: () -> Unit,
+    onUpdateStatus: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val statusColors = recipeStatusColors(recipe.status)
+    var statusExpanded by remember(recipe.recipeId, recipe.status) { mutableStateOf(false) }
+    val hintText = when {
+        isPrimary -> "Bepes sẽ bám theo món này trước"
+        recipe.status.equals(MealRecipeStatus.DONE, ignoreCase = true) -> "Món này đã hoàn tất"
+        recipe.status.equals(MealRecipeStatus.SKIPPED, ignoreCase = true) -> "Món này đã được bỏ qua"
+        else -> "Có thể chuyển món này lên làm focus"
+    }
+
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDFC)),
+        border = BorderStroke(1.dp, if (isPrimary) Color(0xFFF6B26B) else Color(0xFFE6DED2)),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Card(
+                    shape = CircleShape,
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F5F0)),
+                    modifier = Modifier.size(22.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_options),
+                            contentDescription = null,
+                            tint = Color(0xFFC4B5A5),
+                            modifier = Modifier.size(10.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Card(
+                    shape = RoundedCornerShape(999.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1F2A44))
+                ) {
+                    Text(
+                        text = "#${index + 1}",
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = recipe.recipeName ?: "Món #${recipe.recipeId}",
+                    color = Color(0xFF111827),
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                    maxLines = 2,
+                    modifier = Modifier.weight(1f)
+                )
+                StatusCapsule(
+                    text = if (isPrimary) "Đang ưu tiên" else "Đã chọn",
+                    containerColor = if (isPrimary) Color(0xFFD1FAE5) else Color(0xFFF3F4F6),
+                    textColor = if (isPrimary) Color(0xFF166534) else Color(0xFF6B7280)
+                )
+            }
+
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFCF6)),
+                border = BorderStroke(1.dp, Color(0xFFF3D49A)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Card(
+                        onClick = { statusExpanded = !statusExpanded },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = statusColors.background),
+                        border = BorderStroke(1.dp, statusColors.border),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
+                        ) {
+                            Text(
+                                text = recipeStatusLabel(recipe.status),
+                                color = statusColors.text,
+                                fontSize = 13.sp,
+                                fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                                modifier = Modifier.weight(1f)
+                            )
+                            Icon(
+                                painter = painterResource(R.drawable.ic_expand),
+                                contentDescription = null,
+                                tint = statusColors.text,
+                                modifier = Modifier
+                                    .size(14.dp)
+                                    .rotate(if (statusExpanded) 180f else 0f)
+                            )
+                        }
+                    }
+
+                    AnimatedVisibility(
+                        visible = statusExpanded,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically()
+                    ) {
+                        Column(modifier = Modifier.padding(top = 12.dp)) {
+                            Text(
+                                text = "TRẠNG THÁI MÓN",
+                                color = Color(0xFFB07A37),
+                                fontSize = 10.sp,
+                                fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                            )
+
+                            mealRecipeStatuses().forEach { status ->
+                                val optionColors = recipeStatusColors(status)
+                                val isSelected = recipe.status.equals(status, ignoreCase = true)
+                                Card(
+                                    onClick = {
+                                        statusExpanded = false
+                                        if (!isSelected) {
+                                            onUpdateStatus(status)
+                                        }
+                                    },
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (isSelected) optionColors.background else Color.White
+                                    ),
+                                    border = if (isSelected) BorderStroke(1.dp, optionColors.border) else null,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 8.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
+                                    ) {
+                                        Text(
+                                            text = recipeStatusLabel(status),
+                                            color = if (isSelected) optionColors.text else Color(0xFF374151),
+                                            fontSize = 13.sp,
+                                            fontFamily = FontFamily(
+                                                Font(
+                                                    resId = if (isSelected) R.font.roboto_bold else R.font.roboto_regular
+                                                )
+                                            ),
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        if (isSelected) {
+                                            Text(
+                                                text = "✓",
+                                                color = optionColors.text,
+                                                fontSize = 14.sp,
+                                                fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            val detailLine = listOfNotNull(
+                recipe.cookingTime?.takeIf { it.isNotBlank() },
+                recipe.ration?.let { "$it phần" }
+            ).joinToString(" • ")
+            if (detailLine.isNotBlank()) {
+                Text(
+                    text = detailLine,
+                    color = Color(0xFF6B7280),
+                    fontSize = 11.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                    modifier = Modifier.padding(top = 6.dp)
+                )
+            }
+
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isPrimary) Color(0xFFFFF6E8) else Color(0xFFF9F5F0)
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp)
+            ) {
+                Text(
+                    text = if (isPrimary) "Đang ưu tiên" else "Chọn focus",
+                    color = if (isPrimary) Color(0xFFE58B28) else Color(0xFF0F6CBD),
+                    fontSize = 11.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp)
+                )
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp)
+            ) {
+                StatusCapsule(
+                    text = hintText,
+                    containerColor = if (isPrimary) Color(0xFFFFF3E0) else Color(0xFFF9F5F0),
+                    textColor = if (isPrimary) Color(0xFFB45309) else Color(0xFF8B7355),
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                RecipeFooterIconButton(
+                    iconRes = R.drawable.ic_expand,
+                    contentDescription = "Đưa món lên",
+                    rotation = 180f,
+                    onClick = onMoveUp
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                RecipeFooterIconButton(
+                    iconRes = R.drawable.ic_expand,
+                    contentDescription = "Đưa món xuống",
+                    rotation = 0f,
+                    onClick = onMoveDown
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                RecipeFooterIconButton(
+                    iconRes = R.drawable.ic_cancel,
+                    contentDescription = "Xóa món",
+                    onClick = onRemove,
+                    containerColor = Color(0xFFFFF1F2),
+                    iconTint = Color(0xFFEF4444)
+                )
+            }
+
+            if (!isPrimary) {
+                ContextActionChip(
+                    text = "Bepes sẽ bám theo món này trước",
+                    onClick = onSetPrimary,
+                    containerColor = Color(0xFFE0F2FE),
+                    textColor = Color(0xFF0369A1),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                )
+            }
+        }
+    }
+}
+
+private fun recipeStatusLabel(status: String): String = when (status.lowercase()) {
+    MealRecipeStatus.COOKING -> "Đang nấu"
+    MealRecipeStatus.DONE -> "Đã xong"
+    MealRecipeStatus.SKIPPED -> "Đã bỏ qua"
+    MealRecipeStatus.PENDING -> "Chờ nấu"
+    else -> "Trạng thái: $status"
+}
+
+private fun mealRecipeStatuses(): List<String> = listOf(
+    MealRecipeStatus.PENDING,
+    MealRecipeStatus.COOKING,
+    MealRecipeStatus.DONE,
+    MealRecipeStatus.SKIPPED
+)
+
+private data class StatusVisuals(
+    val text: Color,
+    val border: Color,
+    val background: Color
+)
+
+private fun recipeStatusColors(status: String): StatusVisuals = when (status.lowercase()) {
+    MealRecipeStatus.COOKING -> StatusVisuals(
+        text = Color(0xFFD97706),
+        border = Color(0xFFFCD34D),
+        background = Color(0xFFFFF7ED)
+    )
+    MealRecipeStatus.DONE -> StatusVisuals(
+        text = Color(0xFF15803D),
+        border = Color(0xFF86EFAC),
+        background = Color(0xFFF0FDF4)
+    )
+    MealRecipeStatus.SKIPPED -> StatusVisuals(
+        text = Color(0xFFB91C1C),
+        border = Color(0xFFFCA5A5),
+        background = Color(0xFFFEF2F2)
+    )
+    else -> StatusVisuals(
+        text = Color(0xFFB45309),
+        border = Color(0xFFFCD34D),
+        background = Color(0xFFFFFBEB)
+    )
+}
+
+@Composable
 private fun RecipeGroupSection(
     title: String,
     titleColor: Color,
+    subtitle: String,
     expanded: Boolean,
     onToggleExpanded: () -> Unit,
     items: List<Recommendation>,
     emptyText: String,
     onSelectRecipe: (Recommendation) -> Unit
 ) {
+    val rotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        label = "${title}_rotation"
+    )
+
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 10.dp)
+            .padding(top = 12.dp)
+            .animateContentSize()
     ) {
-        Column(modifier = Modifier.padding(10.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -1058,37 +1827,331 @@ private fun RecipeGroupSection(
             ) {
                 Text(
                     text = title,
-                    color = titleColor,
+                    color = Color(0xFF111827),
                     fontSize = 14.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
                     modifier = Modifier.weight(1f)
                 )
+                StatusCapsule(
+                    text = "${items.size} món",
+                    containerColor = Color(0xFFF9F5F0),
+                    textColor = titleColor
+                )
+                Spacer(modifier = Modifier.width(10.dp))
                 Icon(
                     painter = painterResource(R.drawable.ic_expand),
                     contentDescription = null,
-                    tint = Color(0xFF6B7280),
+                    tint = Color(0xFF9CA3AF),
                     modifier = Modifier
                         .size(14.dp)
-                        .rotate(if (expanded) 180f else 0f)
+                        .rotate(rotation)
                 )
             }
 
-            if (expanded) {
-                if (items.isEmpty()) {
+            Text(
+                text = subtitle,
+                color = Color(0xFF6B7280),
+                fontSize = 11.sp,
+                fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                modifier = Modifier.padding(top = 6.dp)
+            )
+
+            AnimatedVisibility(
+                visible = expanded,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Column {
+                    if (items.isEmpty()) {
+                        Text(
+                            text = emptyText,
+                            color = Color(0xFF6B7280),
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    } else {
+                        items.take(8).forEach { recommendation ->
+                            PickerItem(
+                                recommendation = recommendation,
+                                onSelect = { onSelectRecipe(recommendation) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddMoreDivider(modifier: Modifier = Modifier) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        HorizontalDivider(
+            color = Color(0xFFE7DED1),
+            modifier = Modifier.weight(1f)
+        )
+        Card(
+            shape = RoundedCornerShape(999.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = BorderStroke(1.dp, Color(0xFFF3D1A5)),
+            modifier = Modifier.padding(horizontal = 12.dp)
+        ) {
+            Text(
+                text = "  THÊM MÓN  ",
+                color = Color(0xFFD79A42),
+                fontSize = 11.sp,
+                fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+            )
+        }
+        HorizontalDivider(
+            color = Color(0xFFE7DED1),
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun StatusCapsule(
+    text: String,
+    containerColor: Color,
+    textColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        shape = RoundedCornerShape(999.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        modifier = modifier
+    ) {
+        Text(
+            text = text,
+            color = textColor,
+            fontSize = 10.sp,
+            fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+        )
+    }
+}
+
+@Composable
+private fun RecipeFooterIconButton(
+    iconRes: Int,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    rotation: Float = 0f,
+    containerColor: Color = Color.White,
+    iconTint: Color = Color(0xFF9CA3AF)
+) {
+    Card(
+        onClick = onClick,
+        shape = CircleShape,
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        border = BorderStroke(1.dp, Color(0xFFE5E7EB)),
+        modifier = modifier.size(38.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+            Icon(
+                painter = painterResource(iconRes),
+                contentDescription = contentDescription,
+                tint = iconTint,
+                modifier = Modifier
+                    .size(16.dp)
+                    .rotate(rotation)
+            )
+        }
+    }
+}
+
+@Composable
+private fun RecipeFooterButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    containerColor: Color = Color.White,
+    textColor: Color = Color(0xFF9CA3AF)
+) {
+    Card(
+        onClick = onClick,
+        shape = RoundedCornerShape(999.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        border = BorderStroke(1.dp, Color(0xFFE5E7EB)),
+        modifier = modifier
+    ) {
+        Text(
+            text = text,
+            color = textColor,
+            fontSize = 11.sp,
+            fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+        )
+    }
+}
+
+@Composable
+private fun SheetRoundIconButton(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    containerColor: Color = Color(0xFFFFFFFF),
+    contentColor: Color = Color(0xFF9CA3AF)
+) {
+    Card(
+        onClick = onClick,
+        shape = CircleShape,
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        border = BorderStroke(1.dp, Color(0xFFE5E7EB)),
+        modifier = modifier.size(34.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+            Text(
+                text = label,
+                color = contentColor,
+                fontSize = 11.sp,
+                fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+            )
+        }
+    }
+}
+
+@Composable
+private fun RecipeBrowserSheet(
+    recipes: List<Recipe>,
+    selectedRecipe: Recipe?,
+    onSelectRecipe: (Recipe) -> Unit,
+    onBackToList: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = modifier
+            .padding(bottom = 18.dp)
+            .verticalScroll(scrollState)
+            .animateContentSize()
+    ) {
+        if (selectedRecipe == null) {
+            Text(
+                text = "Công thức trong phiên",
+                color = Color(0xFF111827),
+                fontSize = 18.sp,
+                fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+            )
+            Text(
+                text = "Chọn một món để xem chi tiết ngay trong sheet này.",
+                color = Color(0xFF6B7280),
+                fontSize = 13.sp,
+                fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                modifier = Modifier.padding(top = 6.dp)
+            )
+
+            recipes.forEach { recipe ->
+                Card(
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp)
+                        .clickable { onSelectRecipe(recipe) }
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = recipe.recipeName,
+                            color = Color(0xFF111827),
+                            fontSize = 15.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                        )
+                        Text(
+                            text = "Thời gian: ${recipe.cookingTime} • Khẩu phần: ${recipe.ration}",
+                            color = Color(0xFF6B7280),
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+            }
+            return
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "Quay lại",
+                color = Color(0xFFF97316),
+                fontSize = 13.sp,
+                fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                modifier = Modifier.clickable(onClick = onBackToList)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = "Chi tiết công thức",
+                color = Color(0xFF111827),
+                fontSize = 18.sp,
+                fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+            )
+        }
+
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp)
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Text(
+                    text = selectedRecipe.recipeName,
+                    color = Color(0xFF111827),
+                    fontSize = 20.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                )
+                Text(
+                    text = "Thời gian: ${selectedRecipe.cookingTime} • Khẩu phần: ${selectedRecipe.ration}",
+                    color = Color(0xFF6B7280),
+                    fontSize = 13.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                    modifier = Modifier.padding(top = 6.dp)
+                )
+
+                Text(
+                    text = "Nguyên liệu",
+                    color = Color(0xFFF97316),
+                    fontSize = 15.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                    modifier = Modifier.padding(top = 14.dp)
+                )
+                selectedRecipe.ingredients.forEach { ingredient ->
                     Text(
-                        text = emptyText,
-                        color = Color(0xFF6B7280),
-                        fontSize = 12.sp,
+                        text = "• ${ingredient.ingredientName}: ${ingredient.weight} ${ingredient.unit}",
+                        color = Color(0xFF374151),
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
+                }
+
+                Text(
+                    text = "Các bước",
+                    color = Color(0xFFF97316),
+                    fontSize = 15.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+                selectedRecipe.cookingSteps.sortedBy { it.indexStep ?: Int.MAX_VALUE }.forEachIndexed { index, step ->
+                    Text(
+                        text = "${index + 1}. ${step.stepContent}",
+                        color = Color(0xFF374151),
+                        fontSize = 13.sp,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                         modifier = Modifier.padding(top = 8.dp)
                     )
-                } else {
-                    items.take(8).forEach { recommendation ->
-                        PickerItem(
-                            recommendation = recommendation,
-                            onSelect = { onSelectRecipe(recommendation) }
-                        )
-                    }
                 }
             }
         }
@@ -1494,10 +2557,34 @@ private fun sessionDividerText(createdAt: String?): String {
 }
 
 @Composable
-private fun ChatBubble(message: ChatUiMessage) {
+private fun ChatBubble(
+    message: ChatUiMessage,
+    isActionRunning: Boolean,
+    onRetry: () -> Unit,
+    onPromptAction: (PendingResolveAction) -> Unit
+) {
+    if (message.kind == ChatMessageKind.PROMPT) {
+        InlinePromptBubble(
+            message = message,
+            isActionRunning = isActionRunning,
+            onPromptAction = onPromptAction
+        )
+        return
+    }
+
     val isUser = message.role == ChatRole.USER
     val bubbleColor = if (isUser) Color(0xFFF97316) else Color(0xFFFFEDD5)
     val textColor = if (isUser) Color.White else Color(0xFF1F2937)
+    val retryCountdown by produceState(initialValue = 0L, key1 = message.retryAvailableAt) {
+        val target = message.retryAvailableAt
+        if (target == null) return@produceState
+        while (true) {
+            val remaining = (target - System.currentTimeMillis()).coerceAtLeast(0L)
+            value = remaining
+            if (remaining <= 0L) break
+            delay(1000L)
+        }
+    }
 
     Row(
         horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
@@ -1507,9 +2594,10 @@ private fun ChatBubble(message: ChatUiMessage) {
     ) {
         Card(
             shape = RoundedCornerShape(14.dp),
-            colors = CardDefaults.cardColors(containerColor = bubbleColor),
-            modifier = Modifier
-                .fillMaxWidth(0.82f)
+            colors = CardDefaults.cardColors(
+                containerColor = if (message.isFailed) Color(0xFFFEF2F2) else bubbleColor
+            ),
+            modifier = Modifier.fillMaxWidth(0.82f)
         ) {
             Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp)) {
                 if (!isUser) {
@@ -1522,13 +2610,149 @@ private fun ChatBubble(message: ChatUiMessage) {
                 }
                 MarkdownText(
                     markdown = message.text,
-                    color = textColor,
+                    color = if (message.isFailed) Color(0xFF7F1D1D) else textColor,
                     fontSize = 14.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                     modifier = Modifier.padding(top = if (isUser) 0.dp else 3.dp)
                 )
+                if (message.isFailed) {
+                    Text(
+                        text = message.errorText ?: "Tin nhắn gửi thất bại.",
+                        color = Color(0xFFB91C1C),
+                        fontSize = 12.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                    if (message.retryable) {
+                        if (retryCountdown > 0L) {
+                            Text(
+                                text = "Gui lai sau ${retryCountdown / 1000}s",
+                                color = Color(0xFF92400E),
+                                fontSize = 12.sp,
+                                fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        } else {
+                            ContextActionChip(
+                                text = "Gui lai",
+                                onClick = onRetry,
+                                containerColor = Color(0xFFF97316),
+                                textColor = Color.White,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun InlinePromptBubble(
+    message: ChatUiMessage,
+    isActionRunning: Boolean,
+    onPromptAction: (PendingResolveAction) -> Unit
+) {
+    val status = message.promptStatus ?: PromptStatus.PENDING
+    Row(
+        horizontalArrangement = Arrangement.Start,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
+    ) {
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF7ED)),
+            border = BorderStroke(1.dp, Color(0xFFFDBA74)),
+            modifier = Modifier.fillMaxWidth(0.9f)
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp)) {
+                Text(
+                    text = "Bepes can ban xac nhan",
+                    color = Color(0xFFF97316),
+                    fontSize = 12.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                )
+                MarkdownText(
+                    markdown = message.text,
+                    color = Color(0xFF1F2937),
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+                if (!message.recipeName.isNullOrBlank()) {
+                    Text(
+                        text = "Mon: ${message.recipeName}",
+                        color = Color(0xFF6B7280),
+                        fontSize = 12.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
+                }
+                when (status) {
+                    PromptStatus.RESOLVED -> {
+                        Text(
+                            text = "Da chon: ${message.selectedActionId.orEmpty()}",
+                            color = Color(0xFF166534),
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                    PromptStatus.ERROR -> {
+                        Text(
+                            text = message.errorText ?: "Khong the xu ly prompt.",
+                            color = Color(0xFFB91C1C),
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                    else -> Unit
+                }
+
+                if (status != PromptStatus.RESOLVED) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 10.dp)
+                    ) {
+                        message.promptActions.forEach { action ->
+                            Button(
+                                onClick = { onPromptAction(action) },
+                                enabled = status != PromptStatus.LOADING && !isActionRunning,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (status == PromptStatus.LOADING) Color(0xFF9CA3AF) else Color(0xFFF97316)
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = promptActionLabel(action.id, action.label),
+                                    color = Color.White,
+                                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun promptActionLabel(actionId: String, fallback: String): String {
+    return when (actionId) {
+        MealCompletionAction.MARK_DONE -> "Da xong mon"
+        MealCompletionAction.MARK_SKIPPED -> "Bo qua mon"
+        MealCompletionAction.CONTINUE_CURRENT -> "Chua xong, tiep tuc"
+        MealCompletionAction.COMPLETE_SESSION -> "Dong phien"
+        MealCompletionAction.KEEP_SESSION_OPEN -> "Giu phien mo"
+        MealCompletionAction.ADD_MORE_RECIPES -> "Chon them mon"
+        else -> fallback.ifBlank { actionId }
     }
 }
 

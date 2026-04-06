@@ -200,29 +200,26 @@ fun SignInScreen(
                             try {
                                 val response = ApiClient.login(identifier = identifier.trim(), password = password.trim())
                                 Log.d("Login", "Response: $response")
-                                if (response != null) {
-                                    if (response.success) {
-                                        if (response.data != null) {
-                                            userViewModel.saveLoginState(context, response.data)
-                                            navController.navigate("mainAct") {
-                                                popUpTo("signIn") {
-                                                    inclusive = true
-                                                }
+                                if (response.success) {
+                                    if (response.data != null) {
+                                        userViewModel.saveAuthenticatedSession(context, response.data)
+                                        navController.navigate("mainAct") {
+                                            popUpTo("signIn") {
+                                                inclusive = true
                                             }
-                                            isLoading = false
-                                        } else {
-                                            isLoading = false
-                                            Toast.makeText(context, "Đăng nhập thất bại. Vui lòng thử lại!", Toast.LENGTH_SHORT).show()
                                         }
+                                        isLoading = false
                                     } else {
                                         isLoading = false
-                                        if (response.message == "Unauthorized access") {
-                                            Toast.makeText(context, "Tài khoản hoặc mật khẩu không đúng", Toast.LENGTH_SHORT).show()
-                                        }
+                                        Toast.makeText(context, "Đăng nhập thất bại. Thiếu dữ liệu phiên đăng nhập.", Toast.LENGTH_SHORT).show()
                                     }
                                 } else {
                                     isLoading = false
-                                    Toast.makeText(context, "Đăng nhập thất bại. Vui lòng thử lại!", Toast.LENGTH_SHORT).show()
+                                    if (response.message == "Unauthorized access") {
+                                        Toast.makeText(context, "Tài khoản hoặc mật khẩu không đúng", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        Toast.makeText(context, "Đăng nhập thất bại. Vui lòng thử lại!", Toast.LENGTH_SHORT).show()
+                                    }
                                 }
                             } catch (e: Exception) {
                                 isLoading = false
