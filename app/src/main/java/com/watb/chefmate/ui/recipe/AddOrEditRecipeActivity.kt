@@ -722,6 +722,16 @@ fun AddOrEditRecipeScreen(
                             val currentDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).format(Date())
                             val tagsToSave = tagsInput.value.split(",").map { it.trim() }.filter { it.isNotBlank() }
 
+                            if (ingredientsToSave.isEmpty() || stepsToSave.isEmpty()) {
+                                isLoading = false
+                                Toast.makeText(
+                                    context,
+                                    "Cần ít nhất 1 nguyên liệu và 1 bước nấu hợp lệ",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                return@launch
+                            }
+
                             if (recipeId == -1) {
                                 Log.d("Uri", imageUri.toString())
                                 if (!isPublic) {

@@ -16,16 +16,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.watb.chefmate.R
 import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.theme.CustomDialog
 import com.watb.chefmate.ui.theme.Header
+import com.watb.chefmate.ui.theme.HeaderBackButton
 import com.watb.chefmate.ui.theme.RecipeItem
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
@@ -47,7 +50,12 @@ fun RecipeListScreen(
             .fillMaxSize()
             .background(Color(0xFFFFFFFF))
     ) {
-        Header(text = "Kho công thức")
+        Header(
+            text = "Kho công thức",
+            leadingIcon = {
+                HeaderBackButton(onClick = { navController.popBackStack() })
+            }
+        )
         if (recipes.isEmpty()) {
             Column(
                 modifier = Modifier

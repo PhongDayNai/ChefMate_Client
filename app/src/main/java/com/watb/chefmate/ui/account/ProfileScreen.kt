@@ -424,7 +424,7 @@ fun Settings(
     onRating: () -> Unit
 ) {
     val icons = listOf(
-        R.drawable.ic_recipe,
+        R.drawable.ic_mark,
         R.drawable.ic_shopping_history,
         R.drawable.ic_privacy_policy,
         R.drawable.ic_terms_of_use,

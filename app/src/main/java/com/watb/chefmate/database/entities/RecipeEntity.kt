@@ -26,30 +26,48 @@ data class RecipeEntity(
 )
 
 fun RecipeEntity.toRecipe(): Recipe {
-    val ingredientNames = ingredientNames.split(";;;")
-    val ingredientWeights = ingredientWeights.split(";;;").map { it.toInt() }
-    val ingredientUnits = ingredientUnits.split(";;;")
-    val ingredients = ingredientNames.indices.map { index ->
+    val ingredientNamesList = ingredientNames
+        .split(";;;")
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+    val ingredientWeightsList = ingredientWeights
+        .split(";;;")
+        .mapNotNull { it.trim().toIntOrNull() }
+    val ingredientUnitsList = ingredientUnits
+        .split(";;;")
+        .map { it.trim() }
+
+    val ingredientCount = minOf(
+        ingredientNamesList.size,
+        ingredientWeightsList.size,
+        ingredientUnitsList.size
+    )
+    val ingredients = List(ingredientCount) { index ->
         IngredientItem(
-            ingredientName = ingredientNames[index],
-            weight = ingredientWeights[index],
-            unit = ingredientUnits[index]
+            ingredientName = ingredientNamesList[index],
+            weight = ingredientWeightsList[index],
+            unit = ingredientUnitsList[index]
         )
     }
 
-    val cookingStepContents = cookingSteps.split(";;;")
-    val cookingSteps = cookingStepContents.indices.map { index ->
-        CookingStep(
-            indexStep = index + 1,
-            stepContent = cookingStepContents[index]
-        )
-    }
+    val cookingSteps = cookingSteps
+        .split(";;;")
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .mapIndexed { index, stepContent ->
+            CookingStep(
+                indexStep = index + 1,
+                stepContent = stepContent
+            )
+        }
 
-    val tagList = tags.split(";;;")
-    val tags = mutableListOf<TagEntity>()
-    tagList.forEachIndexed { index, tag ->
-        tags.add(TagEntity(index, tag))
-    }
+    val tags = tags
+        .split(";;;")
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .mapIndexed { index, tag ->
+            TagEntity(index, tag)
+        }
 
     return Recipe(
         recipeId = recipeId,
