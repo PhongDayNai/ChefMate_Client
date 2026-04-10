@@ -40,8 +40,8 @@ android {
         applicationId = "com.watb.chefmate"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "2.1.0"
+        versionCode = 5
+        versionName = "2.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "API_BASE_URL", apiBaseUrl.asBuildConfigString())
