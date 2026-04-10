@@ -65,6 +65,7 @@ import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.recipe.bottomDashedBorder
 import com.watb.chefmate.ui.theme.Header
+import com.watb.chefmate.ui.theme.HeaderBackButton
 import com.watb.chefmate.ui.theme.CustomTextField
 import com.watb.chefmate.ui.theme.RecipeSelectedItem
 import com.watb.chefmate.viewmodel.RecipeViewModel
@@ -110,15 +111,7 @@ fun MakeShoppingListScreen(
         Header(
             "Lập danh sách mua sắm",
             leadingIcon = {
-                IconButton(
-                    onClick = { navController.navigate("mainAct")}
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_back),
-                        contentDescription = "back",
-                        tint = Color(0xFFFFFFFF)
-                    )
-                }
+                HeaderBackButton(onClick = { navController.navigate("mainAct") })
             }
         )
         CustomTextField(

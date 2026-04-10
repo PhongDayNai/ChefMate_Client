@@ -34,6 +34,7 @@ import com.watb.chefmate.R
 import com.watb.chefmate.database.entities.ShoppingTimeEntity
 import com.watb.chefmate.helper.CommonHelper
 import com.watb.chefmate.ui.theme.Header
+import com.watb.chefmate.ui.theme.HeaderBackButton
 import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
 
 @Composable
@@ -53,19 +54,7 @@ fun ShoppingHistoryScreen(
         Header(
             text = "Lịch sử mua sắm",
             leadingIcon = {
-                IconButton(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier
-                        .size(24.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_back),
-                        contentDescription = "Notification",
-                        tint = Color(0xFFFFFFFF),
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-                }
+                HeaderBackButton(onClick = { navController.popBackStack() })
             },
         )
         Column(

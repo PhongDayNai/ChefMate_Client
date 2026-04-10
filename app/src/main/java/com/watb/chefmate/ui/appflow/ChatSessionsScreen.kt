@@ -46,6 +46,7 @@ import com.watb.chefmate.R
 import com.watb.chefmate.data.ChatSession
 import com.watb.chefmate.ui.theme.CustomTextField
 import com.watb.chefmate.ui.theme.Header
+import com.watb.chefmate.ui.theme.HeaderBackButton
 import com.watb.chefmate.viewmodel.AppFlowViewModel
 import com.watb.chefmate.viewmodel.UserViewModel
 
@@ -84,13 +85,7 @@ fun ChatSessionsScreen(
         Header(
             text = "Lịch sử Bepes",
             leadingIcon = {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_back),
-                        contentDescription = "Back",
-                        tint = Color.White
-                    )
-                }
+                HeaderBackButton(onClick = { navController.popBackStack() })
             }
         )
 

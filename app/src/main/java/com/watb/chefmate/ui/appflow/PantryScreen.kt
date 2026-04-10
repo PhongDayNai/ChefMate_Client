@@ -86,16 +86,7 @@ fun PantryScreen(
             .background(Color.White)
     ) {
         Header(
-            text = "Tủ lạnh cá nhân",
-            leadingIcon = {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_back),
-                        contentDescription = "Quay lại",
-                        tint = Color.White
-                    )
-                }
-            }
+            text = "Tủ lạnh cá nhân"
         )
 
         if (!isLoggedIn || user == null) {

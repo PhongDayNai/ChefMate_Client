@@ -104,6 +104,7 @@ import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.data.ResolveAction
 import com.watb.chefmate.ui.theme.CustomTextField
 import com.watb.chefmate.ui.theme.Header
+import com.watb.chefmate.ui.theme.HeaderBackButton
 import com.watb.chefmate.viewmodel.AppFlowViewModel
 import com.watb.chefmate.viewmodel.UserViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -307,17 +308,7 @@ fun BepesChatScreen(
         Header(
             text = "Bepes",
             leadingIcon = {
-                IconButton(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_back),
-                        contentDescription = "Quay lại",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                HeaderBackButton(onClick = { navController.popBackStack() })
             },
             trailingIcon = {
                 AnimatedVisibility(

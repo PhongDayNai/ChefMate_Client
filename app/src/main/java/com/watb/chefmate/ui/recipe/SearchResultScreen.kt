@@ -50,6 +50,7 @@ import com.watb.chefmate.R
 import com.watb.chefmate.data.Recipe
 import com.watb.chefmate.data.SearchType
 import com.watb.chefmate.ui.theme.Header
+import com.watb.chefmate.ui.theme.HeaderBackButton
 import com.watb.chefmate.ui.theme.RecipeItem
 import com.watb.chefmate.ui.theme.CustomTextField
 import com.watb.chefmate.viewmodel.RecipeViewModel
@@ -86,19 +87,7 @@ fun SearchResultScreen(
         Header(
             "Nấu ngon",
             leadingIcon = {
-                IconButton(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier
-                        .size(24.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_back),
-                        contentDescription = "back",
-                        tint = Color(0xFFFFFFFF),
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-                }
+                HeaderBackButton(onClick = { navController.popBackStack() })
             }
         )
         CustomTextField(

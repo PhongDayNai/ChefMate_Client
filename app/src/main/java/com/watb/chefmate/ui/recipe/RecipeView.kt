@@ -93,6 +93,7 @@ import com.watb.chefmate.api.ApiClient
 import com.watb.chefmate.api.ApiConstant
 import com.watb.chefmate.ui.theme.chefMateTextFieldColors
 import com.watb.chefmate.ui.theme.Header
+import com.watb.chefmate.ui.theme.HeaderBackButton
 import com.watb.chefmate.data.CommentItem
 import com.watb.chefmate.data.CookingStep
 import com.watb.chefmate.data.IngredientItem
@@ -206,19 +207,7 @@ fun RecipeViewScreen(
     ) {
         Header(
             leadingIcon = {
-                IconButton(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier
-                        .size(24.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_back),
-                        contentDescription = "Back",
-                        tint = Color(0xFFFFFFFF),
-                        modifier = Modifier
-                            .size(24.dp)
-                    )
-                }
+                HeaderBackButton(onClick = { navController.popBackStack() })
             },
             trailingIcon = {
                 Row {

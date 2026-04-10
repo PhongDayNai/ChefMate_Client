@@ -12,6 +12,8 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -132,30 +134,78 @@ fun ChefMateTheme(
 @Composable
 fun Header(
     text: String? = null,
+    subtitle: String? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
+    bottomContent: @Composable (ColumnScope.() -> Unit)? = null,
+    contentPadding: PaddingValues = PaddingValues(16.dp),
     modifier: Modifier = Modifier
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .background(brush = AppConstant.headerGradient)
-            .padding(16.dp),
     ) {
-        leadingIcon?.invoke()
-        text?.let {
-            Text(
-                text = text,
-                color = Color(0xFFFFFFFF),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.W700,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(contentPadding),
+        ) {
+            leadingIcon?.invoke()
+            Column(
                 modifier = Modifier
                     .padding(start = if (leadingIcon != null) 8.dp else 0.dp)
-            )
+            ) {
+                text?.let {
+                    Text(
+                        text = text,
+                        color = Color(0xFFFFFFFF),
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.W700,
+                    )
+                }
+                subtitle?.let {
+                    Text(
+                        text = it,
+                        color = Color(0xFFFFFFFF).copy(alpha = 0.84f),
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                        modifier = Modifier
+                            .padding(top = 2.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            trailingIcon?.invoke()
         }
-        Spacer(modifier = Modifier.weight(1f))
-        trailingIcon?.invoke()
+        bottomContent?.let {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+            ) {
+                it()
+            }
+        }
+    }
+}
+
+@Composable
+fun HeaderBackButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = modifier.size(24.dp)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_back),
+            contentDescription = "Quay lại",
+            tint = Color.White,
+            modifier = Modifier.size(24.dp)
+        )
     }
 }
 

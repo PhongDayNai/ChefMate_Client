@@ -52,6 +52,7 @@ import com.watb.chefmate.data.DietNoteType
 import com.watb.chefmate.data.DietNoteUpsertRequest
 import com.watb.chefmate.ui.theme.CustomTextField
 import com.watb.chefmate.ui.theme.Header
+import com.watb.chefmate.ui.theme.HeaderBackButton
 import com.watb.chefmate.viewmodel.AppFlowViewModel
 import com.watb.chefmate.viewmodel.UserViewModel
 
@@ -90,13 +91,7 @@ fun DietNotesScreen(
         Header(
             text = "Dị ứng & Hạn chế",
             leadingIcon = {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_back),
-                        contentDescription = "Quay lại",
-                        tint = Color.White
-                    )
-                }
+                HeaderBackButton(onClick = { navController.popBackStack() })
             }
         )
 

@@ -43,6 +43,7 @@ import com.watb.chefmate.repository.ShoppingTimeRepository
 import com.watb.chefmate.ui.recipe.bottomDashedBorder
 import com.watb.chefmate.ui.theme.CustomDialog
 import com.watb.chefmate.ui.theme.Header
+import com.watb.chefmate.ui.theme.HeaderBackButton
 import com.watb.chefmate.ui.theme.RecipeSelectedItem
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import com.watb.chefmate.viewmodel.ShoppingTimeViewModel
@@ -104,7 +105,7 @@ fun ConsolidatedIngredientsScreen(
         Header(
             text = if (!isHistory) "Danh sách mua sắm" else "Lịch sử mua sắm",
             leadingIcon = {
-                IconButton(
+                HeaderBackButton(
                     onClick = {
                         if (!isHistory) {
                             navController.navigate("mainAct") {
@@ -114,17 +115,7 @@ fun ConsolidatedIngredientsScreen(
                             navController.popBackStack()
                         }
                     },
-                    modifier = Modifier
-                        .size(24.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_back),
-                        contentDescription = "back",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(20.dp)
-                    )
-                }
+                )
             }
         )
 
@@ -443,4 +434,3 @@ fun CustomEditIngredientDialogPreview() {
         shoppingTimeViewModel = shoppingTimeViewModel
     )
 }
-
