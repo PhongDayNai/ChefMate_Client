@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -124,7 +125,7 @@ fun ConsolidatedIngredientsScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Chưa có nguyên liệu nào trong danh sách mua sắm.", fontSize = 16.sp)
+                Text(stringResource(R.string.shopping_empty_message), fontSize = 16.sp)
             }
         } else {
             val orderedIndices = ingredientNames.indices.sortedWith(compareBy {
@@ -209,7 +210,7 @@ fun ConsolidatedIngredientsScreen(
             }
             if (editIndex != null) {
                 CustomDialog(
-                    title = "Chỉnh sửa nguyên liệu",
+                    title = stringResource(R.string.shopping_dialog_edit_ingredient_title),
                     name = editName,
                     onNameChange = { editName = it },
                     weight = editWeight,
@@ -242,12 +243,12 @@ fun ConsolidatedIngredientsScreen(
                     onDismiss = {
                         editIndex = null
                     },
-                    buttonText = "Cập nhật"
+                    buttonText = stringResource(R.string.shopping_update_button)
                 )
             }
             if (showAddIngredient) {
                 CustomDialog(
-                    title = "Thêm mới nguyên liệu",
+                    title = stringResource(R.string.shopping_dialog_add_ingredient_title),
                     name = addName,
                     onNameChange = { addName = it },
                     weight = addWeight,
@@ -282,7 +283,7 @@ fun ConsolidatedIngredientsScreen(
                     isConfirm = false,
                     confirmText = "",
                     onDismiss = { showAddIngredient = false },
-                    buttonText = "Thêm mới"
+                    buttonText = stringResource(R.string.shopping_add_new_button)
                 )
             }
         }
@@ -301,7 +302,7 @@ fun ConsolidatedIngredientsScreen(
                         .padding(30.dp)
                 ) {
                     Text(
-                        text = "Bổ sung",
+                        text = stringResource(R.string.shopping_add_more_button),
                         color = Color(0xFF000000),
                         fontSize = 16.sp,
                         fontFamily = FontFamily(Font(R.font.roboto_bold))

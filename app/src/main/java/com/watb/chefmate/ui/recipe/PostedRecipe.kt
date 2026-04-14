@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -55,7 +56,7 @@ fun PostedRecipeList(
             .background(color = Color(0xFFFFFFFF))
     ) {
         Header(
-            text = "Công thức đã đăng",
+            text = stringResource(R.string.posted_recipe_title),
             leadingIcon = {
                 HeaderBackButton(onClick = { navController.popBackStack() })
             },
@@ -68,11 +69,11 @@ fun PostedRecipeList(
                     recipe.recipeName.contains(searchValue, ignoreCase = true)
                 }
             },
-            placeholder = "Tìm kiếm món ăn",
+            placeholder = stringResource(R.string.search_recipe_placeholder),
             leadingIcon = {
                 Icon(
                     painter = painterResource(R.drawable.ic_search),
-                    contentDescription = "Search",
+                    contentDescription = stringResource(R.string.search_content_description),
                     tint = Color(0xFFFF9800).copy(alpha = 0.75f),
                     modifier = Modifier
                         .size(24.dp)

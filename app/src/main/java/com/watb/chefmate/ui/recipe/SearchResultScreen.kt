@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
@@ -85,7 +86,7 @@ fun SearchResultScreen(
             .padding(bottom = 12.dp)
     ) {
         Header(
-            "Nấu ngon",
+            stringResource(R.string.search_screen_title),
             leadingIcon = {
                 HeaderBackButton(onClick = { navController.popBackStack() })
             }
@@ -93,11 +94,11 @@ fun SearchResultScreen(
         CustomTextField(
             value = searchValue,
             onValueChange = { searchValue = it },
-            placeholder = "Tìm kiếm món ăn",
+            placeholder = stringResource(R.string.search_recipe_placeholder),
             leadingIcon = {
                 Icon(
                     painter = painterResource(R.drawable.ic_search),
-                    contentDescription = "Search",
+                    contentDescription = stringResource(R.string.search_content_description),
                     tint = Color(0xFFFF9800).copy(alpha = 0.75f),
                     modifier = Modifier
                         .size(24.dp)
@@ -135,7 +136,7 @@ fun SearchResultScreen(
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = "Tìm kiếm theo: ",
+                    text = stringResource(R.string.search_by_label),
                     color = Color(0xFF000000),
                     fontSize = 14.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
@@ -156,7 +157,7 @@ fun SearchResultScreen(
                         .padding(horizontal = 8.dp)
                 ) {
                     Text(
-                        text = "Tên món",
+                        text = stringResource(R.string.search_by_name),
                         color = Color(0xFF000000),
                         fontSize = 14.sp,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -179,7 +180,7 @@ fun SearchResultScreen(
                         .padding(horizontal = 8.dp)
                 ) {
                     Text(
-                        text = "Tag",
+                        text = stringResource(R.string.search_by_tag),
                         color = Color(0xFF000000),
                         fontSize = 14.sp,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -192,7 +193,7 @@ fun SearchResultScreen(
         if (!isLoading) {
             if (searchResultRecipes.isEmpty()) {
                 Text(
-                    text = "Không có kết quả nào.\nVui lòng đợi trong giây lát...",
+                    text = stringResource(R.string.search_no_result_message),
                     color = Color(0xFF000000),
                     textAlign = TextAlign.Center,
                     modifier = Modifier
@@ -216,7 +217,7 @@ fun SearchResultScreen(
                         .fillMaxWidth(0.9f)
                 ) {
                     Text(
-                        text = "Thử lại",
+                        text = stringResource(R.string.search_retry),
                         color = Color(0xFFFFFFFF),
                         fontSize = 16.sp,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),

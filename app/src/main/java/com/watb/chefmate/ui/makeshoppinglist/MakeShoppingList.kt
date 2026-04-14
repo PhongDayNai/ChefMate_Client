@@ -43,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
@@ -109,7 +110,7 @@ fun MakeShoppingListScreen(
             .background(Color(0xFFFFFFFF))
     ) {
         Header(
-            "Lập danh sách mua sắm",
+            stringResource(R.string.shopping_make_list_title),
             leadingIcon = {
                 HeaderBackButton(onClick = { navController.navigate("mainAct") })
             }
@@ -117,11 +118,11 @@ fun MakeShoppingListScreen(
         CustomTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it},
-            placeholder = "Tìm công thức đã lưu",
+            placeholder = stringResource(R.string.shopping_saved_recipes_search_placeholder),
             leadingIcon = {
                 Icon(
                     painter = painterResource(R.drawable.ic_search),
-                    contentDescription = "search",
+                    contentDescription = stringResource(R.string.shopping_search_content_description),
                     tint = Color(0xFFFF9800)
                 )
             },
@@ -130,7 +131,7 @@ fun MakeShoppingListScreen(
                     IconButton(onClick = { searchQuery = "" }) {
                         Icon(
                             painter = painterResource(R.drawable.ic_cancel),
-                            contentDescription = "Clear search"
+                            contentDescription = stringResource(R.string.shopping_clear_search_content_description)
                         )
                     }
                 }
@@ -140,7 +141,7 @@ fun MakeShoppingListScreen(
                 .fillMaxWidth(0.85f)
         )
         Text(
-            text = "Thêm nguyên liệu qua công thức",
+            text = stringResource(R.string.shopping_add_from_recipe_title),
             fontSize = 16.sp,
             fontWeight = FontWeight(600),
             fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
@@ -159,8 +160,8 @@ fun MakeShoppingListScreen(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Chưa có công thức nào để lựa chọn.", style = MaterialTheme.typography.bodyLarge)
-                    Text("Thêm công thức mới từ màn hình chính.", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.shopping_no_recipes_title), style = MaterialTheme.typography.bodyLarge)
+                    Text(stringResource(R.string.shopping_no_recipes_message), style = MaterialTheme.typography.bodyMedium)
                 }
             } else if (searchQuery.isEmpty()) {
                 LazyVerticalGrid(
@@ -188,7 +189,7 @@ fun MakeShoppingListScreen(
             } else if (searchQuery.isNotEmpty()) {
                 if (filteredRecipes.isEmpty()) {
                     Text(
-                        text = "Không tìm thấy công thức nào.",
+                        text = stringResource(R.string.shopping_no_recipe_found),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 20.dp),
@@ -244,7 +245,7 @@ fun MakeShoppingListScreen(
                         .fillMaxWidth(0.95f)
                 ) {
                     Text(
-                        text = "Thêm nguyên liệu thủ công",
+                        text = stringResource(R.string.shopping_add_manual_title),
                         fontSize = 15.sp,
                         fontWeight = FontWeight(600),
                         fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
@@ -264,7 +265,7 @@ fun MakeShoppingListScreen(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_addingredient),
-                            contentDescription = "add manually",
+                            contentDescription = stringResource(R.string.shopping_add_manual_content_description),
                             modifier = Modifier
                                 .size(20.dp)
                         )
@@ -381,7 +382,7 @@ fun MakeShoppingListScreen(
                 shape = RoundedCornerShape(10.dp),
             ) {
                 Text(
-                    text = "Hoàn thành",
+                    text = stringResource(R.string.shopping_done),
                     color = Color(0xFFFFFFFF),
                     fontSize = 16.sp,
                     fontFamily = FontFamily(Font(R.font.roboto_bold))

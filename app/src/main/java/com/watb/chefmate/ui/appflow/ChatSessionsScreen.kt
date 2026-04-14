@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -83,7 +84,7 @@ fun ChatSessionsScreen(
             .background(Color.White)
     ) {
         Header(
-            text = "Lịch sử Bepes",
+            text = stringResource(R.string.chat_sessions_title),
             leadingIcon = {
                 HeaderBackButton(onClick = { navController.popBackStack() })
             }
@@ -91,7 +92,7 @@ fun ChatSessionsScreen(
 
         if (!isLoggedIn || user == null) {
             NeedLoginCard(
-                title = "Bạn cần đăng nhập để xem lịch sử trò chuyện",
+                title = stringResource(R.string.chat_sessions_login_required_title),
                 onSignIn = { navController.navigate("signIn") }
             )
         } else {
@@ -139,7 +140,7 @@ fun ChatSessionsScreen(
             ) {
                 Column(modifier = Modifier.padding(14.dp)) {
                     Text(
-                        text = "Đổi tiêu đề phiên",
+                        text = stringResource(R.string.chat_sessions_rename_title),
                         color = Color(0xFF111827),
                         fontSize = 18.sp,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
@@ -148,7 +149,7 @@ fun ChatSessionsScreen(
                     CustomTextField(
                         value = newTitle,
                         onValueChange = { newTitle = it },
-                        placeholder = "Tiêu đề phiên",
+                        placeholder = stringResource(R.string.chat_sessions_rename_placeholder),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 12.dp)
@@ -160,7 +161,7 @@ fun ChatSessionsScreen(
                             .fillMaxWidth()
                             .padding(top = 14.dp)
                     ) {
-                        ActionTextButton(text = "Hủy") { editingSession = null }
+                        ActionTextButton(text = stringResource(R.string.common_cancel)) { editingSession = null }
                         Spacer(modifier = Modifier.width(10.dp))
                         Button(
                             onClick = {
@@ -177,7 +178,7 @@ fun ChatSessionsScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF97316))
                         ) {
                             Text(
-                                text = "Lưu",
+                                text = stringResource(R.string.common_save),
                                 color = Color.White,
                                 fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
                             )
@@ -207,13 +208,13 @@ private fun SessionCard(
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Text(
-                text = session.title?.ifBlank { "Phiên Bepes" } ?: "Phiên Bepes",
+                text = session.title?.ifBlank { stringResource(R.string.chat_session_default_title) } ?: stringResource(R.string.chat_session_default_title),
                 color = Color(0xFF111827),
                 fontSize = 16.sp,
                 fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
             )
             Text(
-                text = "Mã phiên: ${session.chatSessionId ?: "-"}",
+                text = stringResource(R.string.chat_sessions_code, session.chatSessionId ?: "-"),
                 color = Color(0xFF6B7280),
                 fontSize = 13.sp,
                 fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -221,7 +222,7 @@ private fun SessionCard(
             )
             if (!session.updatedAt.isNullOrBlank()) {
                 Text(
-                    text = "Cập nhật: ${session.updatedAt}",
+                    text = stringResource(R.string.chat_sessions_updated, session.updatedAt),
                     color = Color(0xFF6B7280),
                     fontSize = 13.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -235,11 +236,11 @@ private fun SessionCard(
                     .fillMaxWidth()
                     .padding(top = 10.dp)
             ) {
-                ActionTextButton(text = "Mở", onClick = onOpen)
+                ActionTextButton(text = stringResource(R.string.chat_sessions_open), onClick = onOpen)
                 Spacer(modifier = Modifier.width(12.dp))
-                ActionTextButton(text = "Đổi tên", onClick = onRename)
+                ActionTextButton(text = stringResource(R.string.chat_sessions_rename), onClick = onRename)
                 Spacer(modifier = Modifier.width(12.dp))
-                ActionTextButton(text = "Xóa", onClick = onDelete)
+                ActionTextButton(text = stringResource(R.string.common_delete), onClick = onDelete)
             }
         }
     }
@@ -278,7 +279,7 @@ private fun NeedLoginCard(
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF97316))
                 ) {
                     Text(
-                        text = "Đăng nhập",
+                        text = stringResource(R.string.common_sign_in),
                         color = Color.White,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
                     )

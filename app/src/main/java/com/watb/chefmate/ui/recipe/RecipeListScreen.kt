@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
@@ -51,7 +52,7 @@ fun RecipeListScreen(
             .background(Color(0xFFFFFFFF))
     ) {
         Header(
-            text = "Kho công thức",
+            text = stringResource(R.string.recipe_list_title),
             leadingIcon = {
                 HeaderBackButton(onClick = { navController.popBackStack() })
             }
@@ -64,9 +65,9 @@ fun RecipeListScreen(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Chưa có công thức nào.", style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(R.string.recipe_list_empty_title), style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Nhấn 'Thêm công thức' để thêm công thức mới!", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.recipe_list_empty_message), style = MaterialTheme.typography.bodyMedium)
             }
         } else {
             LazyColumn(
@@ -100,10 +101,10 @@ fun RecipeListScreen(
             }
             if (isShowDialog) {
                 CustomDialog(
-                    title = "Xóa công thức",
+                    title = stringResource(R.string.recipe_delete_dialog_title),
                     "", {}, "", {}, "", {},
                     isConfirm = true,
-                    confirmText = "Bạn có chắc chắn muốn xóa công thức này?",
+                    confirmText = stringResource(R.string.recipe_delete_dialog_confirm),
                     onConfirm = {
                         selectedRecipe?.recipeId?.let { id ->
                             viewModel.deleteRecipeById(id)
@@ -115,7 +116,7 @@ fun RecipeListScreen(
                         isShowDialog = false
                         selectedRecipe = null
                     },
-                    buttonText = "Xóa"
+                    buttonText = stringResource(R.string.recipe_delete_button)
                 )
             }
         }

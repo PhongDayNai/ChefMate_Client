@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -89,7 +90,7 @@ fun DietNotesScreen(
             .background(Color.White)
     ) {
         Header(
-            text = "Dị ứng & Hạn chế",
+            text = stringResource(R.string.diet_notes_title),
             leadingIcon = {
                 HeaderBackButton(onClick = { navController.popBackStack() })
             }
@@ -97,7 +98,7 @@ fun DietNotesScreen(
 
         if (!isLoggedIn || user == null) {
             NeedLoginCard(
-                title = "Bạn cần đăng nhập để quản lý chế độ ăn",
+                title = stringResource(R.string.diet_notes_login_required_title),
                 onSignIn = { navController.navigate("signIn") }
             )
         } else {
@@ -109,7 +110,7 @@ fun DietNotesScreen(
                     .padding(horizontal = 20.dp, vertical = 14.dp)
             ) {
                 Text(
-                    text = "Danh sách ghi chú",
+                    text = stringResource(R.string.diet_notes_list_title),
                     color = Color(0xFF111827),
                     fontSize = 18.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
@@ -125,7 +126,7 @@ fun DietNotesScreen(
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_add),
-                        contentDescription = "Thêm",
+                        contentDescription = stringResource(R.string.common_add),
                         tint = Color.White,
                         modifier = Modifier.size(18.dp)
                     )
@@ -219,7 +220,7 @@ private fun DietNoteCard(
             }
 
             Text(
-                text = "Loại: ${note.noteType}",
+                text = stringResource(R.string.diet_notes_type, note.noteType),
                 color = Color(0xFF6B7280),
                 fontSize = 13.sp,
                 fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
@@ -227,7 +228,7 @@ private fun DietNoteCard(
 
             if (note.keywords.isNotEmpty()) {
                 Text(
-                    text = "Từ khóa: ${note.keywords.joinToString(", ")}",
+                    text = stringResource(R.string.diet_notes_keywords, note.keywords.joinToString(", ")),
                     color = Color(0xFF374151),
                     fontSize = 13.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -237,7 +238,7 @@ private fun DietNoteCard(
 
             if (!note.instruction.isNullOrBlank()) {
                 Text(
-                    text = "Ghi chú: ${note.instruction}",
+                    text = stringResource(R.string.diet_notes_note, note.instruction ?: ""),
                     color = Color(0xFF374151),
                     fontSize = 13.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -251,9 +252,9 @@ private fun DietNoteCard(
                     .fillMaxWidth()
                     .padding(top = 10.dp)
             ) {
-                ActionTextButton(text = "Sửa", onClick = onEdit)
+                ActionTextButton(text = stringResource(R.string.common_edit), onClick = onEdit)
                 Spacer(modifier = Modifier.width(10.dp))
-                ActionTextButton(text = "Xóa", onClick = onDelete)
+                ActionTextButton(text = stringResource(R.string.common_delete), onClick = onDelete)
             }
         }
     }
@@ -286,14 +287,14 @@ private fun DietNoteEditorDialog(
                     .padding(14.dp)
             ) {
                 Text(
-                    text = if (initial == null) "Thêm ghi chú" else "Cập nhật ghi chú",
+                    text = if (initial == null) stringResource(R.string.diet_notes_editor_add_title) else stringResource(R.string.diet_notes_editor_update_title),
                     color = Color(0xFF111827),
                     fontSize = 18.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
                 )
 
                 Text(
-                    text = "Loại ghi chú",
+                    text = stringResource(R.string.diet_notes_editor_type),
                     color = Color(0xFF6B7280),
                     fontSize = 13.sp,
                     modifier = Modifier.padding(top = 10.dp)
@@ -327,7 +328,7 @@ private fun DietNoteEditorDialog(
                 CustomTextField(
                     value = label,
                     onValueChange = { label = it },
-                    placeholder = "Tiêu đề",
+                    placeholder = stringResource(R.string.diet_notes_editor_title_placeholder),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 12.dp)
@@ -336,7 +337,7 @@ private fun DietNoteEditorDialog(
                 CustomTextField(
                     value = keywordsInput,
                     onValueChange = { keywordsInput = it },
-                    placeholder = "Từ khóa, ngăn cách bằng dấu phẩy",
+                    placeholder = stringResource(R.string.diet_notes_editor_keywords_placeholder),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 10.dp)
@@ -345,7 +346,7 @@ private fun DietNoteEditorDialog(
                 CustomTextField(
                     value = instruction,
                     onValueChange = { instruction = it },
-                    placeholder = "Hướng dẫn thêm",
+                    placeholder = stringResource(R.string.diet_notes_editor_instruction_placeholder),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 10.dp)
@@ -356,7 +357,7 @@ private fun DietNoteEditorDialog(
                     modifier = Modifier.padding(top = 10.dp)
                 ) {
                     Text(
-                        text = "Đang kích hoạt",
+                        text = stringResource(R.string.diet_notes_editor_active),
                         color = Color(0xFF374151),
                         fontSize = 13.sp,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_regular))
@@ -371,7 +372,7 @@ private fun DietNoteEditorDialog(
                         .fillMaxWidth()
                         .padding(top = 14.dp)
                 ) {
-                    ActionTextButton(text = "Hủy", onClick = onDismiss)
+                    ActionTextButton(text = stringResource(R.string.common_cancel), onClick = onDismiss)
                     Spacer(modifier = Modifier.width(12.dp))
                     Button(
                         onClick = {
@@ -398,7 +399,7 @@ private fun DietNoteEditorDialog(
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF97316))
                     ) {
                         Text(
-                            text = "Lưu",
+                            text = stringResource(R.string.common_save),
                             color = Color.White,
                             fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
                         )
@@ -442,7 +443,7 @@ private fun NeedLoginCard(
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF97316))
                 ) {
                     Text(
-                        text = "Đăng nhập",
+                        text = stringResource(R.string.common_sign_in),
                         color = Color.White,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
                     )

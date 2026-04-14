@@ -61,6 +61,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -202,7 +203,7 @@ fun HeaderBackButton(
     ) {
         Icon(
             painter = painterResource(R.drawable.ic_back),
-            contentDescription = "Quay lại",
+            contentDescription = stringResource(R.string.common_back_content_description),
             tint = Color.White,
             modifier = Modifier.size(24.dp)
         )
@@ -357,7 +358,7 @@ fun RecipeItem(
                     if (!isStorage) {
                         Icon(
                             painter = painterResource(R.drawable.ic_like_filled),
-                            contentDescription = "Like",
+                            contentDescription = stringResource(R.string.common_like_content_description),
                             tint = Color(0xFFEF4444) ,
                             modifier = Modifier
                                 .size(16.dp)
@@ -373,7 +374,7 @@ fun RecipeItem(
                         )
                         Icon(
                             painter = painterResource(R.drawable.ic_view_filled),
-                            contentDescription = "Like",
+                            contentDescription = stringResource(R.string.common_like_content_description),
                             tint = Color(0xFFFB923C),
                             modifier = Modifier
                                 .padding(start = 16.dp)
@@ -390,7 +391,7 @@ fun RecipeItem(
                         )
                         Icon(
                             painter = painterResource(R.drawable.ic_comment_filled),
-                            contentDescription = "Like",
+                            contentDescription = stringResource(R.string.common_like_content_description),
                             tint = Color(0xFFFB923C),
                             modifier = Modifier
                                 .padding(start = 16.dp)
@@ -408,7 +409,7 @@ fun RecipeItem(
                     }
                     Icon(
                         painter = painterResource(R.drawable.ic_clock_filled),
-                        contentDescription = "Like",
+                        contentDescription = stringResource(R.string.common_like_content_description),
                         tint = Color(0xFFFB923C),
                         modifier = Modifier
                             .padding(start = if (isStorage) 0.dp else 16.dp)
@@ -427,14 +428,14 @@ fun RecipeItem(
                     if (isStorage) {
                         SecondaryTextButtonTheme(
                             onClick = { onEdit(recipe) },
-                            text = "Sửa",
+                            text = stringResource(R.string.common_edit),
                             paddingOuter = 0.dp,
                             paddingInner = 4.dp,
                             modifier = Modifier
                         )
                         SecondaryTextButtonTheme(
                             onClick = { onDelete(recipe) },
-                            text = "Xóa",
+                            text = stringResource(R.string.common_delete),
                             paddingOuter = 0.dp,
                             paddingInner = 4.dp,
                             modifier = Modifier
@@ -629,7 +630,7 @@ fun CustomDialog(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_cancel),
-                            contentDescription = "cancel",
+                            contentDescription = stringResource(R.string.common_cancel_content_description),
                             tint = Color(0xFFFFFFFF),
                             modifier = Modifier
                                 .size(20.dp)
@@ -652,7 +653,7 @@ fun CustomDialog(
                         )
                     } else {
                         Text(
-                            text = "Tên nguyên liệu",
+                            text = stringResource(R.string.common_ingredient_name),
                             color = Color(0xFF6B7280),
                             fontSize = 14.sp,
                             fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
@@ -663,14 +664,14 @@ fun CustomDialog(
                         CustomTextField(
                             value = name,
                             onValueChange = onNameChange,
-                            placeholder = "Tên nguyên liệu",
+                            placeholder = stringResource(R.string.common_ingredient_name),
                             placeholderSize = 12.sp,
                             modifier = Modifier
                                 .padding(top = 12.dp)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Định lượng",
+                            text = stringResource(R.string.common_quantity),
                             color = Color(0xFF6B7280),
                             fontSize = 14.sp,
                             fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
@@ -685,7 +686,7 @@ fun CustomDialog(
                             CustomTextField(
                                 value = weight,
                                 onValueChange = onWeightChange,
-                                placeholder = "Khối lượng",
+                                placeholder = stringResource(R.string.common_weight),
                                 placeholderSize = 12.sp,
                                 modifier = Modifier
                                     .padding(end = 4.dp)
@@ -694,7 +695,7 @@ fun CustomDialog(
                             CustomTextField(
                                 value = unit,
                                 onValueChange = onUnitChange,
-                                placeholder = "Đơn vị",
+                                placeholder = stringResource(R.string.common_unit),
                                 placeholderSize = 12.sp,
                                 modifier = Modifier
                                     .padding(start = 4.dp)
@@ -810,14 +811,14 @@ fun Preview() {
             .background(color = Color(0xFFFFFFFF))
     ) {
         Header(
-            text = "Nấu ngon",
+            text = stringResource(R.string.search_screen_title),
             trailingIcon = {
                 IconButton(
                     onClick = {}
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_bell),
-                        contentDescription = "Notification",
+                        contentDescription = stringResource(R.string.notification_content_description),
                         tint = Color(0xFFFFFFFF),
                         modifier = Modifier
                             .size(24.dp)
@@ -828,11 +829,11 @@ fun Preview() {
         CustomTextField(
             value = searchValue,
             onValueChange = { searchValue = it },
-            placeholder = "Tìm kiếm món ăn",
+            placeholder = stringResource(R.string.search_recipe_placeholder),
             leadingIcon = {
                 Icon(
                     painter = painterResource(R.drawable.ic_search),
-                    contentDescription = "Search",
+                    contentDescription = stringResource(R.string.search_content_description),
                     tint = Color(0xFFFF9800).copy(alpha = 0.75f),
                     modifier = Modifier
                         .size(24.dp)

@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -86,12 +87,12 @@ fun PantryScreen(
             .background(Color.White)
     ) {
         Header(
-            text = "Tủ lạnh cá nhân"
+            text = stringResource(R.string.pantry_title)
         )
 
         if (!isLoggedIn || user == null) {
             NeedLoginCard(
-                title = "Bạn cần đăng nhập để quản lý tủ lạnh",
+                title = stringResource(R.string.pantry_login_required_title),
                 onSignIn = { navController.navigate("signIn") }
             )
         } else {
@@ -103,7 +104,7 @@ fun PantryScreen(
                     .padding(horizontal = 20.dp, vertical = 14.dp)
             ) {
                 Text(
-                    text = "Nguyên liệu hiện có",
+                    text = stringResource(R.string.pantry_list_title),
                     color = Color(0xFF111827),
                     fontSize = 18.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
@@ -119,7 +120,7 @@ fun PantryScreen(
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_add),
-                        contentDescription = "Thêm",
+                        contentDescription = stringResource(R.string.common_add),
                         tint = Color.White,
                         modifier = Modifier.size(18.dp)
                     )
@@ -186,7 +187,7 @@ private fun PantryItemCard(
                 fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
             )
             Text(
-                text = "Số lượng: ${item.quantity} ${item.unit}",
+                text = stringResource(R.string.pantry_quantity, item.quantity.toString(), item.unit),
                 color = Color(0xFF374151),
                 fontSize = 13.sp,
                 fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -194,7 +195,7 @@ private fun PantryItemCard(
             )
             if (!item.expiresAt.isNullOrBlank()) {
                 Text(
-                    text = "HSD: ${item.expiresAt}",
+                    text = stringResource(R.string.pantry_expiry, item.expiresAt),
                     color = Color(0xFF6B7280),
                     fontSize = 13.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -208,9 +209,9 @@ private fun PantryItemCard(
                     .fillMaxWidth()
                     .padding(top = 10.dp)
             ) {
-                ActionTextButton(text = "Sửa", onClick = onEdit)
+                ActionTextButton(text = stringResource(R.string.common_edit), onClick = onEdit)
                 Spacer(modifier = Modifier.width(10.dp))
-                ActionTextButton(text = "Xóa", onClick = onDelete)
+                ActionTextButton(text = stringResource(R.string.common_delete), onClick = onDelete)
             }
         }
     }
@@ -242,7 +243,7 @@ private fun PantryEditorDialog(
                     .padding(14.dp)
             ) {
                 Text(
-                    text = if (initial == null) "Thêm nguyên liệu" else "Cập nhật nguyên liệu",
+                    text = if (initial == null) stringResource(R.string.pantry_editor_add_title) else stringResource(R.string.pantry_editor_update_title),
                     color = Color(0xFF111827),
                     fontSize = 18.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
@@ -251,7 +252,7 @@ private fun PantryEditorDialog(
                 CustomTextField(
                     value = ingredientName,
                     onValueChange = { ingredientName = it },
-                    placeholder = "Tên nguyên liệu",
+                    placeholder = stringResource(R.string.pantry_editor_name_placeholder),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 12.dp)
@@ -265,7 +266,7 @@ private fun PantryEditorDialog(
                     CustomTextField(
                         value = quantityInput,
                         onValueChange = { quantityInput = it },
-                        placeholder = "Số lượng",
+                        placeholder = stringResource(R.string.pantry_editor_quantity_placeholder),
                         modifier = Modifier
                             .weight(1f)
                             .padding(end = 6.dp)
@@ -273,7 +274,7 @@ private fun PantryEditorDialog(
                     CustomTextField(
                         value = unit,
                         onValueChange = { unit = it },
-                        placeholder = "Đơn vị",
+                        placeholder = stringResource(R.string.pantry_editor_unit_placeholder),
                         modifier = Modifier
                             .weight(1f)
                             .padding(start = 6.dp)
@@ -283,7 +284,7 @@ private fun PantryEditorDialog(
                 CustomTextField(
                     value = expiresAt,
                     onValueChange = { expiresAt = it },
-                    placeholder = "Hạn sử dụng (YYYY-MM-DD)",
+                    placeholder = stringResource(R.string.pantry_editor_expiry_placeholder),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 10.dp)
@@ -295,7 +296,7 @@ private fun PantryEditorDialog(
                         .fillMaxWidth()
                         .padding(top = 14.dp)
                 ) {
-                    ActionTextButton(text = "Hủy", onClick = onDismiss)
+                    ActionTextButton(text = stringResource(R.string.common_cancel), onClick = onDismiss)
                     Spacer(modifier = Modifier.width(12.dp))
                     Button(
                         onClick = {
@@ -318,7 +319,7 @@ private fun PantryEditorDialog(
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF97316))
                     ) {
                         Text(
-                            text = "Lưu",
+                            text = stringResource(R.string.common_save),
                             color = Color.White,
                             fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
                         )
@@ -362,7 +363,7 @@ private fun NeedLoginCard(
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF97316))
                 ) {
                     Text(
-                        text = "Đăng nhập",
+                        text = stringResource(R.string.common_sign_in),
                         color = Color.White,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
                     )

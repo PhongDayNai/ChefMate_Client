@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -133,13 +134,13 @@ fun NoInternetConnectionBottomSheet(
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.img_no_internet_connection),
-                    contentDescription = "No internet connection",
+                    contentDescription = stringResource(R.string.network_no_internet_content_description),
                     modifier = Modifier
                         .size(70.dp)
                 )
             }
             Text(
-                text = "Không có kết nối internet",
+                text = stringResource(R.string.network_no_internet_title),
                 color = Color(0xFF1B1B1D),
                 fontSize = 20.sp,
                 fontWeight = FontWeight(600),
@@ -148,7 +149,7 @@ fun NoInternetConnectionBottomSheet(
                     .padding(top = 16.dp)
             )
             Text(
-                text = "Vui lòng kiểm tra kết nối internet và thử lại",
+                text = stringResource(R.string.network_no_internet_message),
                 color = Color(0xFF5A5A60),
                 fontSize = 14.sp,
                 fontWeight = FontWeight(400),
@@ -164,7 +165,7 @@ fun NoInternetConnectionBottomSheet(
                     activity.finishAffinity()
                     exitProcess(0)
                 },
-                text = "Đóng ứng dụng",
+                text = stringResource(R.string.network_close_app),
                 modifier = Modifier
                     .padding(top = 40.dp)
                     .fillMaxWidth(0.9f)

@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -241,7 +242,7 @@ fun BottomNavigationBar(
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_options),
-                contentDescription = "Options",
+                contentDescription = stringResource(R.string.main_options_content_description),
                 tint = Color(0xFFFFFFFF),
                 modifier = Modifier
             )
@@ -280,7 +281,7 @@ fun BottomNavigationBar(
                             }
                     ) {
                         Text(
-                            text = "Thêm công thức",
+                            text = stringResource(R.string.main_add_recipe),
                             fontSize = 16.sp,
                             fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
                             color = Color(0xFFFFFFFF),
@@ -296,7 +297,7 @@ fun BottomNavigationBar(
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_add_recipe),
-                                contentDescription = "Add Recipe",
+                                contentDescription = stringResource(R.string.main_add_recipe_content_description),
                                 tint = Color.Unspecified,
                                 modifier = Modifier
                                     .size(28.dp)
@@ -319,7 +320,7 @@ fun BottomNavigationBar(
                             }
                     ) {
                         Text(
-                            text = "Lập danh sách\nmua sắm",
+                            text = stringResource(R.string.main_make_shopping_list),
                             fontSize = 16.sp,
                             fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
                             color = Color(0xFFFFFFFF),
@@ -335,7 +336,7 @@ fun BottomNavigationBar(
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_shopping),
-                                contentDescription = "Create Shopping List",
+                                contentDescription = stringResource(R.string.main_make_shopping_list_content_description),
                                 tint = Color.Unspecified,
                                 modifier = Modifier
                                     .size(28.dp)
@@ -355,7 +356,7 @@ fun BottomNavigationBar(
                             .height(32.dp)
                     ) {
                         Text(
-                            text = "Đóng",
+                            text = stringResource(R.string.main_close),
                             fontSize = 16.sp,
                             fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
                             color = Color(0xFF474747),

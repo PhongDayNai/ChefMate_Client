@@ -66,6 +66,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -245,7 +246,7 @@ fun AddOrEditRecipeScreen(
             ) {
                 Icon(
                     painterResource(R.drawable.ic_back),
-                    contentDescription = "back",
+                    contentDescription = stringResource(R.string.recipe_form_back_content_description),
                     tint = Color(0xFFFFFFFF),
                     modifier = Modifier
                         .size(24.dp)
@@ -288,7 +289,7 @@ fun AddOrEditRecipeScreen(
                     .clickable { galleryLauncher.launch(arrayOf("image/*")) }
             )
             Text(
-                text = "Tags",
+                text = stringResource(R.string.recipe_form_tags_title),
                 fontWeight = FontWeight(600),
                 fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
                 fontSize = 16.sp,
@@ -314,7 +315,7 @@ fun AddOrEditRecipeScreen(
                         .height(32.dp)
                 ) {
                     Text(
-                        text = "Thêm",
+                        text = stringResource(R.string.recipe_form_add),
                         color = Color(0xFFFB923C),
                         fontWeight = FontWeight(600),
                         fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
@@ -329,7 +330,7 @@ fun AddOrEditRecipeScreen(
                 ) {
                     if (tags.isEmpty()) {
                         Text(
-                            text = "Chưa nhập tag nào",
+                            text = stringResource(R.string.recipe_form_no_tags),
                             color = Color(0xFF555555),
                             fontWeight = FontWeight(500),
                             fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
@@ -356,7 +357,7 @@ fun AddOrEditRecipeScreen(
             OutlinedTextField(
                 value = nameRecipe.value,
                 onValueChange = { nameRecipe.value = it },
-                label = { Text(text = "Tên công thức") },
+                label = { Text(text = stringResource(R.string.recipe_form_label_name)) },
                 colors = chefMateOutlinedTextFieldColors(
                     focusedBorderColor = Color(0xFFE0E0E0),
                     unfocusedBorderColor = Color(0xFFE0E0E0)
@@ -383,7 +384,7 @@ fun AddOrEditRecipeScreen(
                 OutlinedTextField(
                     value = cookTime.value,
                     onValueChange = { cookTime.value = it },
-                    label = { Text(text = "Thời gian nấu") },
+                    label = { Text(text = stringResource(R.string.recipe_form_label_cook_time)) },
                     colors = chefMateOutlinedTextFieldColors(
                         focusedBorderColor = Color(0xFFE0E0E0),
                         unfocusedBorderColor = Color(0xFFE0E0E0)
@@ -415,7 +416,7 @@ fun AddOrEditRecipeScreen(
                     val cleanInput = it.filter { char -> char.isDigit() }
                     ration.value = cleanInput
                 },
-                label = { Text(text = "Khẩu phần ăn") },
+                label = { Text(text = stringResource(R.string.recipe_form_label_servings)) },
                 colors = chefMateOutlinedTextFieldColors(
                     focusedBorderColor = Color(0xFFE0E0E0),
                     unfocusedBorderColor = Color(0xFFE0E0E0)
@@ -442,7 +443,7 @@ fun AddOrEditRecipeScreen(
                         .fillMaxWidth()
                 ) {
                     Text(
-                        text = "Trạng thái",
+                        text = stringResource(R.string.recipe_form_status_title),
                         fontWeight = FontWeight(600),
                         fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
                         fontSize = 16.sp
@@ -452,14 +453,14 @@ fun AddOrEditRecipeScreen(
                             selected = isPublic,
                             onClick = {
                                 if (!isLoggedIn) {
-                                    Toast.makeText(context, "Vui lòng đăng nhập để sử dụng tính năng này!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, stringResource(R.string.recipe_form_login_required), Toast.LENGTH_SHORT).show()
                                 } else {
                                     isPublic = true
                                 }
                             },
                             colors = RadioButtonDefaults.colors(selectedColor = Color(0xFFFB923C))
                         )
-                        Text(text = "Công khai")
+                        Text(text = stringResource(R.string.recipe_form_status_public))
 
                         RadioButton(
                             selected = !isPublic,
@@ -468,7 +469,7 @@ fun AddOrEditRecipeScreen(
                             modifier = Modifier
                                 .padding(start = 20.dp)
                         )
-                        Text(text = "Riêng tư")
+                        Text(text = stringResource(R.string.recipe_form_status_private))
                     }
                 }
             }
@@ -479,7 +480,7 @@ fun AddOrEditRecipeScreen(
                     .padding(top = 20.dp)
             ) {
                 Text(
-                    text = "Nguyên liệu",
+                    text = stringResource(R.string.recipe_form_ingredients_title),
                     fontWeight = FontWeight(600),
                     fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
                     fontSize = 16.sp,
@@ -528,7 +529,7 @@ fun AddOrEditRecipeScreen(
                                     ) {
                                         Icon(
                                             painterResource(R.drawable.ic_minus),
-                                            contentDescription = "Xóa nguyên liệu",
+                                            contentDescription = stringResource(R.string.recipe_form_delete_ingredient_content_description),
                                             tint = Color.Red,
                                             modifier = Modifier.size(24.dp)
                                         )
@@ -549,7 +550,7 @@ fun AddOrEditRecipeScreen(
                                             ingredients[index] = ingredient.copy(weight = newValue)
                                         }
                                     },
-                                    label = { Text(text = "Khối lượng", fontSize = 12.sp) },
+                                    label = { Text(text = stringResource(R.string.recipe_form_label_weight), fontSize = 12.sp) },
                                     colors = chefMateOutlinedTextFieldColors(
                                         focusedBorderColor = Color.Transparent,
                                         unfocusedBorderColor = Color.Transparent
@@ -577,7 +578,7 @@ fun AddOrEditRecipeScreen(
                                 TextField(
                                     value = ingredient.unit,
                                     onValueChange = { ingredients[index] = ingredient.copy(unit = it) },
-                                    label = { Text(text = "Đơn vị", fontSize = 12.sp) },
+                                    label = { Text(text = stringResource(R.string.recipe_form_label_unit), fontSize = 12.sp) },
                                     colors = chefMateOutlinedTextFieldColors(
                                         focusedBorderColor = Color.Transparent,
                                         unfocusedBorderColor = Color.Transparent
@@ -618,11 +619,11 @@ fun AddOrEditRecipeScreen(
                 ) {
                     Icon(
                         painterResource(R.drawable.ic_add),
-                        contentDescription = "Thêm nguyên liệu",
+                        contentDescription = stringResource(R.string.recipe_form_add_ingredient_content_description),
                         tint = Color(0xFFFB923C),
                         modifier = Modifier.size(26.dp)
                     )
-                    Text(text = "Thêm nguyên liệu")
+                    Text(text = stringResource(R.string.recipe_form_add_ingredient))
                 }
             }
 
@@ -632,7 +633,7 @@ fun AddOrEditRecipeScreen(
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = "Các bước nấu",
+                    text = stringResource(R.string.recipe_form_steps_title),
                     fontWeight = FontWeight(600),
                     fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
                     fontSize = 16.sp,
@@ -650,7 +651,7 @@ fun AddOrEditRecipeScreen(
                         OutlinedTextField(
                             value = step.content,
                             onValueChange = { steps[index] = step.copy(content = it) },
-                            label = { Text(text = "Bước ${index + 1}", fontSize = 12.sp) },
+                            label = { Text(text = stringResource(R.string.recipe_form_label_step, index + 1), fontSize = 12.sp) },
                             colors = chefMateOutlinedTextFieldColors(
                                 focusedBorderColor = Color(0xFFE0E0E0),
                                 unfocusedBorderColor = Color(0xFFE0E0E0)
@@ -683,7 +684,7 @@ fun AddOrEditRecipeScreen(
                             ) {
                                 Icon(
                                     painterResource(R.drawable.ic_minus),
-                                    contentDescription = "Xóa bước",
+                                    contentDescription = stringResource(R.string.recipe_form_delete_step_content_description),
                                     tint = Color.Red,
                                     modifier = Modifier.size(24.dp)
                                 )
@@ -698,11 +699,11 @@ fun AddOrEditRecipeScreen(
                 ) {
                     Icon(
                         painterResource(R.drawable.ic_add),
-                        contentDescription = "Thêm bước nấu",
+                        contentDescription = stringResource(R.string.recipe_form_add_step_content_description),
                         tint = Color(0xFFFB923C),
                         modifier = Modifier.size(26.dp)
                     )
-                    Text(text = "Thêm bước nấu")
+                    Text(text = stringResource(R.string.recipe_form_add_step))
                 }
             }
 
@@ -726,7 +727,7 @@ fun AddOrEditRecipeScreen(
                                 isLoading = false
                                 Toast.makeText(
                                     context,
-                                    "Cần ít nhất 1 nguyên liệu và 1 bước nấu hợp lệ",
+                                    stringResource(R.string.recipe_form_need_valid_ingredient_and_step),
                                     Toast.LENGTH_SHORT
                                 ).show()
                                 return@launch
@@ -799,7 +800,7 @@ fun AddOrEditRecipeScreen(
                                             }
                                         } else {
                                             Log.e("AddRecipeScreen", "Error: Response is null")
-                                            Toast.makeText(context, "Có lỗi xảy ra. Vui lòng thử lại!", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, stringResource(R.string.recipe_form_generic_error), Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                 }
@@ -823,7 +824,7 @@ fun AddOrEditRecipeScreen(
                             }
                             isLoading = false
                         } else {
-                            Toast.makeText(context, "Vui lòng điền đầy đủ thông tin", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, stringResource(R.string.recipe_form_fill_all_fields), Toast.LENGTH_SHORT).show()
                         }
                     }
                 },
@@ -838,7 +839,7 @@ fun AddOrEditRecipeScreen(
                     .padding(bottom = 20.dp)
             ) {
                 Text(
-                    text = if (recipeId == -1) "Đăng công thức" else "Cập nhật công thức"
+                    text = if (recipeId == -1) stringResource(R.string.recipe_form_publish) else stringResource(R.string.recipe_form_update)
                 )
             }
         }
@@ -860,10 +861,10 @@ fun AddOrEditRecipeScreen(
                             tags.add(selectedTag)
                             selectedTag = ""
                         } else {
-                            Toast.makeText(context, "Tag đã được chọn", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, stringResource(R.string.recipe_form_tag_selected), Toast.LENGTH_SHORT).show()
                         }
                     } else {
-                        Toast.makeText(context, "Vui lòng nhập tag", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, stringResource(R.string.recipe_form_enter_tag), Toast.LENGTH_SHORT).show()
                     }
                 },
                 recipeViewModel = recipeViewModel
@@ -887,7 +888,7 @@ fun TimeUnitDropdown(selectedUnit: String, onUnitSelected: (String) -> Unit, mod
             value = selectedUnit,
             onValueChange = {},
             readOnly = true,
-            label = { Text("Đơn vị") },
+            label = { Text(stringResource(R.string.recipe_form_label_unit)) },
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(
                     expanded = expanded.value
@@ -972,7 +973,7 @@ fun IngredientDropdown(
 
                 expanded.value = true
             },
-            label = { Text(text = "Tên nguyên liệu", fontSize = 12.sp) },
+            label = { Text(text = stringResource(R.string.recipe_form_label_ingredient_name), fontSize = 12.sp) },
             colors = chefMateOutlinedTextFieldColors(
                 focusedBorderColor = Color.Transparent,
                 unfocusedBorderColor = Color.Transparent,
@@ -1055,7 +1056,7 @@ fun AddTagDialog(
                     .padding(12.dp)
             ) {
                 Text(
-                    text = "Thêm tag",
+                    text = stringResource(R.string.recipe_form_add_tag_title),
                     fontWeight = FontWeight(600),
                     fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
                     fontSize = 18.sp,
@@ -1079,7 +1080,7 @@ fun AddTagDialog(
                 ) {
                     if (tags.isEmpty()) {
                         Text(
-                            text = "Chưa nhập tag nào",
+                            text = stringResource(R.string.recipe_form_no_tags),
                             color = Color(0xFF555555),
                             fontWeight = FontWeight(500),
                             fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
@@ -1111,7 +1112,7 @@ fun AddTagDialog(
                         .padding(top = 12.dp)
                         .align(Alignment.End)
                 ) {
-                    Text(text = "Thêm")
+                    Text(text = stringResource(R.string.common_add))
                 }
             }
 
@@ -1131,7 +1132,7 @@ fun AddTagDialog(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_cancel),
-                    contentDescription = "Close",
+                    contentDescription = stringResource(R.string.recipe_form_close_content_description),
                     tint = Color(0xFFFB923C),
                     modifier = Modifier
                         .size(24.dp)
@@ -1190,7 +1191,7 @@ fun TagDropdown(
 
                 expanded.value = true
             },
-            label = { Text(text = "Tên tag", fontSize = 12.sp) },
+            label = { Text(text = stringResource(R.string.recipe_form_label_tag_name), fontSize = 12.sp) },
             colors = chefMateOutlinedTextFieldColors(
                 focusedBorderColor = Color(0xFFE0E0E0),
                 unfocusedBorderColor = Color(0xFFE0E0E0),

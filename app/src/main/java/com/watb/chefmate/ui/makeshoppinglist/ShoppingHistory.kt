@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
@@ -52,7 +53,7 @@ fun ShoppingHistoryScreen(
             .padding(bottom = 42.dp)
     ) {
         Header(
-            text = "Lịch sử mua sắm",
+            text = stringResource(R.string.shopping_history_title),
             leadingIcon = {
                 HeaderBackButton(onClick = { navController.popBackStack() })
             },
@@ -99,7 +100,7 @@ fun ShoppingHistoryItem(
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_history),
-                contentDescription = "History",
+                contentDescription = stringResource(R.string.shopping_history_icon),
                 tint = Color(0xFF000000),
                 modifier = Modifier
                     .padding(start = 8.dp)
@@ -111,7 +112,7 @@ fun ShoppingHistoryItem(
                     .padding(start = 12.dp)
             ) {
                 Text(
-                    text = "Ngày mua",
+                    text = stringResource(R.string.shopping_history_date_label),
                     color = Color(0xFF555555),
                     fontSize = 14.sp,
                     fontFamily = FontFamily(Font(R.font.roboto_regular)),
@@ -134,7 +135,7 @@ fun ShoppingHistoryItem(
                     .padding(end = 8.dp)
             ) {
                 Text(
-                    text = "Xem chi tiết",
+                    text = stringResource(R.string.shopping_history_view_detail),
                     color = Color(0xFFF97316),
                     fontSize = 12.sp,
                     fontFamily = FontFamily(Font(R.font.roboto_medium)),

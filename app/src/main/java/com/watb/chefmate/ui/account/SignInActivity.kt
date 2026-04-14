@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -107,7 +108,7 @@ fun SignInScreen(
             ) {
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    text = "Đăng nhập",
+                    text = stringResource(R.string.sign_in_title),
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                     color = Color(0xFFFFFFFF),
                     fontSize = 32.sp,
@@ -116,7 +117,7 @@ fun SignInScreen(
                         .padding(bottom = 15.dp)
                 )
                 Text(
-                    text = "Chào mừng trở lại BepTroLy - Bepes",
+                    text = stringResource(R.string.sign_in_welcome),
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                     color = Color(0xFFFFFFFF),
                     fontSize = 18.sp,
@@ -138,10 +139,10 @@ fun SignInScreen(
             var isShowPassword by remember { mutableStateOf(false) }
 
             InputField(
-                label = "Số điện thoại hoặc email",
+                label = stringResource(R.string.sign_in_label_identifier),
                 onValueChange = { identifier = it },
                 valueTextField = identifier,
-                placeholderText = "Nhập số điện thoại hoặc email",
+                placeholderText = stringResource(R.string.sign_in_placeholder_identifier),
                 focusRequester = identifierRequester,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
@@ -153,10 +154,10 @@ fun SignInScreen(
             )
 
             InputField(
-                label = "Mật khẩu",
+                label = stringResource(R.string.sign_in_label_password),
                 onValueChange = { password = it },
                 valueTextField = password,
-                placeholderText = "Nhập mật khẩu",
+                placeholderText = stringResource(R.string.sign_in_placeholder_password),
                 trailingIcon = {
                     IconButton(
                         onClick = {isShowPassword = !isShowPassword}
@@ -211,28 +212,28 @@ fun SignInScreen(
                                         isLoading = false
                                     } else {
                                         isLoading = false
-                                        Toast.makeText(context, "Đăng nhập thất bại. Thiếu dữ liệu phiên đăng nhập.", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, stringResource(R.string.sign_in_failed_missing_session), Toast.LENGTH_SHORT).show()
                                     }
                                 } else {
                                     isLoading = false
                                     if (response.message == "Unauthorized access") {
-                                        Toast.makeText(context, "Tài khoản hoặc mật khẩu không đúng", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, stringResource(R.string.sign_in_invalid_credentials), Toast.LENGTH_SHORT).show()
                                     } else {
-                                        Toast.makeText(context, "Đăng nhập thất bại. Vui lòng thử lại!", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, stringResource(R.string.sign_in_failed_retry), Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             } catch (e: Exception) {
                                 isLoading = false
                                 if (e.message == "Unauthorized access") {
-                                    Toast.makeText(context, "Tài khoản hoặc mật khẩu không đúng", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, stringResource(R.string.sign_in_invalid_credentials), Toast.LENGTH_SHORT).show()
                                 } else {
-                                    Toast.makeText(context, "Đăng nhập thất bại. Vui lòng thử lại!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, stringResource(R.string.sign_in_failed_retry), Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
                     } else {
                         isLoading = false
-                        Toast.makeText(context, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, stringResource(R.string.sign_in_fill_all_fields), Toast.LENGTH_SHORT).show()
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
@@ -242,7 +243,7 @@ fun SignInScreen(
                     .width(242.dp)
             ) {
                 Text(
-                    text = "Đăng nhập",
+                    text = stringResource(R.string.sign_in_title),
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                     color = Color(0xFFFFFFFF),
                     fontSize = 18.sp,
@@ -254,14 +255,14 @@ fun SignInScreen(
                     .padding(top = 12.dp)
             ) {
                 Text(
-                    text = "Bạn chưa có tài khoản?",
+                    text = stringResource(R.string.sign_in_no_account),
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                     color = Color(0xFF777779),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Text(
-                    text = "Đăng ký ngay",
+                    text = stringResource(R.string.sign_in_register_now),
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                     color = Color(0xFFF97316),
                     fontSize = 14.sp,

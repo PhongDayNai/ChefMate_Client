@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
@@ -121,7 +122,7 @@ fun SignUpScreen(
                 ) {
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
-                        text = "Đăng ký",
+                        text = stringResource(R.string.sign_up_title),
                         fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                         color = Color(0xFFFFFFFF),
                         fontSize = 32.sp,
@@ -130,7 +131,7 @@ fun SignUpScreen(
                             .padding(bottom = 15.dp)
                     )
                     Text(
-                        text = "Chào mừng đến với BepTroLy - Bepes",
+                        text = stringResource(R.string.sign_up_welcome),
                         fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                         color = Color(0xFFFFFFFF),
                         fontSize = 18.sp,
@@ -153,10 +154,10 @@ fun SignUpScreen(
                     var isShowConfirmPassword by remember { mutableStateOf(false) }
 
                     InputField(
-                        label = "Họ và tên",
+                        label = stringResource(R.string.sign_up_label_full_name),
                         onValueChange = { fullName.value = it },
                         valueTextField = fullName.value,
-                        placeholderText = "Vui lòng nhập họ và tên",
+                        placeholderText = stringResource(R.string.sign_up_placeholder_full_name),
                         focusRequester = fullNameRequester,
                         keyboardOptions = KeyboardOptions(
                             imeAction = ImeAction.Next
@@ -168,10 +169,10 @@ fun SignUpScreen(
                             .padding(top = 12.dp)
                     )
                     InputField(
-                        label = "Số điện thoại",
+                        label = stringResource(R.string.sign_up_label_phone_number),
                         onValueChange = { phoneNumber.value = it },
                         valueTextField = phoneNumber.value,
-                        placeholderText = "Vui lòng nhập số điện thoại",
+                        placeholderText = stringResource(R.string.sign_up_placeholder_phone_number),
                         focusRequester = phoneRequester,
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Phone,
@@ -184,10 +185,10 @@ fun SignUpScreen(
                             .padding(top = 12.dp)
                     )
                     InputField(
-                        label = "Email",
+                        label = stringResource(R.string.sign_up_label_email),
                         onValueChange = { email.value = it },
                         valueTextField = email.value,
-                        placeholderText = "Vui lòng nhập email",
+                        placeholderText = stringResource(R.string.sign_up_placeholder_email),
                         focusRequester = emailRequester,
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Email,
@@ -200,10 +201,10 @@ fun SignUpScreen(
                             .padding(top = 12.dp)
                     )
                     InputField(
-                        label = "Mật khẩu",
+                        label = stringResource(R.string.sign_up_label_password),
                         onValueChange = { password.value = it },
                         valueTextField = password.value,
-                        placeholderText = "Vui lòng nhập mật khẩu",
+                        placeholderText = stringResource(R.string.sign_up_placeholder_password),
                         trailingIcon = {
                             IconButton(
                                 onClick = { isShowPassword = !isShowPassword }
@@ -228,10 +229,10 @@ fun SignUpScreen(
                             .padding(top = 12.dp)
                     )
                     InputField(
-                        label = "Xác nhận mật khẩu",
+                        label = stringResource(R.string.sign_up_label_confirm_password),
                         onValueChange = { confirmPassword.value = it },
                         valueTextField = confirmPassword.value,
-                        placeholderText = "Vui lòng xác nhận mật khẩu",
+                        placeholderText = stringResource(R.string.sign_up_placeholder_confirm_password),
                         trailingIcon = {
                             IconButton(
                                 onClick = { isShowConfirmPassword = !isShowConfirmPassword }
@@ -317,7 +318,7 @@ fun SignUpScreen(
                                                     }
                                                 }
                                             } else {
-                                                Toast.makeText(context, "Đăng ký thành công, vui lòng đăng nhập lại", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, stringResource(R.string.sign_up_success_sign_in_again), Toast.LENGTH_SHORT).show()
                                                 navController.navigate("signIn") {
                                                     popUpTo("signUp") {
                                                         inclusive = true
@@ -325,21 +326,21 @@ fun SignUpScreen(
                                                 }
                                             }
                                         } else {
-                                            Toast.makeText(context, response.message ?: "Đăng ký thất bại", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, response.message ?: stringResource(R.string.sign_up_failed), Toast.LENGTH_SHORT).show()
                                         }
                                         isLoading = false
                                     }
                                 } else {
                                     isLoading = false
-                                    Toast.makeText(context, "Vui lòng đồng ý với điều khoản dịch vụ", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, stringResource(R.string.sign_up_accept_terms), Toast.LENGTH_SHORT).show()
                                 }
                             } else {
                                 isLoading = false
-                                Toast.makeText(context, "Mật khẩu không khớp", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, stringResource(R.string.sign_up_password_mismatch), Toast.LENGTH_SHORT).show()
                             }
                         } else {
                             isLoading = false
-                            Toast.makeText(context, "Vui lòng điền đầy đủ thông tin", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, stringResource(R.string.sign_up_fill_all_fields), Toast.LENGTH_SHORT).show()
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -350,7 +351,7 @@ fun SignUpScreen(
                         .width(242.dp)
                 ) {
                     Text(
-                        text = "Đăng ký"
+                        text = stringResource(R.string.sign_up_title)
                     )
                 }
                 Row(
@@ -358,14 +359,14 @@ fun SignUpScreen(
                         .padding(top = 12.dp)
                 ) {
                     Text(
-                        text = "Bạn đã có tài khoản?",
+                        text = stringResource(R.string.sign_up_has_account),
                         fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                         color = Color(0xFF777779),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
                     Text(
-                        text = "Đăng nhập ngay",
+                        text = stringResource(R.string.sign_up_sign_in_now),
                         fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                         color = Color(0xFFF97316),
                         fontSize = 14.sp,

@@ -30,6 +30,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -82,7 +83,7 @@ fun AddManuallyScreen(
                 }
         ) {
             Text(
-                text = "Nhập tên nguyên liệu",
+                text = stringResource(R.string.shopping_manual_input_name_title),
                 fontSize = 18.sp,
                 fontWeight = FontWeight(600),
                 fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
@@ -120,7 +121,7 @@ fun AddManuallyScreen(
                 ),
                 placeholder = {
                     Text(
-                        text = "Tên nguyên liệu",
+                        text = stringResource(R.string.shopping_manual_input_name_placeholder),
                         fontSize = 14.sp,
                         color = Color(0xFFADAEBC)
                     )
@@ -128,7 +129,7 @@ fun AddManuallyScreen(
             )
             Spacer(modifier = Modifier.height(20.dp))
             Text(
-                text = "Nhập định lượng",
+                text = stringResource(R.string.shopping_manual_input_quantity_title),
                 fontSize = 18.sp,
                 fontWeight = FontWeight(600),
                 fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
@@ -143,7 +144,7 @@ fun AddManuallyScreen(
                     onValueChange = onWeightChange,
                     placeholder = {
                         Text(
-                        text = "Khối lượng",
+                        text = stringResource(R.string.shopping_manual_input_weight_placeholder),
                         fontSize = 14.sp,
                         color = Color(0xFFADAEBC)
                         )
@@ -179,7 +180,7 @@ fun AddManuallyScreen(
                     onValueChange = onUnitChange,
                     placeholder = {
                         Text(
-                            text = "Đơn vị",
+                            text = stringResource(R.string.shopping_manual_input_unit_placeholder),
                             fontSize = 14.sp,
                             color = Color(0xFFADAEBC)
                         )
@@ -222,7 +223,7 @@ fun AddManuallyScreen(
                         .width(100.dp)
                 ) {
                     Text(
-                        text = "Thêm",
+                        text = stringResource(R.string.common_add),
                         color = Color.White,
                         fontSize = 16.sp
                     )

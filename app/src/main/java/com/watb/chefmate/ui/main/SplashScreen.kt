@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -82,7 +83,7 @@ fun SplashScreen(navController: NavController) {
                 ) {
                     Image(
                         painter = painterResource(id = R.mipmap.ic_launcher_foreground),
-                        contentDescription = "BepTroLy - Bepes logo",
+                        contentDescription = stringResource(R.string.splash_logo_content_description),
                         modifier = Modifier
                             .size(96.dp)
                     )
@@ -90,7 +91,7 @@ fun SplashScreen(navController: NavController) {
             }
 
             Text(
-                text = "BepTroLy - Bepes",
+                text = stringResource(R.string.splash_app_title),
                 color = Color.White,
                 fontSize = 28.sp,
                 fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
@@ -100,7 +101,7 @@ fun SplashScreen(navController: NavController) {
             )
 
             Text(
-                text = "Bepes đang chuẩn bị gian bếp cho bạn...",
+                text = stringResource(R.string.splash_loading_message),
                 color = Color.White.copy(alpha = 0.95f),
                 fontSize = 14.sp,
                 fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),

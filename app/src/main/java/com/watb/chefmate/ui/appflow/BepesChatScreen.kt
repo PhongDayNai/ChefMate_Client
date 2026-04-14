@@ -73,6 +73,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -306,7 +307,7 @@ fun BepesChatScreen(
             .background(Color.White)
     ) {
         Header(
-            text = "Bepes",
+            text = stringResource(R.string.bepes_title),
             leadingIcon = {
                 HeaderBackButton(onClick = { navController.popBackStack() })
             },
@@ -323,7 +324,7 @@ fun BepesChatScreen(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_tick_square),
-                            contentDescription = "Hoàn thành",
+                            contentDescription = stringResource(R.string.bepes_complete),
                             tint = if (canCompleteSession) Color.White else Color.White.copy(alpha = 0.45f),
                             modifier = Modifier.size(22.dp)
                         )
@@ -334,7 +335,7 @@ fun BepesChatScreen(
 
         if (!isLoggedIn || user == null) {
             NeedLoginCard(
-                title = "Bạn cần đăng nhập để trò chuyện cùng Bepes",
+                title = stringResource(R.string.bepes_chat_login_required_title),
                 onSignIn = { navController.navigate("signIn") }
             )
         } else {
@@ -353,7 +354,7 @@ fun BepesChatScreen(
                 onComplete = openCompleteDialog,
                 onOpenRecipe = {
                     if (mealRecipes.isEmpty()) {
-                        Toast.makeText(context, "Hãy chọn món trước khi mở công thức", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, stringResource(R.string.bepes_open_recipe_choose_first), Toast.LENGTH_SHORT).show()
                     } else {
                         coroutineScope.launch {
                             isResolvingRecipe = true
@@ -370,7 +371,7 @@ fun BepesChatScreen(
                                 selectedRecipePreview = null
                                 showRecipeBrowserSheet = true
                             } else {
-                                Toast.makeText(context, "Không tìm thấy công thức phù hợp", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, stringResource(R.string.bepes_recipe_not_found), Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
@@ -575,7 +576,7 @@ fun BepesChatScreen(
     if (selectedRecipeForConfirm != null && user != null) {
         val selected = selectedRecipeForConfirm!!
         val missingText = if (selected.missing.isEmpty()) {
-            "Không thiếu nguyên liệu."
+            stringResource(R.string.bepes_missing_ingredients_none)
         } else {
             selected.missing.joinToString { item ->
                 item.ingredientName
@@ -585,7 +586,7 @@ fun BepesChatScreen(
             onDismissRequest = { selectedRecipeForConfirm = null },
             title = {
                 Text(
-                    text = "Chọn món này?",
+                    text = stringResource(R.string.bepes_choose_recipe_dialog_title),
                     fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
                 )
             },
@@ -597,14 +598,14 @@ fun BepesChatScreen(
                         fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
                     )
                     Text(
-                        text = "Độ sẵn sàng: ${selected.completionRate ?: 0}%",
+                        text = stringResource(R.string.bepes_readiness, selected.completionRate ?: 0),
                         color = Color(0xFF6B7280),
                         fontSize = 13.sp,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
                         modifier = Modifier.padding(top = 6.dp)
                     )
                     Text(
-                        text = "Nguyên liệu còn thiếu: $missingText",
+                        text = stringResource(R.string.bepes_missing_ingredients, missingText),
                         color = Color(0xFF92400E),
                         fontSize = 13.sp,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -622,7 +623,7 @@ fun BepesChatScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF97316))
                 ) {
                     Text(
-                        text = "Xác nhận",
+                        text = stringResource(R.string.common_confirm),
                         color = Color.White,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
                     )
@@ -634,7 +635,7 @@ fun BepesChatScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6B7280))
                 ) {
                     Text(
-                        text = "Hủy",
+                        text = stringResource(R.string.common_cancel),
                         color = Color.White,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
                     )
@@ -1458,9 +1459,9 @@ private fun RecipePickerSheet(
         }
 
         RecipeGroupSection(
-            title = "Có thể nấu ngay",
+            title = stringResource(R.string.bepes_recipe_group_ready_title),
             titleColor = Color(0xFF15803D),
-            subtitle = "Đủ nguyên liệu để bắt đầu ngay lúc này.",
+            subtitle = stringResource(R.string.bepes_recipe_group_ready_subtitle),
             expanded = expandReady,
             onToggleExpanded = { expandReady = !expandReady },
             items = readyToCook,
@@ -1469,9 +1470,9 @@ private fun RecipePickerSheet(
         )
 
         RecipeGroupSection(
-            title = "Thiếu một chút",
+            title = stringResource(R.string.bepes_recipe_group_almost_title),
             titleColor = Color(0xFFB45309),
-            subtitle = "Thiếu ít nguyên liệu, có thể cân nhắc thay thế hoặc mua nhanh.",
+            subtitle = stringResource(R.string.bepes_recipe_group_almost_subtitle),
             expanded = expandAlmost,
             onToggleExpanded = { expandAlmost = !expandAlmost },
             items = almostReady,
@@ -1480,9 +1481,9 @@ private fun RecipePickerSheet(
         )
 
         RecipeGroupSection(
-            title = "Món đề xuất",
+            title = stringResource(R.string.bepes_recipe_group_suggested_title),
             titleColor = Color(0xFF6B7280),
-            subtitle = "Các món đáng tham khảo thêm cho bữa hiện tại.",
+            subtitle = stringResource(R.string.bepes_recipe_group_suggested_subtitle),
             expanded = expandUnavailable,
             onToggleExpanded = { expandUnavailable = !expandUnavailable },
             items = unavailable,

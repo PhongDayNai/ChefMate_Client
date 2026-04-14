@@ -45,6 +45,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -127,7 +128,7 @@ fun HomeScreen(
             .background(color = Color(0xFFFFFFFF))
     ) {
         Header(
-            text = "Nấu ngon",
+            text = stringResource(R.string.home_title),
             trailingIcon = {
                 IconButton(
                     onClick = {},
@@ -135,7 +136,7 @@ fun HomeScreen(
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_bell),
-                        contentDescription = "Thông báo",
+                        contentDescription = stringResource(R.string.home_notification_content_description),
                         tint = Color(0xFFFFFFFF),
                         modifier = Modifier.size(24.dp)
                     )
@@ -146,11 +147,11 @@ fun HomeScreen(
         CustomTextField(
             value = searchValue,
             onValueChange = { searchValue = it },
-            placeholder = "Tìm kiếm món ăn",
+            placeholder = stringResource(R.string.search_recipe_placeholder),
                 leadingIcon = {
                     Icon(
                         painter = painterResource(R.drawable.ic_search),
-                        contentDescription = "Tìm kiếm",
+                        contentDescription = stringResource(R.string.home_search_content_description),
                         tint = Color(0xFFFF9800).copy(alpha = 0.75f),
                         modifier = Modifier.size(24.dp)
                     )
@@ -186,7 +187,7 @@ fun HomeScreen(
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = "Tìm kiếm theo: ",
+                    text = stringResource(R.string.search_by_label),
                     color = Color(0xFF000000),
                     fontSize = 14.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
@@ -201,7 +202,7 @@ fun HomeScreen(
                     modifier = Modifier.padding(horizontal = 8.dp)
                 ) {
                     Text(
-                        text = "Tên món",
+                        text = stringResource(R.string.search_by_name),
                         color = Color(0xFF000000),
                         fontSize = 14.sp,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -218,7 +219,7 @@ fun HomeScreen(
                     modifier = Modifier.padding(horizontal = 8.dp)
                 ) {
                     Text(
-                        text = "Tag",
+                        text = stringResource(R.string.search_by_tag),
                         color = Color(0xFF000000),
                         fontSize = 14.sp,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -311,7 +312,7 @@ fun HomeScreen(
 //            }
 //        }
         Text(
-            text = "Top thịnh hành",
+            text = stringResource(R.string.home_top_trending),
             color = Color(0xFF000000),
             fontSize = 18.sp,
             fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
@@ -385,13 +386,13 @@ private fun BepesEntrySection(
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Text(
-                text = "Bepes - Trợ lý bếp thông minh",
+                text = stringResource(R.string.home_bepes_title),
                 color = Color(0xFF9A3412),
                 fontSize = 18.sp,
                 fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
             )
             Text(
-                text = "Đặt câu hỏi nấu ăn, nhận gợi ý món từ tủ lạnh của bạn.",
+                text = stringResource(R.string.home_bepes_description),
                 color = Color(0xFF7C2D12),
                 fontSize = 13.sp,
                 fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -404,12 +405,12 @@ private fun BepesEntrySection(
                     .padding(top = 12.dp)
             ) {
                 HomeActionChip(
-                    text = "Trò chuyện với Bepes",
+                    text = stringResource(R.string.home_chat_with_bepes),
                     onClick = onOpenChat,
                     modifier = Modifier.weight(1f)
                 )
                 HomeActionChip(
-                    text = "Gợi ý từ tủ lạnh",
+                    text = stringResource(R.string.home_pantry_suggestions),
                     onClick = onOpenPantrySuggestions,
                     containerColor = Color(0xFFE0F2FE),
                     textColor = Color(0xFF0369A1),
@@ -436,13 +437,13 @@ private fun PantryRecommendationOverlay(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = "Gợi ý từ tủ lạnh",
+                text = stringResource(R.string.home_pantry_suggestions),
                 color = Color(0xFF111827),
                 fontSize = 18.sp,
                 fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
             )
             Text(
-                text = "Làm mới",
+                text = stringResource(R.string.home_refresh),
                 color = Color(0xFFF97316),
                 fontSize = 13.sp,
                 fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
@@ -463,7 +464,7 @@ private fun PantryRecommendationOverlay(
         }
 
         Text(
-            text = "Nấu ngay",
+            text = stringResource(R.string.home_ready_to_cook),
             color = Color(0xFF15803D),
             fontSize = 14.sp,
             fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
@@ -471,7 +472,7 @@ private fun PantryRecommendationOverlay(
         )
         val safeReady = readyToCook.filter { it.recipeId > 0 }
         if (safeReady.isEmpty()) {
-            EmptyRecommendationCard(text = "Chưa có món phù hợp để nấu ngay")
+            EmptyRecommendationCard(text = stringResource(R.string.home_empty_ready_to_cook))
         } else {
             safeReady.take(6).forEach { recommendation ->
                 RecommendationOverlayCard(
@@ -482,7 +483,7 @@ private fun PantryRecommendationOverlay(
         }
 
         Text(
-            text = "Thiếu chút là nấu được",
+            text = stringResource(R.string.home_almost_ready),
             color = Color(0xFFB45309),
             fontSize = 14.sp,
             fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
@@ -490,7 +491,7 @@ private fun PantryRecommendationOverlay(
         )
         val safeAlmostReady = almostReady.filter { it.recipeId > 0 }
         if (safeAlmostReady.isEmpty()) {
-            EmptyRecommendationCard(text = "Chưa có món gần hoàn thiện")
+            EmptyRecommendationCard(text = stringResource(R.string.home_empty_almost_ready))
         } else {
             safeAlmostReady.take(6).forEach { recommendation ->
                 RecommendationOverlayCard(
@@ -524,7 +525,7 @@ private fun RecommendationOverlayCard(
                 fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
             )
             Text(
-                text = "Độ hoàn thiện: ${recommendation.completionRate ?: 0}%",
+                text = stringResource(R.string.home_completion_rate, recommendation.completionRate ?: 0),
                 color = Color(0xFF6B7280),
                 fontSize = 12.sp,
                 fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -538,7 +539,7 @@ private fun RecommendationOverlayCard(
                     "${item.ingredientName} (${need}${unit})"
                 }
                 Text(
-                    text = "Thiếu: $missingText",
+                    text = stringResource(R.string.home_missing, missingText),
                     color = Color(0xFF92400E),
                     fontSize = 12.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -553,7 +554,7 @@ private fun RecommendationOverlayCard(
                     .padding(top = 8.dp)
             ) {
                 HomeActionChip(
-                    text = "Nấu với Bepes",
+                    text = stringResource(R.string.home_cook_with_bepes),
                     onClick = { onOpenRecipeChat(recommendation.recipeId) }
                 )
             }
