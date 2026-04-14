@@ -152,6 +152,10 @@
     <string name="home_today_eat_ready_message">Có thể bắt tay vào nấu ngay với nguyên liệu hiện có.</string>
     <string name="home_today_eat_almost_message">Chỉ cần bổ sung thêm một chút, độ sẵn sàng %1$d%%.</string>
     <string name="home_today_eat_empty">Chưa có gợi ý phù hợp từ tủ lạnh của bạn hôm nay.</string>
+    <string name="home_today_eat_card_hint_title">Gợi ý đã sẵn sàng</string>
+    <string name="home_today_eat_card_hint_ready">Chạm để xem các món có thể nấu ngay từ nguyên liệu hiện có.</string>
+    <string name="home_today_eat_card_hint_almost">Chạm để xem các món gần đủ nguyên liệu và cần bổ sung thêm.</string>
+    <string name="home_today_eat_tap_to_view">Chạm vào card để Bepes mở gợi ý món trong bottom sheet.</string>
     <string name="home_open_pantry_ai">Mở gợi ý từ tủ lạnh</string>
     <string name="home_ready_count">%1$d món sẵn sàng</string>
     <string name="home_almost_ready_count">%1$d món gần đủ</string>

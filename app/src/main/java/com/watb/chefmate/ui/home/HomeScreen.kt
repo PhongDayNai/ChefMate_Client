@@ -260,7 +260,6 @@ private fun TodayEatCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val topRecommendation = readyToCook.firstOrNull() ?: almostReady.firstOrNull()
     Card(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFBEB)),
@@ -297,65 +296,6 @@ private fun TodayEatCard(
                     containerColor = Color(0xFFFFEDD5),
                     textColor = Color(0xFFC2410C)
                 )
-            }
-
-            when {
-                !isLoggedIn -> {
-                    EmptyRecommendationCard(
-                        text = stringResource(R.string.home_sign_in_for_suggestions),
-                        modifier = Modifier.padding(top = 14.dp)
-                    )
-                }
-
-                isLoading && readyToCook.isEmpty() && almostReady.isEmpty() -> {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 20.dp)
-                    ) {
-                        CircularProgressIndicator(color = Color(0xFFF97316))
-                    }
-                }
-
-                topRecommendation != null -> {
-                    Card(
-                        shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 14.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Text(
-                                text = topRecommendation.recipeName,
-                                color = Color(0xFF111827),
-                                fontSize = 16.sp,
-                                fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
-                            )
-                            Text(
-                                text = when {
-                                    readyToCook.isNotEmpty() -> stringResource(R.string.home_today_eat_ready_message)
-                                    else -> stringResource(
-                                        R.string.home_today_eat_almost_message,
-                                        topRecommendation.completionRate ?: 0
-                                    )
-                                },
-                                color = Color(0xFF6B7280),
-                                fontSize = 13.sp,
-                                fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                                modifier = Modifier.padding(top = 6.dp)
-                            )
-                        }
-                    }
-                }
-
-                else -> {
-                    EmptyRecommendationCard(
-                        text = stringResource(R.string.home_today_eat_empty),
-                        modifier = Modifier.padding(top = 14.dp)
-                    )
-                }
             }
 
             HomeActionChip(
