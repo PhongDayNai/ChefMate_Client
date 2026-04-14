@@ -2,18 +2,9 @@ package com.watb.chefmate.ui.home
 
 import android.annotation.SuppressLint
 import androidx.annotation.DrawableRes
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,37 +14,28 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -61,12 +43,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.watb.chefmate.R
-import com.watb.chefmate.data.Recommendation
 import com.watb.chefmate.data.Recipe
-import com.watb.chefmate.data.SearchType
 import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.repository.RecipeRepository
-import com.watb.chefmate.ui.theme.CustomTextField
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.ui.theme.RecipeItem
 import com.watb.chefmate.viewmodel.AppFlowViewModel
@@ -74,7 +53,6 @@ import com.watb.chefmate.viewmodel.RecipeViewModel
 import com.watb.chefmate.viewmodel.UserViewModel
 
 @SuppressLint("MemberExtensionConflict")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onRecipeClick: (Recipe) -> Unit,
@@ -89,15 +67,9 @@ fun HomeScreen(
     val recipes by recipeViewModel.topTrending.collectAsState()
     val topTrendingHasMore by recipeViewModel.topTrendingHasMore.collectAsState()
     val topTrendingLoading by recipeViewModel.topTrendingLoading.collectAsState()
-    val homeState by appFlowViewModel.homeState.collectAsState()
-
-    var searchType by remember { mutableStateOf(SearchType.NAME.value) }
-    var searchValue by remember { mutableStateOf("") }
-    var showRecommendationOverlay by remember { mutableStateOf(false) }
 
     LaunchedEffect(isLoggedIn, user?.userId) {
         if (isLoggedIn && user != null) {
-            appFlowViewModel.refreshHomeContext(user!!.userId)
             appFlowViewModel.prefetchChatHistorySources(user!!.userId)
         }
     }
@@ -131,103 +103,18 @@ fun HomeScreen(
             text = stringResource(R.string.home_title),
             trailingIcon = {
                 IconButton(
-                    onClick = {},
+                    onClick = { navController.navigate("homeSearch") },
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_bell),
-                        contentDescription = stringResource(R.string.home_notification_content_description),
+                        painter = painterResource(R.drawable.ic_search),
+                        contentDescription = stringResource(R.string.home_search_open_content_description),
                         tint = Color(0xFFFFFFFF),
                         modifier = Modifier.size(24.dp)
                     )
                 }
             }
         )
-
-        CustomTextField(
-            value = searchValue,
-            onValueChange = { searchValue = it },
-            placeholder = stringResource(R.string.search_recipe_placeholder),
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_search),
-                        contentDescription = stringResource(R.string.home_search_content_description),
-                        tint = Color(0xFFFF9800).copy(alpha = 0.75f),
-                        modifier = Modifier.size(24.dp)
-                    )
-                },
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(
-                onSearch = {
-                    navController.navigate("searchRecipe/$searchType/$searchValue")
-                    if (searchType == SearchType.NAME.value) {
-                        recipeViewModel.searchRecipe(searchValue, userId = if (isLoggedIn) user?.userId else null)
-                    } else {
-                        recipeViewModel.searchRecipeByTag(searchValue, userId = if (isLoggedIn) user?.userId else null)
-                    }
-                }
-            ),
-            modifier = Modifier
-                .padding(top = 16.dp)
-                .fillMaxWidth(0.9f)
-        )
-
-        AnimatedVisibility(
-            visible = searchValue.isNotEmpty(),
-            enter = fadeIn() + slideInVertically() + expandVertically(),
-            exit = fadeOut() + shrinkVertically(),
-            modifier = Modifier
-                .padding(top = 8.dp)
-                .fillMaxWidth(0.9f)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .height(36.dp)
-                    .fillMaxWidth()
-            ) {
-                Text(
-                    text = stringResource(R.string.search_by_label),
-                    color = Color(0xFF000000),
-                    fontSize = 14.sp,
-                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
-                )
-                Card(
-                    onClick = { searchType = SearchType.NAME.value },
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF)),
-                    elevation = CardDefaults.elevatedCardElevation(
-                        defaultElevation = if (searchType == SearchType.NAME.value) 4.dp else 0.dp,
-                        pressedElevation = 8.dp
-                    ),
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.search_by_name),
-                        color = Color(0xFF000000),
-                        fontSize = 14.sp,
-                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-                Card(
-                    onClick = { searchType = SearchType.TAG.value },
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFFFF)),
-                    elevation = CardDefaults.elevatedCardElevation(
-                        defaultElevation = if (searchType == SearchType.TAG.value) 4.dp else 0.dp,
-                        pressedElevation = 8.dp
-                    ),
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.search_by_tag),
-                        color = Color(0xFF000000),
-                        fontSize = 14.sp,
-                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
-                }
-            }
-        }
 
         BepesEntrySection(
             onOpenChat = {
@@ -239,8 +126,7 @@ fun HomeScreen(
             },
             onOpenPantrySuggestions = {
                 if (isLoggedIn && user != null) {
-                    appFlowViewModel.refreshRecommendations(user!!.userId)
-                    showRecommendationOverlay = true
+                    navController.navigate("homeSearch")
                 } else {
                     navController.navigate("signIn")
                 }
@@ -345,29 +231,6 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(8.dp))
         }
     }
-
-    if (showRecommendationOverlay && isLoggedIn && user != null) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ModalBottomSheet(
-            onDismissRequest = { showRecommendationOverlay = false },
-            sheetState = sheetState,
-            containerColor = Color(0xFFFFFBF5)
-        ) {
-            PantryRecommendationOverlay(
-                isLoading = homeState.isLoading || homeState.isRefreshingRecommendations,
-                readyToCook = homeState.readyToCook,
-                almostReady = homeState.almostReady,
-                onRefresh = { appFlowViewModel.refreshRecommendations(user!!.userId) },
-                onOpenRecipeChat = { recipeId ->
-                    showRecommendationOverlay = false
-                    navController.navigate("bepesChat?recipeId=$recipeId")
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-        }
-    }
 }
 
 @Composable
@@ -421,146 +284,6 @@ private fun BepesEntrySection(
     }
 }
 
-@Composable
-private fun PantryRecommendationOverlay(
-    isLoading: Boolean,
-    readyToCook: List<Recommendation>,
-    almostReady: List<Recommendation>,
-    onRefresh: () -> Unit,
-    onOpenRecipeChat: (Int) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier.padding(bottom = 18.dp)) {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = stringResource(R.string.home_pantry_suggestions),
-                color = Color(0xFF111827),
-                fontSize = 18.sp,
-                fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
-            )
-            Text(
-                text = stringResource(R.string.home_refresh),
-                color = Color(0xFFF97316),
-                fontSize = 13.sp,
-                fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
-                modifier = Modifier.clickable(onClick = onRefresh)
-            )
-        }
-
-        if (isLoading) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 20.dp)
-            ) {
-                CircularProgressIndicator(color = Color(0xFFF97316))
-            }
-            return
-        }
-
-        Text(
-            text = stringResource(R.string.home_ready_to_cook),
-            color = Color(0xFF15803D),
-            fontSize = 14.sp,
-            fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
-            modifier = Modifier.padding(top = 10.dp)
-        )
-        val safeReady = readyToCook.filter { it.recipeId > 0 }
-        if (safeReady.isEmpty()) {
-            EmptyRecommendationCard(text = stringResource(R.string.home_empty_ready_to_cook))
-        } else {
-            safeReady.take(6).forEach { recommendation ->
-                RecommendationOverlayCard(
-                    recommendation = recommendation,
-                    onOpenRecipeChat = onOpenRecipeChat
-                )
-            }
-        }
-
-        Text(
-            text = stringResource(R.string.home_almost_ready),
-            color = Color(0xFFB45309),
-            fontSize = 14.sp,
-            fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
-            modifier = Modifier.padding(top = 12.dp)
-        )
-        val safeAlmostReady = almostReady.filter { it.recipeId > 0 }
-        if (safeAlmostReady.isEmpty()) {
-            EmptyRecommendationCard(text = stringResource(R.string.home_empty_almost_ready))
-        } else {
-            safeAlmostReady.take(6).forEach { recommendation ->
-                RecommendationOverlayCard(
-                    recommendation = recommendation,
-                    onOpenRecipeChat = onOpenRecipeChat
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun RecommendationOverlayCard(
-    recommendation: Recommendation,
-    onOpenRecipeChat: (Int) -> Unit
-) {
-    Card(
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp)
-            .clickable { onOpenRecipeChat(recommendation.recipeId) }
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = recommendation.recipeName,
-                color = Color(0xFF111827),
-                fontSize = 15.sp,
-                fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
-            )
-            Text(
-                text = stringResource(R.string.home_completion_rate, recommendation.completionRate ?: 0),
-                color = Color(0xFF6B7280),
-                fontSize = 12.sp,
-                fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                modifier = Modifier.padding(top = 4.dp)
-            )
-
-            if (recommendation.missing.isNotEmpty()) {
-                val missingText = recommendation.missing.joinToString { item ->
-                    val need = item.need ?: 0.0
-                    val unit = item.unit.orEmpty()
-                    "${item.ingredientName} (${need}${unit})"
-                }
-                Text(
-                    text = stringResource(R.string.home_missing, missingText),
-                    color = Color(0xFF92400E),
-                    fontSize = 12.sp,
-                    fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-
-            Row(
-                horizontalArrangement = Arrangement.End,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-            ) {
-                HomeActionChip(
-                    text = stringResource(R.string.home_cook_with_bepes),
-                    onClick = { onOpenRecipeChat(recommendation.recipeId) }
-                )
-            }
-        }
-    }
-}
 
 @Composable
 private fun EmptyRecommendationCard(text: String) {

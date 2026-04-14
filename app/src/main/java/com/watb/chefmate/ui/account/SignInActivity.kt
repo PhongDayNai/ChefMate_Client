@@ -212,28 +212,28 @@ fun SignInScreen(
                                         isLoading = false
                                     } else {
                                         isLoading = false
-                                        Toast.makeText(context, stringResource(R.string.sign_in_failed_missing_session), Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.sign_in_failed_missing_session), Toast.LENGTH_SHORT).show()
                                     }
                                 } else {
                                     isLoading = false
                                     if (response.message == "Unauthorized access") {
-                                        Toast.makeText(context, stringResource(R.string.sign_in_invalid_credentials), Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.sign_in_invalid_credentials), Toast.LENGTH_SHORT).show()
                                     } else {
-                                        Toast.makeText(context, stringResource(R.string.sign_in_failed_retry), Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.sign_in_failed_retry), Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             } catch (e: Exception) {
                                 isLoading = false
                                 if (e.message == "Unauthorized access") {
-                                    Toast.makeText(context, stringResource(R.string.sign_in_invalid_credentials), Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.sign_in_invalid_credentials), Toast.LENGTH_SHORT).show()
                                 } else {
-                                    Toast.makeText(context, stringResource(R.string.sign_in_failed_retry), Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.sign_in_failed_retry), Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
                     } else {
                         isLoading = false
-                        Toast.makeText(context, stringResource(R.string.sign_in_fill_all_fields), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.sign_in_fill_all_fields), Toast.LENGTH_SHORT).show()
                     }
                 },
                 colors = ButtonDefaults.buttonColors(

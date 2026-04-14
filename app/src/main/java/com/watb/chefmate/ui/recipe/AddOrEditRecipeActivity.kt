@@ -453,7 +453,7 @@ fun AddOrEditRecipeScreen(
                             selected = isPublic,
                             onClick = {
                                 if (!isLoggedIn) {
-                                    Toast.makeText(context, stringResource(R.string.recipe_form_login_required), Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.recipe_form_login_required), Toast.LENGTH_SHORT).show()
                                 } else {
                                     isPublic = true
                                 }
@@ -727,7 +727,7 @@ fun AddOrEditRecipeScreen(
                                 isLoading = false
                                 Toast.makeText(
                                     context,
-                                    stringResource(R.string.recipe_form_need_valid_ingredient_and_step),
+                                    context.getString(R.string.recipe_form_need_valid_ingredient_and_step),
                                     Toast.LENGTH_SHORT
                                 ).show()
                                 return@launch
@@ -800,7 +800,7 @@ fun AddOrEditRecipeScreen(
                                             }
                                         } else {
                                             Log.e("AddRecipeScreen", "Error: Response is null")
-                                            Toast.makeText(context, stringResource(R.string.recipe_form_generic_error), Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, context.getString(R.string.recipe_form_generic_error), Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                 }
@@ -824,7 +824,7 @@ fun AddOrEditRecipeScreen(
                             }
                             isLoading = false
                         } else {
-                            Toast.makeText(context, stringResource(R.string.recipe_form_fill_all_fields), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.recipe_form_fill_all_fields), Toast.LENGTH_SHORT).show()
                         }
                     }
                 },
@@ -861,10 +861,10 @@ fun AddOrEditRecipeScreen(
                             tags.add(selectedTag)
                             selectedTag = ""
                         } else {
-                            Toast.makeText(context, stringResource(R.string.recipe_form_tag_selected), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.recipe_form_tag_selected), Toast.LENGTH_SHORT).show()
                         }
                     } else {
-                        Toast.makeText(context, stringResource(R.string.recipe_form_enter_tag), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.recipe_form_enter_tag), Toast.LENGTH_SHORT).show()
                     }
                 },
                 recipeViewModel = recipeViewModel

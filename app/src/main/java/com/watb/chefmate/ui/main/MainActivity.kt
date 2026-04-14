@@ -11,10 +11,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph
 import androidx.navigation.NavType
@@ -37,6 +41,7 @@ import com.watb.chefmate.ui.account.SignUpScreen
 import com.watb.chefmate.ui.appflow.BepesChatScreen
 import com.watb.chefmate.ui.appflow.DietNotesScreen
 import com.watb.chefmate.ui.appflow.PantryScreen
+import com.watb.chefmate.ui.home.HomeSearchScreen
 import com.watb.chefmate.ui.makeshoppinglist.ConsolidatedIngredientsScreen
 import com.watb.chefmate.ui.makeshoppinglist.MakeShoppingListScreen
 import com.watb.chefmate.ui.makeshoppinglist.ShoppingHistoryScreen
@@ -87,6 +92,7 @@ fun MainScreen(activity: Activity) {
     val recipeRepository = RecipeRepository(appDatabase.recipeDao(), appDatabase.ingredientDao(), appDatabase.tagDao())
     val shoppingTimeRepository = ShoppingTimeRepository(appDatabase.shoppingTimeDao())
     val navController = rememberNavController()
+    val recentRecipes = remember { mutableStateListOf<Recipe>() }
     val userViewModel: UserViewModel = viewModel()
     val appFlowViewModel: AppFlowViewModel = viewModel()
     userViewModel.isLoggedIn(context)
@@ -107,7 +113,8 @@ fun MainScreen(activity: Activity) {
                     userViewModel = userViewModel,
                     appFlowViewModel = appFlowViewModel,
                     recipeRepository = recipeRepository,
-                    shoppingTimeRepository = shoppingTimeRepository
+                    shoppingTimeRepository = shoppingTimeRepository,
+                    recentRecipes = recentRecipes
                 )
             )
         }
@@ -120,7 +127,8 @@ fun navGraph(
     userViewModel: UserViewModel,
     appFlowViewModel: AppFlowViewModel,
     recipeRepository: RecipeRepository,
-    shoppingTimeRepository: ShoppingTimeRepository
+    shoppingTimeRepository: ShoppingTimeRepository,
+    recentRecipes: MutableList<Recipe>
 ): NavGraph {
     var recipe = Recipe(
         recipeId = -1,
@@ -140,6 +148,19 @@ fun navGraph(
     )
     val recipeViewModel = RecipeViewModel(recipeRepository)
     val shoppingTimeViewModel = ShoppingTimeViewModel(shoppingTimeRepository)
+    val openRecipe: (Recipe, Boolean) -> Unit = { selectedRecipe, isHistory ->
+        recipe = selectedRecipe
+        if (!isHistory) {
+            recentRecipes.removeAll { it.recipeId == selectedRecipe.recipeId }
+            recentRecipes.add(0, selectedRecipe)
+            if (recentRecipes.size > 10) {
+                recentRecipes.removeAt(recentRecipes.lastIndex)
+            }
+            navController.navigate("recipeView")
+        } else {
+            navController.navigate("recipeViewHistory")
+        }
+    }
     return navController.createGraph("splash") {
         composable("splash") {
             SplashScreen(navController)
@@ -157,18 +178,46 @@ fun navGraph(
             MainAct(
                 activity = activity,
                 navController = navController,
-                onRecipeClick = { selectedRecipe, isHistory ->
-                    recipe = selectedRecipe
-                    if (!isHistory) {
-                        navController.navigate("recipeView")
-                    } else {
-                        navController.navigate("recipeViewHistory")
-                    }
-                },
+                onRecipeClick = openRecipe,
                 userViewModel = userViewModel,
                 appFlowViewModel = appFlowViewModel,
                 recipeViewModel = recipeViewModel,
                 shoppingTimeViewModel = shoppingTimeViewModel
+            )
+        }
+        composable(
+            route = "homeSearch",
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(280)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(280)
+                )
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(280)
+                )
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(280)
+                )
+            }
+        ) {
+            HomeSearchScreen(
+                navController = navController,
+                userViewModel = userViewModel,
+                recipeViewModel = recipeViewModel,
+                recentRecipes = recentRecipes,
+                onRecipeClick = { selectedRecipe -> openRecipe(selectedRecipe, false) }
             )
         }
         composable("dietNotes") {
@@ -201,8 +250,7 @@ fun navGraph(
                 appFlowViewModel = appFlowViewModel,
                 recipeId = recipeId,
                 onOpenRecipe = { selectedRecipe ->
-                    recipe = selectedRecipe
-                    navController.navigate("recipeView")
+                    openRecipe(selectedRecipe, false)
                 }
             )
         }
@@ -216,8 +264,7 @@ fun navGraph(
             RecipeListScreen(
                 navController = navController,
                 onRecipeClick = { selectedRecipe ->
-                    recipe = selectedRecipe
-                    navController.navigate("recipeViewHistory")
+                    openRecipe(selectedRecipe, true)
                 },
                 viewModel = recipeViewModel
             )
@@ -242,8 +289,7 @@ fun navGraph(
                         searchTypeValue = searchType,
                         search = searchValue,
                         onRecipeClick = { selectedRecipe ->
-                            recipe = selectedRecipe
-                            navController.navigate("recipeView")
+                            openRecipe(selectedRecipe, false)
                         },
                         userViewModel = userViewModel,
                         recipeViewModel = recipeViewModel
@@ -275,8 +321,7 @@ fun navGraph(
             PostedRecipeList(
                 navController = navController,
                 onRecipeClick = { selectedRecipe ->
-                    recipe = selectedRecipe
-                    navController.navigate("recipeView")
+                    openRecipe(selectedRecipe, false)
                 },
                 recipeViewModel = recipeViewModel
             )

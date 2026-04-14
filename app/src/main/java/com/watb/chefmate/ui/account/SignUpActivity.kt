@@ -318,7 +318,7 @@ fun SignUpScreen(
                                                     }
                                                 }
                                             } else {
-                                                Toast.makeText(context, stringResource(R.string.sign_up_success_sign_in_again), Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, context.getString(R.string.sign_up_success_sign_in_again), Toast.LENGTH_SHORT).show()
                                                 navController.navigate("signIn") {
                                                     popUpTo("signUp") {
                                                         inclusive = true
@@ -326,21 +326,21 @@ fun SignUpScreen(
                                                 }
                                             }
                                         } else {
-                                            Toast.makeText(context, response.message ?: stringResource(R.string.sign_up_failed), Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, response.message ?: context.getString(R.string.sign_up_failed), Toast.LENGTH_SHORT).show()
                                         }
                                         isLoading = false
                                     }
                                 } else {
                                     isLoading = false
-                                    Toast.makeText(context, stringResource(R.string.sign_up_accept_terms), Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.sign_up_accept_terms), Toast.LENGTH_SHORT).show()
                                 }
                             } else {
                                 isLoading = false
-                                Toast.makeText(context, stringResource(R.string.sign_up_password_mismatch), Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.sign_up_password_mismatch), Toast.LENGTH_SHORT).show()
                             }
                         } else {
                             isLoading = false
-                            Toast.makeText(context, stringResource(R.string.sign_up_fill_all_fields), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.sign_up_fill_all_fields), Toast.LENGTH_SHORT).show()
                         }
                     },
                     colors = ButtonDefaults.buttonColors(

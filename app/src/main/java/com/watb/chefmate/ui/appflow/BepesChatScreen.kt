@@ -354,7 +354,7 @@ fun BepesChatScreen(
                 onComplete = openCompleteDialog,
                 onOpenRecipe = {
                     if (mealRecipes.isEmpty()) {
-                        Toast.makeText(context, stringResource(R.string.bepes_open_recipe_choose_first), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.bepes_open_recipe_choose_first), Toast.LENGTH_SHORT).show()
                     } else {
                         coroutineScope.launch {
                             isResolvingRecipe = true
@@ -371,7 +371,7 @@ fun BepesChatScreen(
                                 selectedRecipePreview = null
                                 showRecipeBrowserSheet = true
                             } else {
-                                Toast.makeText(context, stringResource(R.string.bepes_recipe_not_found), Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.bepes_recipe_not_found), Toast.LENGTH_SHORT).show()
                             }
                         }
                     }

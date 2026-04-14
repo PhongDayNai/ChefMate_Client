@@ -132,6 +132,7 @@
     <string name="notification_content_description">Notification</string>
     <string name="home_title">BEPTROLY</string>
     <string name="home_notification_content_description">Thông báo</string>
+    <string name="home_search_open_content_description">Tìm kiếm</string>
     <string name="home_search_content_description">Tìm kiếm</string>
     <string name="home_top_trending">Top thịnh hành</string>
     <string name="home_bepes_title">Bepes - Trợ lý bếp thông minh</string>
@@ -146,6 +147,9 @@
     <string name="home_completion_rate">Độ hoàn thiện: %1$d%%</string>
     <string name="home_missing">Thiếu: %1$s</string>
     <string name="home_cook_with_bepes">Nấu với Bepes</string>
+    <string name="home_recently_viewed">Món vừa xem</string>
+    <string name="home_recently_viewed_empty">Chưa có món nào được xem gần đây</string>
+    <string name="home_search_hint">Tìm món ăn hoặc tag...</string>
     <string name="main_options_content_description">Options</string>
     <string name="main_add_recipe">Thêm công thức</string>
     <string name="main_add_recipe_content_description">Add Recipe</string>
