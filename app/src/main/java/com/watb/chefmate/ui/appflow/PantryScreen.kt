@@ -1,5 +1,6 @@
 package com.watb.chefmate.ui.appflow
 
+import android.app.DatePickerDialog
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,6 +27,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -40,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
@@ -49,7 +52,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -62,6 +64,7 @@ import com.watb.chefmate.viewmodel.AppFlowViewModel
 import com.watb.chefmate.viewmodel.UserViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
+import java.time.format.DateTimeFormatter
 
 private enum class PantrySortOption {
     ALL,
@@ -267,7 +270,7 @@ private fun PantryItemCard(
             )
             if (!item.expiresAt.isNullOrBlank()) {
                 Text(
-                    text = stringResource(R.string.pantry_expiry, item.expiresAt),
+                    text = stringResource(R.string.pantry_expiry, formatPantryExpiryDisplay(item.expiresAt)),
                     color = Color(0xFF6B7280),
                     fontSize = 13.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -364,44 +367,60 @@ private fun PantryEditorDialog(
     onDismiss: () -> Unit,
     onSave: (PantryUpsertRequest) -> Unit
 ) {
+    val context = LocalContext.current
     var ingredientName by remember(initial) { mutableStateOf(initial?.ingredientName.orEmpty()) }
     var quantityInput by remember(initial) { mutableStateOf(initial?.quantity?.toString().orEmpty()) }
     var unit by remember(initial) { mutableStateOf(initial?.unit.orEmpty()) }
-    var expiresAt by remember(initial) { mutableStateOf(initial?.expiresAt.orEmpty()) }
+    var expiresAt by remember(initial) {
+        mutableStateOf(formatPantryExpiryForStorage(parsePantryDate(initial?.expiresAt)))
+    }
 
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         Card(
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            shape = RoundedCornerShape(22.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFBF8)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
             modifier = Modifier
-                .fillMaxWidth(0.95f)
+                .fillMaxWidth(0.92f)
                 .imePadding()
         ) {
             Column(
                 modifier = Modifier
                     .verticalScroll(rememberScrollState())
-                    .padding(14.dp)
+                    .padding(horizontal = 18.dp, vertical = 16.dp)
             ) {
                 Text(
                     text = if (initial == null) stringResource(R.string.pantry_editor_add_title) else stringResource(R.string.pantry_editor_update_title),
                     color = Color(0xFF111827),
-                    fontSize = 18.sp,
+                    fontSize = 20.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
                 )
+                Divider(
+                    color = Color(0xFFF1F5F9),
+                    modifier = Modifier.padding(top = 14.dp)
+                )
 
+                FormLabel(
+                    text = stringResource(R.string.pantry_editor_name_label),
+                    modifier = Modifier.padding(top = 16.dp)
+                )
                 CustomTextField(
                     value = ingredientName,
                     onValueChange = { ingredientName = it },
                     placeholder = stringResource(R.string.pantry_editor_name_placeholder),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 12.dp)
+                        .padding(top = 8.dp)
                 )
 
+                FormLabel(
+                    text = stringResource(R.string.pantry_editor_quantity_label),
+                    modifier = Modifier.padding(top = 14.dp)
+                )
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 10.dp)
+                        .padding(top = 8.dp)
                 ) {
                     CustomTextField(
                         value = quantityInput,
@@ -421,20 +440,39 @@ private fun PantryEditorDialog(
                     )
                 }
 
-                CustomTextField(
-                    value = expiresAt,
-                    onValueChange = { expiresAt = it },
+                FormLabel(
+                    text = stringResource(R.string.pantry_editor_expiry_label),
+                    modifier = Modifier
+                        .padding(top = 14.dp)
+                )
+                ExpiryPickerField(
+                    value = formatPantryExpiryDisplay(expiresAt),
                     placeholder = stringResource(R.string.pantry_editor_expiry_placeholder),
+                    onClick = {
+                        val initialDate = parsePantryDate(expiresAt) ?: LocalDate.now()
+                        DatePickerDialog(
+                            context,
+                            { _, year, month, dayOfMonth ->
+                                expiresAt = formatPantryExpiryForStorage(
+                                    LocalDate.of(year, month + 1, dayOfMonth)
+                                )
+                            },
+                            initialDate.year,
+                            initialDate.monthValue - 1,
+                            initialDate.dayOfMonth
+                        ).show()
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 10.dp)
+                        .padding(top = 8.dp)
                 )
 
                 Row(
-                    horizontalArrangement = Arrangement.End,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 14.dp)
+                        .padding(top = 18.dp, start = 24.dp, end = 24.dp)
                 ) {
                     ActionTextButton(text = stringResource(R.string.common_cancel), onClick = onDismiss)
                     Spacer(modifier = Modifier.width(12.dp))
@@ -525,6 +563,52 @@ private fun ActionTextButton(text: String, onClick: () -> Unit) {
 }
 
 @Composable
+private fun FormLabel(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = text,
+        color = Color(0xFF374151),
+        fontSize = 13.sp,
+        fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun ExpiryPickerField(
+    value: String,
+    placeholder: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .shadowCardBackground()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_clock_filled),
+            contentDescription = null,
+            tint = Color(0xFFF97316),
+            modifier = Modifier.size(18.dp)
+        )
+        Text(
+            text = value.ifBlank { placeholder },
+            color = if (value.isBlank()) Color(0xFFADAEBC) else Color(0xFF111827),
+            fontSize = 15.sp,
+            fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 10.dp)
+        )
+    }
+}
+
+@Composable
 private fun sortOptionLabel(option: PantrySortOption): String {
     return when (option) {
         PantrySortOption.ALL -> stringResource(R.string.pantry_sort_all)
@@ -589,10 +673,32 @@ private fun buildVisiblePantryItems(
 
 private fun parsePantryDate(value: String?): LocalDate? {
     if (value.isNullOrBlank()) return null
-    val normalized = value.trim().take(10)
-    return try {
-        LocalDate.parse(normalized)
-    } catch (_: DateTimeParseException) {
-        null
+    val normalized = value.trim()
+    val datePatterns = listOf(
+        DateTimeFormatter.ISO_LOCAL_DATE,
+        DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    )
+    datePatterns.forEach { formatter ->
+        try {
+            return LocalDate.parse(normalized.take(10), formatter)
+        } catch (_: DateTimeParseException) {
+        }
     }
+    return null
+}
+
+private fun formatPantryExpiryDisplay(value: String?): String {
+    val date = parsePantryDate(value) ?: return value.orEmpty()
+    return date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+}
+
+private fun formatPantryExpiryForStorage(value: LocalDate?): String {
+    if (value == null) return ""
+    return value.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+}
+
+private fun Modifier.shadowCardBackground(): Modifier {
+    return this
+        .shadow(elevation = 8.dp, shape = RoundedCornerShape(16.dp))
+        .background(Color.White, RoundedCornerShape(16.dp))
 }

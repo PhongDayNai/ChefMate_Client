@@ -102,10 +102,15 @@
     <string name="pantry_expiry">HSD: %1$s</string>
     <string name="pantry_editor_add_title">Thêm nguyên liệu</string>
     <string name="pantry_editor_update_title">Cập nhật nguyên liệu</string>
+    <string name="pantry_editor_helper">Điền nhanh thông tin nguyên liệu và chọn hạn sử dụng bằng lịch để chính xác hơn.</string>
+    <string name="pantry_editor_name_label">Tên nguyên liệu</string>
+    <string name="pantry_editor_quantity_label">Số lượng và đơn vị</string>
+    <string name="pantry_editor_expiry_label">Hạn sử dụng</string>
     <string name="pantry_editor_name_placeholder">Tên nguyên liệu</string>
     <string name="pantry_editor_quantity_placeholder">Số lượng</string>
     <string name="pantry_editor_unit_placeholder">Đơn vị</string>
-    <string name="pantry_editor_expiry_placeholder">Hạn sử dụng (YYYY-MM-DD)</string>
+    <string name="pantry_editor_expiry_placeholder">Chọn ngày hết hạn</string>
+    <string name="pantry_editor_expiry_helper">Chạm để chọn ngày hết hạn từ lịch.</string>
     <string name="shopping_history_title">Lịch sử mua sắm</string>
     <string name="shopping_history_icon">History</string>
     <string name="shopping_history_date_label">Ngày mua</string>
