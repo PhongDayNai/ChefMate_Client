@@ -262,7 +262,7 @@ private fun TodayEatCard(
 ) {
     Card(
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFBEB)),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF9E1)),
         elevation = CardDefaults.cardElevation(defaultElevation = 7.dp),
         modifier = modifier.clickable(onClick = onClick)
     ) {
@@ -320,7 +320,7 @@ private fun ExpiryAlertCard(
 ) {
     Card(
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F9FF)),
         elevation = CardDefaults.cardElevation(defaultElevation = 7.dp),
         modifier = modifier
     ) {
@@ -348,24 +348,32 @@ private fun ExpiryAlertCard(
                 }
 
                 else -> {
-                    PantryStatusAction(
-                        text = stringResource(R.string.home_pantry_status_expiring_soon, summary.expiringSoonCount),
-                        textColor = Color(0xFFF97316),
-                        onClick = onOpenPantry,
-                        modifier = Modifier.padding(top = 14.dp)
-                    )
-                    PantryStatusAction(
-                        text = stringResource(R.string.home_pantry_status_expired, summary.expiredCount),
-                        textColor = Color(0xFFDC2626),
-                        onClick = onOpenPantry,
-                        modifier = Modifier.padding(top = 10.dp)
-                    )
-                    PantryStatusAction(
-                        text = stringResource(R.string.home_pantry_status_safe, summary.safeCount),
-                        textColor = Color(0xFF16A34A),
-                        onClick = onOpenPantry,
-                        modifier = Modifier.padding(top = 10.dp)
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 14.dp)
+                    ) {
+
+                        PantryStatusAction(
+                            text = stringResource(R.string.home_pantry_status_expired, summary.expiredCount),
+                            textColor = Color(0xFFDC2626),
+                            onClick = onOpenPantry,
+                            modifier = Modifier.weight(1f)
+                        )
+                        PantryStatusAction(
+                            text = stringResource(R.string.home_pantry_status_expiring_soon, summary.expiringSoonCount),
+                            textColor = Color(0xFFF97316),
+                            onClick = onOpenPantry,
+                            modifier = Modifier.weight(1f)
+                        )
+                        PantryStatusAction(
+                            text = stringResource(R.string.home_pantry_status_safe, summary.safeCount),
+                            textColor = Color(0xFF16A34A),
+                            onClick = onOpenPantry,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
             }
         }
@@ -384,25 +392,28 @@ private fun PantryStatusAction(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = modifier
-            .fillMaxWidth()
+            .height(80.dp)
             .clickable(onClick = onClick)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp)
         ) {
             Text(
                 text = text,
                 color = textColor,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                lineHeight = 16.sp
             )
             Icon(
                 painter = painterResource(R.drawable.ic_arrow_right),
                 contentDescription = null,
                 tint = Color(0xFF94A3B8),
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier
+                    .size(16.dp)
+                    .padding(start = 4.dp, top = 1.dp)
             )
         }
     }

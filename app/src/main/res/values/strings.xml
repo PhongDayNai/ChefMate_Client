@@ -177,9 +177,9 @@
     <string name="home_sign_in_for_expiry">Đăng nhập để xem cảnh báo hạn sử dụng từ tủ lạnh của bạn.</string>
     <string name="home_due_today">Hôm nay</string>
     <string name="home_overdue">Đã hết hạn</string>
-    <string name="home_pantry_status_expiring_soon">%1$d món sắp hết hạn</string>
-    <string name="home_pantry_status_expired">%1$d món đã hết hạn</string>
-    <string name="home_pantry_status_safe">%1$d món còn lại chưa lo hết hạn</string>
+    <string name="home_pantry_status_expiring_soon">%1$d nguyên liệu sắp hết hạn</string>
+    <string name="home_pantry_status_expired">%1$d nguyên liệu đã hết hạn</string>
+    <string name="home_pantry_status_safe">%1$d nguyên liệu còn tươi ngon</string>
     <string name="home_recently_viewed">Món vừa xem</string>
     <string name="home_recently_viewed_empty">Chưa có món nào được xem gần đây</string>
     <string name="home_search_hint">Tìm món ăn hoặc tag...</string>
