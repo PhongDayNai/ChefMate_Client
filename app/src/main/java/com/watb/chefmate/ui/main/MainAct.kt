@@ -140,6 +140,11 @@ fun MainAct(
                             onRecipeClick = { selectedRecipe ->
                                 onRecipeClick(selectedRecipe, false)
                             },
+                            onOpenPantryTab = {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(1)
+                                }
+                            },
                             navController = navController,
                             userViewModel = userViewModel,
                             recipeViewModel = recipeViewModel,
