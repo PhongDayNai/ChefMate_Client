@@ -211,7 +211,7 @@ private fun BepesEntrySection(
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         modifier = modifier
     ) {
-        Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 18.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -225,7 +225,7 @@ private fun BepesEntrySection(
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .padding(start = 12.dp)
+                        .padding(end = 12.dp)
                 ) {
                     Text(
                         text = stringResource(R.string.home_bepes_title),
@@ -238,8 +238,8 @@ private fun BepesEntrySection(
                         text = stringResource(R.string.home_bepes_description),
                         color = Color(0xFF7C2D12),
                         fontSize = 13.sp,
+                        textAlign = TextAlign.Center,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                        modifier = Modifier.padding(top = 8.dp)
                     )
                 }
             }
