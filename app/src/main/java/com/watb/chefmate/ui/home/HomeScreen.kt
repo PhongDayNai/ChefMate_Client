@@ -3,6 +3,7 @@ package com.watb.chefmate.ui.home
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -210,36 +212,37 @@ private fun BepesEntrySection(
         modifier = modifier
     ) {
         Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Card(
-                    shape = CircleShape,
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF97316)),
-                    modifier = Modifier.size(38.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                        Text(
-                            text = "B",
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
-                        )
-                    }
-                }
-                Text(
-                    text = stringResource(R.string.home_bepes_title),
-                    color = Color(0xFF9A3412),
-                    fontSize = 19.sp,
-                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
-                    modifier = Modifier.padding(start = 12.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_chatbot),
+                    contentDescription = stringResource(R.string.home_bepes_title),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(100.dp)
                 )
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 12.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.home_bepes_title),
+                        color = Color(0xFF9A3412),
+                        fontSize = 19.sp,
+                        textAlign = TextAlign.Center,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                    )
+                    Text(
+                        text = stringResource(R.string.home_bepes_description),
+                        color = Color(0xFF7C2D12),
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
             }
-            Text(
-                text = stringResource(R.string.home_bepes_description),
-                color = Color(0xFF7C2D12),
-                fontSize = 13.sp,
-                fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
-                modifier = Modifier.padding(top = 10.dp)
-            )
             HomeActionChip(
                 text = stringResource(R.string.home_chat_with_bepes),
                 onClick = onOpenChat,
