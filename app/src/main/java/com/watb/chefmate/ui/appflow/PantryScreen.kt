@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,6 +26,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -38,11 +41,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -53,6 +60,16 @@ import com.watb.chefmate.ui.theme.CustomTextField
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.viewmodel.AppFlowViewModel
 import com.watb.chefmate.viewmodel.UserViewModel
+import java.time.LocalDate
+import java.time.format.DateTimeParseException
+
+private enum class PantrySortOption {
+    ALL,
+    NEWEST,
+    OLDEST,
+    EXPIRED,
+    NOT_EXPIRED
+}
 
 @Composable
 fun PantryScreen(
@@ -67,6 +84,7 @@ fun PantryScreen(
 
     var editingItem by remember { mutableStateOf<PantryItem?>(null) }
     var showEditor by remember { mutableStateOf(false) }
+    var selectedSortOption by remember { mutableStateOf(PantrySortOption.ALL) }
 
     LaunchedEffect(isLoggedIn, user?.userId) {
         val userId = user?.userId
@@ -96,6 +114,13 @@ fun PantryScreen(
                 onSignIn = { navController.navigate("signIn") }
             )
         } else {
+            val visiblePantryItems = remember(homeState.pantryItems, selectedSortOption) {
+                buildVisiblePantryItems(
+                    items = homeState.pantryItems,
+                    sortOption = selectedSortOption
+                )
+            }
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -127,12 +152,18 @@ fun PantryScreen(
                 }
             }
 
+            PantrySortDropdown(
+                selectedOption = selectedSortOption,
+                onOptionSelected = { selectedSortOption = it },
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+            )
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp)
             ) {
-                items(homeState.pantryItems, key = { item -> item.pantryItemId ?: item.ingredientName }) { item ->
+                items(visiblePantryItems, key = { item -> item.pantryItemId ?: item.ingredientName }) { item ->
                     PantryItemCard(
                         item = item,
                         onEdit = {
@@ -171,6 +202,8 @@ private fun PantryItemCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -180,12 +213,51 @@ private fun PantryItemCard(
             .padding(bottom = 12.dp)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            Text(
-                text = item.ingredientName,
-                color = Color(0xFF111827),
-                fontSize = 16.sp,
-                fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
-            )
+            Row(
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = item.ingredientName,
+                    color = Color(0xFF111827),
+                    fontSize = 16.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                    modifier = Modifier.weight(1f)
+                )
+                Box {
+                    IconButton(
+                        onClick = { showMenu = true },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Text(
+                            text = "⋮",
+                            color = Color(0xFF6B7280),
+                            fontSize = 18.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(text = stringResource(R.string.common_edit)) },
+                            onClick = {
+                                showMenu = false
+                                onEdit()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(text = stringResource(R.string.common_delete)) },
+                            onClick = {
+                                showMenu = false
+                                onDelete()
+                            }
+                        )
+                    }
+                }
+            }
             Text(
                 text = stringResource(R.string.pantry_quantity, item.quantity.toString(), item.unit),
                 color = Color(0xFF374151),
@@ -202,16 +274,84 @@ private fun PantryItemCard(
                     modifier = Modifier.padding(top = 3.dp)
                 )
             }
+        }
+    }
+}
 
+@Composable
+private fun PantrySortDropdown(
+    selectedOption: PantrySortOption,
+    onOptionSelected: (PantrySortOption) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var rowWidth by remember { mutableStateOf(0) }
+    val density = LocalDensity.current
+
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(R.string.pantry_sort_label),
+            color = Color(0xFF6B7280),
+            fontSize = 13.sp,
+            fontFamily = FontFamily(Font(resId = R.font.roboto_medium))
+        )
+        Box(modifier = Modifier.padding(top = 6.dp, start = 24.dp)) {
             Row(
-                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 10.dp)
+                    .background(Color(0xFFF9FAFB), RoundedCornerShape(12.dp))
+                    .clickable { expanded = true }
+                    .padding(horizontal = 14.dp, vertical = 12.dp)
+                    .onGloballyPositioned { layoutCoordinates ->
+                        rowWidth = layoutCoordinates.size.width
+                    }
             ) {
-                ActionTextButton(text = stringResource(R.string.common_edit), onClick = onEdit)
-                Spacer(modifier = Modifier.width(10.dp))
-                ActionTextButton(text = stringResource(R.string.common_delete), onClick = onDelete)
+                Text(
+                    text = sortOptionLabel(selectedOption),
+                    color = Color(0xFF111827),
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_medium))
+                )
+                Text(
+                    text = "▼",
+                    color = Color(0xFF6B7280),
+                    fontSize = 11.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                )
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                offset = DpOffset(x = 72.dp, y = 0.dp),
+                modifier = Modifier
+                    .width(with(density) { rowWidth.toDp() })
+                    .background(Color.White)
+            ) {
+                PantrySortOption.entries.forEach { option ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = sortOptionLabel(option),
+                                fontSize = 13.sp,
+                            )
+                        },
+                        onClick = {
+                            expanded = false
+                            onOptionSelected(option)
+                        },
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(40.dp)
+                            .background(Color.White)
+                    )
+                }
             }
         }
     }
@@ -382,4 +522,77 @@ private fun ActionTextButton(text: String, onClick: () -> Unit) {
         fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
         modifier = Modifier.clickable(onClick = onClick)
     )
+}
+
+@Composable
+private fun sortOptionLabel(option: PantrySortOption): String {
+    return when (option) {
+        PantrySortOption.ALL -> stringResource(R.string.pantry_sort_all)
+        PantrySortOption.NEWEST -> stringResource(R.string.pantry_sort_newest)
+        PantrySortOption.OLDEST -> stringResource(R.string.pantry_sort_oldest)
+        PantrySortOption.EXPIRED -> stringResource(R.string.pantry_sort_expired)
+        PantrySortOption.NOT_EXPIRED -> stringResource(R.string.pantry_sort_not_expired)
+    }
+}
+
+private fun buildVisiblePantryItems(
+    items: List<PantryItem>,
+    sortOption: PantrySortOption
+): List<PantryItem> {
+    val today = LocalDate.now()
+
+    return when (sortOption) {
+        PantrySortOption.ALL -> items.sortedWith(
+            compareBy<PantryItem> { item ->
+                parsePantryDate(item.expiresAt) ?: LocalDate.MAX
+            }.thenBy { item ->
+                item.ingredientName.lowercase()
+            }
+        )
+
+        PantrySortOption.NEWEST -> items.sortedWith(
+            compareByDescending<PantryItem> { item ->
+                parsePantryDate(item.expiresAt)
+            }.thenBy { item ->
+                item.ingredientName.lowercase()
+            }
+        )
+
+        PantrySortOption.OLDEST -> items.sortedWith(
+            compareBy<PantryItem> { item ->
+                parsePantryDate(item.expiresAt) ?: LocalDate.MAX
+            }.thenBy { item ->
+                item.ingredientName.lowercase()
+            }
+        )
+
+        PantrySortOption.EXPIRED -> items.filter { item ->
+            val date = parsePantryDate(item.expiresAt) ?: return@filter false
+            date.isBefore(today)
+        }.sortedWith(
+            compareBy<PantryItem> { item -> parsePantryDate(item.expiresAt) }
+                .thenBy { item -> item.ingredientName.lowercase() }
+        )
+
+        PantrySortOption.NOT_EXPIRED -> items.filter { item ->
+            val date = parsePantryDate(item.expiresAt)
+            date == null || !date.isBefore(today)
+        }.sortedWith(
+            compareBy<PantryItem> { item ->
+                parsePantryDate(item.expiresAt) ?: LocalDate.MAX
+            }.thenBy { item ->
+                item.ingredientName.lowercase()
+            }
+        )
+    }
+}
+
+private fun parsePantryDate(value: String?): LocalDate? {
+    if (value.isNullOrBlank()) return null
+    val normalized = value.trim().take(10)
+    return try {
+        LocalDate.parse(normalized)
+    } catch (_: DateTimeParseException) {
+        null
+    }
 }

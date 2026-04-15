@@ -92,6 +92,12 @@
     <string name="pantry_title">Tủ lạnh cá nhân</string>
     <string name="pantry_login_required_title">Bạn cần đăng nhập để quản lý tủ lạnh</string>
     <string name="pantry_list_title">Nguyên liệu hiện có</string>
+    <string name="pantry_sort_label">Sắp xếp</string>
+    <string name="pantry_sort_all">Tất cả</string>
+    <string name="pantry_sort_newest">Mới nhất</string>
+    <string name="pantry_sort_oldest">Cũ nhất</string>
+    <string name="pantry_sort_expired">Hết hạn</string>
+    <string name="pantry_sort_not_expired">Chưa hết hạn</string>
     <string name="pantry_quantity">Số lượng: %1$s %2$s</string>
     <string name="pantry_expiry">HSD: %1$s</string>
     <string name="pantry_editor_add_title">Thêm nguyên liệu</string>
