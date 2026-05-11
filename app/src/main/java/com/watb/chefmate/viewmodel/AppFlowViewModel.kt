@@ -40,6 +40,12 @@ import com.watb.chefmate.data.MealSessionUiState
 import com.watb.chefmate.data.PantryDeleteRequest
 import com.watb.chefmate.data.PantryItem
 import com.watb.chefmate.data.PantryUpsertRequest
+import com.watb.chefmate.data.Pantry
+import com.watb.chefmate.data.PantryShare
+import com.watb.chefmate.data.CreatePantryRequest
+import com.watb.chefmate.data.ShareRequest
+import com.watb.chefmate.data.UpdateRoleRequest
+import com.watb.chefmate.data.PaginatedResponse
 import com.watb.chefmate.data.PendingMealPolicyPrompt
 import com.watb.chefmate.data.PendingPreviousRecipePayload
 import com.watb.chefmate.data.PendingPrimaryRecipeSwitchPayload
@@ -74,15 +80,28 @@ private data class HomeBootstrapResult(
 
 data class HomeFlowUiState(
     val isLoading: Boolean = false,
+    val isLoadingPantries: Boolean = false,
+    val isLoadingItems: Boolean = false,
     val isRefreshingRecommendations: Boolean = false,
     val errorMessage: String? = null,
     val dietNotes: List<DietNote> = emptyList(),
-    val pantryItems: List<PantryItem> = emptyList(),
+    val pantries: List<Pantry> = emptyList(),
+    val pantryItems: Map<Int, List<PantryItem>> = emptyMap(),
+    val selectedPantryId: Int? = null,
+    val currentPantryName: String = "",
+    val expirySummary: Map<Int, PantryExpirySummary> = emptyMap(),
     val recommendationLimit: Int = DEFAULT_RECOMMEND_LIMIT,
     val recommendations: List<Recommendation> = emptyList(),
     val readyToCook: List<Recommendation> = emptyList(),
     val almostReady: List<Recommendation> = emptyList(),
     val trendingSuggestions: List<Recommendation> = emptyList()
+)
+
+data class PantryExpirySummary(
+    val hasExpiredItems: Boolean,
+    val hasExpiringSoonItems: Boolean,
+    val itemCountExpiringSoon: Int,
+    val itemCountExpired: Int
 )
 
 data class ChatUiState(
@@ -120,26 +139,197 @@ class AppFlowViewModel : ViewModel() {
     private val _chatState = MutableStateFlow(ChatUiState())
     val chatState: StateFlow<ChatUiState> = _chatState
 
+    fun loadPantries(userId: Int) {
+        viewModelScope.launch {
+            _homeState.update { it.copy(isLoadingPantries = true, errorMessage = null) }
+            val result = AppFlowApiClient.listPantries(userId)
+            val pantries = result.data ?: emptyList()
+            _homeState.update {
+                it.copy(
+                    isLoadingPantries = false,
+                    pantries = pantries,
+                    errorMessage = result.message.takeIf { !result.success }
+                )
+            }
+            if (pantries.size == 1 && _homeState.value.selectedPantryId == null) {
+                selectPantry(pantries.first().pantryId)
+                loadPantryItems(userId, pantries.first().pantryId)
+            }
+        }
+    }
+
+    fun createPantry(userId: Int, name: String) {
+        viewModelScope.launch {
+            _homeState.update { it.copy(isLoadingPantries = true, errorMessage = null) }
+            val result = AppFlowApiClient.createPantry(userId, CreatePantryRequest(name = name))
+            if (result.success && result.data != null) {
+                val newPantry = result.data!!
+                _homeState.update {
+                    it.copy(
+                        isLoadingPantries = false,
+                        pantries = it.pantries + newPantry
+                    )
+                }
+                selectPantry(newPantry.pantryId)
+            } else {
+                _homeState.update {
+                    it.copy(
+                        isLoadingPantries = false,
+                        errorMessage = result.message
+                    )
+                }
+            }
+        }
+    }
+
+    fun selectPantry(pantryId: Int) {
+        _homeState.update { it.copy(selectedPantryId = pantryId) }
+        val pantry = _homeState.value.pantries.find { it.pantryId == pantryId }
+        if (pantry != null) {
+            _homeState.update { it.copy(currentPantryName = pantry.name) }
+        }
+    }
+
+    fun loadPantryItems(userId: Int, pantryId: Int, page: Int = 1, limit: Int = 20) {
+        viewModelScope.launch {
+            android.util.Log.d("AppFlowDebug", "loadPantryItems START: userId=$userId, pantryId=$pantryId")
+            _homeState.update { it.copy(isLoadingItems = true, errorMessage = null) }
+            val result = AppFlowApiClient.getPantryItems(userId, pantryId, page, limit)
+            android.util.Log.d("AppFlowDebug", "loadPantryItems result: success=${result.success}, itemsCount=${result.data?.size}")
+            val items = result.data ?: emptyList()
+            android.util.Log.d("AppFlowDebug", "loadPantryItems items count: ${items.size}")
+            _homeState.update { state ->
+                val existingItems = state.pantryItems[pantryId] ?: emptyList()
+                val updatedItems = if (page > 1) existingItems + items else items
+                state.copy(
+                    isLoadingItems = false,
+                    pantryItems = state.pantryItems + (pantryId to updatedItems),
+                    expirySummary = state.expirySummary + (pantryId to calculateExpirySummary(updatedItems))
+                )
+            }
+        }
+    }
+
+    fun upsertPantryItem(userId: Int, pantryId: Int, ingredientName: String, quantity: Double, unit: String, expiresAt: String?) {
+        viewModelScope.launch {
+            if (quantity < 0.0) {
+                _homeState.update { it.copy(errorMessage = "Số lượng không được nhỏ hơn 0") }
+                return@launch
+            }
+            val request = PantryUpsertRequest(
+                pantryId = pantryId,
+                ingredientName = ingredientName,
+                quantity = quantity,
+                unit = unit,
+                expiresAt = expiresAt
+            )
+            val result = AppFlowApiClient.upsertPantryItem(request)
+            if (result.success && result.data != null) {
+                _homeState.update { state ->
+                    val currentItems = state.pantryItems[pantryId] ?: emptyList()
+                    state.copy(
+                        pantryItems = state.pantryItems + (pantryId to (currentItems + result.data.data)),
+                        errorMessage = null
+                    )
+                }
+                refreshRecommendations(userId)
+            } else {
+                _homeState.update { it.copy(errorMessage = result.message) }
+            }
+        }
+    }
+
+    fun deletePantryItem(userId: Int, pantryId: Int, itemId: Int) {
+        viewModelScope.launch {
+            val result = AppFlowApiClient.deletePantryItem(userId, pantryId, itemId)
+            if (result.success) {
+                _homeState.update { state ->
+                    val currentItems = state.pantryItems[pantryId] ?: emptyList()
+                    state.copy(
+                        pantryItems = state.pantryItems + (pantryId to currentItems.filterNot { it.pantryItemId == itemId })
+                    )
+                }
+                refreshRecommendations(userId)
+            } else {
+                _homeState.update { it.copy(errorMessage = result.message) }
+            }
+        }
+    }
+
+    fun loadPantryShares(userId: Int, pantryId: Int) {
+        viewModelScope.launch {
+            val result = AppFlowApiClient.listPantryShares(userId, pantryId)
+            // shares will be handled by the UI state
+        }
+    }
+
+    fun sharePantry(userId: Int, pantryId: Int, targetUserId: Int, role: String) {
+        viewModelScope.launch {
+            val result = AppFlowApiClient.sharePantry(userId, pantryId, ShareRequest(targetUserId, role))
+        }
+    }
+
+    fun updateShareRole(userId: Int, pantryId: Int, targetUserId: Int, role: String) {
+        viewModelScope.launch {
+            val result = AppFlowApiClient.updateShareRole(userId, pantryId, targetUserId, UpdateRoleRequest(role))
+        }
+    }
+
+    fun removeShare(userId: Int, pantryId: Int, targetUserId: Int) {
+        viewModelScope.launch {
+            val result = AppFlowApiClient.removeShare(userId, pantryId, targetUserId)
+        }
+    }
+
+    fun sortPantriesByUrgency() {
+        val sorted = _homeState.value.pantries.sortedByDescending { pantry ->
+            val summary = _homeState.value.expirySummary[pantry.pantryId]
+            when {
+                summary?.hasExpiredItems == true -> 2
+                summary?.hasExpiringSoonItems == true -> 1
+                else -> 0
+            }
+        }
+        _homeState.update { it.copy(pantries = sorted) }
+    }
+
+    private fun calculateExpirySummary(items: List<PantryItem>): PantryExpirySummary {
+        val expiredCount = items.count { it.isExpired() }
+        val expiringSoonCount = items.count { it.isExpiringSoon() }
+        return PantryExpirySummary(
+            hasExpiredItems = expiredCount > 0,
+            hasExpiringSoonItems = expiringSoonCount > 0,
+            itemCountExpiringSoon = expiringSoonCount,
+            itemCountExpired = expiredCount
+        )
+    }
+
     fun refreshHomeContext(userId: Int) {
         viewModelScope.launch {
             _homeState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            val (dietResult, pantryResult, recommendationResult, trendingResult) = coroutineScope {
+            val (dietResult, recommendationResult, trendingResult) = coroutineScope {
                 val dietDeferred = async { AppFlowApiClient.getDietNotes(userId) }
-                val pantryDeferred = async { AppFlowApiClient.getPantryItems(userId) }
+                val pantryDeferred = async { AppFlowApiClient.listPantries(userId) }
                 val recommendationDeferred = async {
-                    AppFlowApiClient.getRecommendations(userId = userId, limit = _homeState.value.recommendationLimit)
+                    AppFlowApiClient.getRecommendations(
+                        userId = userId,
+                        pantryId = _homeState.value.selectedPantryId,
+                        limit = _homeState.value.recommendationLimit
+                    )
                 }
                 val trendingDeferred = async {
                     ApiClient.getTopTrending(userId = userId, page = 1, limit = 20, period = "all")
                 }
-                HomeBootstrapResult(
-                    diet = dietDeferred.await(),
-                    pantry = pantryDeferred.await(),
-                    recommendations = recommendationDeferred.await(),
-                    trending = trendingDeferred.await()
-                )
+                Triple(dietDeferred.await(), recommendationDeferred.await(), trendingDeferred.await())
             }
+
+            val pantryResult = coroutineScope {
+                val pantryDeferred = async { AppFlowApiClient.listPantries(userId) }
+                pantryDeferred.await()
+            }
+
+            val pantries = pantryResult.data ?: emptyList()
 
             val recommendationPayload = recommendationResult.data ?: RecommendationPayload(
                 recommendationLimit = _homeState.value.recommendationLimit
@@ -149,7 +339,6 @@ class AppFlowViewModel : ViewModel() {
 
             val errorMessage = listOfNotNull(
                 dietResult.message.takeIf { !dietResult.success },
-                pantryResult.message.takeIf { !pantryResult.success },
                 recommendationResult.message.takeIf { !recommendationResult.success },
                 trendingResult?.message.takeIf { trendingResult?.success == false }
             ).firstOrNull()
@@ -159,13 +348,19 @@ class AppFlowViewModel : ViewModel() {
                     isLoading = false,
                     errorMessage = errorMessage,
                     dietNotes = dietResult.data ?: emptyList(),
-                    pantryItems = pantryResult.data ?: emptyList(),
+                    pantries = pantries,
                     recommendationLimit = recommendationPayload.recommendationLimit,
                     recommendations = fallbackRecommendations,
                     readyToCook = recommendationPayload.readyToCook,
                     almostReady = recommendationPayload.almostReady,
                     trendingSuggestions = trendingSuggestions
                 )
+            }
+
+            if (pantries.size == 1 && _homeState.value.selectedPantryId == null) {
+                android.util.Log.d("AppFlowDebug", "Auto-selecting pantry and loading items")
+                selectPantry(pantries.first().pantryId)
+                loadPantryItems(userId, pantries.first().pantryId)
             }
         }
     }
@@ -175,6 +370,7 @@ class AppFlowViewModel : ViewModel() {
             _homeState.update { it.copy(isRefreshingRecommendations = true, errorMessage = null) }
             val recommendationResult = AppFlowApiClient.getRecommendations(
                 userId = userId,
+                pantryId = _homeState.value.selectedPantryId,
                 limit = _homeState.value.recommendationLimit
             )
             val trendingResult = ApiClient.getTopTrending(userId = userId, page = 1, limit = 20, period = "all")
@@ -243,47 +439,28 @@ class AppFlowViewModel : ViewModel() {
 
     fun refreshPantry(userId: Int) {
         viewModelScope.launch {
-            val result = AppFlowApiClient.getPantryItems(userId)
-            _homeState.update {
-                it.copy(
-                    pantryItems = result.data ?: it.pantryItems,
-                    errorMessage = result.message.takeIf { !result.success }
-                )
-            }
-        }
-    }
+            _homeState.update { it.copy(isLoadingItems = true, errorMessage = null) }
+            var selectedPantryId = _homeState.value.selectedPantryId
 
-    fun upsertPantryItem(request: PantryUpsertRequest) {
-        viewModelScope.launch {
-            if (request.quantity < 0.0) {
-                _homeState.update { it.copy(errorMessage = "Số lượng không được nhỏ hơn 0") }
+            // Auto-select pantry if none selected and only 1 pantry exists
+            if (selectedPantryId == null && _homeState.value.pantries.isNotEmpty()) {
+                selectedPantryId = _homeState.value.pantries.first().pantryId
+                _homeState.update { it.copy(selectedPantryId = selectedPantryId) }
+            }
+
+            if (selectedPantryId == null) {
+                _homeState.update { it.copy(isLoadingItems = false) }
                 return@launch
             }
-
-            val result = AppFlowApiClient.upsertPantryItem(request)
+            val result = AppFlowApiClient.getPantryItems(userId, selectedPantryId)
+            val items = result.data ?: emptyList()
             _homeState.update {
                 it.copy(
-                    pantryItems = result.data ?: it.pantryItems,
+                    isLoadingItems = false,
+                    pantryItems = it.pantryItems + (selectedPantryId to items),
+                    expirySummary = it.expirySummary + (selectedPantryId to calculateExpirySummary(items)),
                     errorMessage = result.message.takeIf { !result.success }
                 )
-            }
-            if (result.success) {
-                refreshRecommendations(request.userId)
-            }
-        }
-    }
-
-    fun deletePantryItem(userId: Int, pantryItemId: Int) {
-        viewModelScope.launch {
-            val result = AppFlowApiClient.deletePantryItem(PantryDeleteRequest(userId, pantryItemId))
-            _homeState.update {
-                it.copy(
-                    pantryItems = result.data ?: it.pantryItems,
-                    errorMessage = result.message.takeIf { !result.success }
-                )
-            }
-            if (result.success) {
-                refreshRecommendations(userId)
             }
         }
     }
