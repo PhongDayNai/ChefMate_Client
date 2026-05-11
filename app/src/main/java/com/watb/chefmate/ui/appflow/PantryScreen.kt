@@ -117,9 +117,11 @@ fun PantryScreen(
                 onSignIn = { navController.navigate("signIn") }
             )
         } else {
-            val visiblePantryItems = remember(homeState.pantryItems, selectedSortOption) {
+            val selectedPantryId = homeState.selectedPantryId
+            val pantryItemsList = selectedPantryId?.let { homeState.pantryItems[it] } ?: emptyList()
+            val visiblePantryItems = remember(pantryItemsList, selectedSortOption) {
                 buildVisiblePantryItems(
-                    items = homeState.pantryItems,
+                    items = pantryItemsList,
                     sortOption = selectedSortOption
                 )
             }
@@ -132,7 +134,7 @@ fun PantryScreen(
                     .padding(horizontal = 20.dp, vertical = 14.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.pantry_list_title),
+                    text = homeState.currentPantryName.ifEmpty { stringResource(R.string.pantry_title) },
                     color = Color(0xFF111827),
                     fontSize = 18.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
@@ -166,7 +168,7 @@ fun PantryScreen(
                     .fillMaxSize()
                     .padding(horizontal = 16.dp)
             ) {
-                items(visiblePantryItems, key = { item -> item.pantryItemId ?: item.ingredientName }) { item ->
+                items(visiblePantryItems, key = { item -> item.pantryItemId }) { item ->
                     PantryItemCard(
                         item = item,
                         onEdit = {
@@ -174,9 +176,10 @@ fun PantryScreen(
                             showEditor = true
                         },
                         onDelete = {
-                            val pantryItemId = item.pantryItemId
-                            if (pantryItemId != null) {
-                                appFlowViewModel.deletePantryItem(userId = item.userId, pantryItemId = pantryItemId)
+                            val itemId = item.pantryItemId
+                            val pantryId = item.pantryId
+                            if (itemId > 0 && pantryId > 0) {
+                                appFlowViewModel.deletePantryItem(userId = user!!.userId, pantryId = pantryId, itemId = itemId)
                             }
                         }
                     )
@@ -186,13 +189,22 @@ fun PantryScreen(
         }
     }
 
-    if (showEditor && isLoggedIn && user != null) {
+    val currentUser = user
+    if (showEditor && isLoggedIn && currentUser != null) {
         PantryEditorDialog(
             initial = editingItem,
-            userId = user!!.userId,
+            userId = currentUser.userId,
+            pantryId = homeState.selectedPantryId ?: 0,
             onDismiss = { showEditor = false },
-            onSave = { request ->
-                appFlowViewModel.upsertPantryItem(request)
+            onSave = { pantryId, ingredientName, quantity, unit, expiresAt ->
+                appFlowViewModel.upsertPantryItem(
+                    userId = currentUser.userId,
+                    pantryId = pantryId,
+                    ingredientName = ingredientName,
+                    quantity = quantity,
+                    unit = unit,
+                    expiresAt = expiresAt
+                )
                 showEditor = false
             }
         )
@@ -364,8 +376,9 @@ private fun PantrySortDropdown(
 private fun PantryEditorDialog(
     initial: PantryItem?,
     userId: Int,
+    pantryId: Int,
     onDismiss: () -> Unit,
-    onSave: (PantryUpsertRequest) -> Unit
+    onSave: (pantryId: Int, ingredientName: String, quantity: Double, unit: String, expiresAt: String?) -> Unit
 ) {
     val context = LocalContext.current
     var ingredientName by remember(initial) { mutableStateOf(initial?.ingredientName.orEmpty()) }
@@ -484,14 +497,11 @@ private fun PantryEditorDialog(
                             if (unit.trim().isEmpty()) return@Button
 
                             onSave(
-                                PantryUpsertRequest(
-                                    pantryItemId = initial?.pantryItemId,
-                                    userId = userId,
-                                    ingredientName = ingredientName.trim(),
-                                    quantity = quantity,
-                                    unit = unit.trim(),
-                                    expiresAt = expiresAt.trim().ifBlank { null }
-                                )
+                                pantryId,
+                                ingredientName.trim(),
+                                quantity,
+                                unit.trim(),
+                                expiresAt.trim().ifBlank { null }
                             )
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF97316))
