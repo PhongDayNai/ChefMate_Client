@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.watb.chefmate.R
+import com.watb.chefmate.data.Pantry
 import com.watb.chefmate.data.PantryItem
 import com.watb.chefmate.data.Recommendation
 import com.watb.chefmate.data.Recipe
@@ -59,8 +60,6 @@ import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.viewmodel.AppFlowViewModel
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import com.watb.chefmate.viewmodel.UserViewModel
-import java.time.LocalDate
-import java.time.format.DateTimeParseException
 
 private data class PantryStatusSummary(
     val expiringSoonCount: Int = 0,
@@ -91,8 +90,14 @@ fun HomeScreen(
     val almostReady = remember(homeState.almostReady) {
         homeState.almostReady.filter { it.recipeId > 0 }.distinctBy { it.recipeId }
     }
-    val pantryStatusSummary = remember(homeState.pantryItems) {
-        buildPantryStatusSummary(homeState.pantryItems)
+    val expirySummary = remember(homeState.expirySummary) {
+        homeState.expirySummary.values.fold(PantryStatusSummary(0, 0, 0)) { acc, summary ->
+            PantryStatusSummary(
+                expiringSoonCount = acc.expiringSoonCount + if (summary.hasExpiringSoonItems) summary.itemCountExpiringSoon else 0,
+                expiredCount = acc.expiredCount + if (summary.hasExpiredItems) summary.itemCountExpired else 0,
+                safeCount = acc.safeCount + (summary.itemCountExpiringSoon + summary.itemCountExpired).let { total -> if (total == 0 && summary.hasExpiringSoonItems || summary.hasExpiredItems) 0 else 1 }
+            )
+        }
     }
 
     LaunchedEffect(isLoggedIn, user?.userId) {
@@ -162,7 +167,7 @@ fun HomeScreen(
 
             ExpiryAlertCard(
                 isLoggedIn = isLoggedIn,
-                summary = pantryStatusSummary,
+                summary = expirySummary,
                 onOpenPantry = onOpenPantryTab,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -618,38 +623,6 @@ private fun HomeActionChip(
                 .padding(horizontal = 12.dp, vertical = 9.dp),
             textAlign = TextAlign.Center
         )
-    }
-}
-
-private fun buildPantryStatusSummary(items: List<PantryItem>): PantryStatusSummary {
-    val today = LocalDate.now()
-    var expiringSoonCount = 0
-    var expiredCount = 0
-    var safeCount = 0
-
-    items.forEach { item ->
-        val parsedDate = parsePantryDate(item.expiresAt) ?: return@forEach
-        when {
-            parsedDate.isBefore(today) -> expiredCount += 1
-            !parsedDate.isAfter(today.plusDays(3)) -> expiringSoonCount += 1
-            else -> safeCount += 1
-        }
-    }
-
-    return PantryStatusSummary(
-        expiringSoonCount = expiringSoonCount,
-        expiredCount = expiredCount,
-        safeCount = safeCount
-    )
-}
-
-private fun parsePantryDate(value: String?): LocalDate? {
-    if (value.isNullOrBlank()) return null
-    val normalized = value.trim().take(10)
-    return try {
-        LocalDate.parse(normalized)
-    } catch (_: DateTimeParseException) {
-        null
     }
 }
 
