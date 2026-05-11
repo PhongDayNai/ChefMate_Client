@@ -23,6 +23,7 @@ val CREATED_AT = stringPreferencesKey("created_at")
 
 val LAST_SHOPPING_ID = intPreferencesKey("last_shopping_id")
 val IS_FINISHED_SHOPPING = booleanPreferencesKey("is_finished_shopping")
+val LAST_PANTRY_ID = intPreferencesKey("last_pantry_id")
 
 object DataStoreHelper {
     suspend fun saveUserProfile(
@@ -160,5 +161,16 @@ object DataStoreHelper {
         context.dataStore.edit { preferences ->
             preferences[IS_FINISHED_SHOPPING] = true
         }
+    }
+
+    suspend fun saveLastPantryId(context: Context, pantryId: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[LAST_PANTRY_ID] = pantryId
+        }
+    }
+
+    suspend fun getLastPantryId(context: Context): Int {
+        val preferences = context.dataStore.data.first()
+        return preferences[LAST_PANTRY_ID] ?: 0
     }
 }

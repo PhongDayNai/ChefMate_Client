@@ -211,6 +211,7 @@
     <string name="common_add">Thêm</string>
     <string name="common_edit">Sửa</string>
     <string name="common_delete">Xóa</string>
+    <string name="common_remove">Xóa</string>
     <string name="common_back_content_description">Quay lại</string>
     <string name="common_cancel_content_description">cancel</string>
     <string name="common_like_content_description">Like</string>
@@ -219,6 +220,18 @@
     <string name="common_weight">Khối lượng</string>
     <string name="common_unit">Đơn vị</string>
     <string name="common_retry">Vui lòng thử lại</string>
+    <string name="share_management_title">Quản lý chia sẻ</string>
+    <string name="share_no_users">Chưa có người dùng được chia sẻ</string>
+    <string name="share_remove_title">Xóa người dùng</string>
+    <string name="share_remove_message">Bạn có chắc chắn muốn xóa %1$s khỏi danh sách chia sẻ?</string>
+    <string name="share_shared_at">Chia sẻ lúc: %1$s</string>
+    <string name="share_role_editor">Người chỉnh sửa</string>
+    <string name="share_role_viewer">Người xem</string>
+    <string name="create_pantry_title">Tạo tủ lạnh mới</string>
+    <string name="create_pantry_name_label">Tên tủ lạnh</string>
+    <string name="create_pantry_name_placeholder">Nhập tên tủ lạnh</string>
+    <string name="common_create">Tạo</string>
+    <string name="common_loading">Đang tải…</string>
     <string name="sign_in_failed_missing_session">Đăng nhập thất bại. Thiếu dữ liệu phiên đăng nhập.</string>
     <string name="sign_in_invalid_credentials">Tài khoản hoặc mật khẩu không đúng</string>
     <string name="sign_in_failed_retry">Đăng nhập thất bại. Vui lòng thử lại!</string>
