@@ -50,20 +50,60 @@ data class DietNoteDeleteRequest(
 )
 
 data class PantryItem(
-    val pantryItemId: Int? = null,
-    val userId: Int = 0,
-    val ingredientId: Int? = null,
-    val ingredientName: String = "",
-    val quantity: Double = 0.0,
-    val unit: String = "",
-    val expiresAt: String? = null,
-    val createdAt: String? = null,
-    val updatedAt: String? = null
+    val pantryItemId: Int,
+    val pantryId: Int,
+    val ingredientId: Int,
+    val ingredientName: String,
+    val quantity: Double,
+    val unit: String,
+    val expiresAt: String? = null
+) {
+    fun isExpired(): Boolean = expiresAt?.let {
+        try {
+            java.time.Instant.parse(it).isBefore(java.time.Instant.now())
+        } catch (e: Exception) { false }
+    } ?: false
+
+    fun isExpiringSoon(daysThreshold: Int = 3): Boolean = expiresAt?.let {
+        try {
+            val expiry = java.time.Instant.parse(it)
+            val threshold = java.time.Instant.now().plus(java.time.Duration.ofDays(daysThreshold.toLong()))
+            expiry.isBefore(threshold) && !isExpired()
+        } catch (e: Exception) { false }
+    } ?: false
+}
+
+data class Pantry(
+    val pantryId: Int,
+    val name: String,
+    val ownerUserId: Int,
+    val userRole: String,
+    val itemCount: Int,
+    val createdAt: String
+)
+
+data class PantryShare(
+    val userId: Int,
+    val fullName: String,
+    val role: String,
+    val sharedAt: String
+)
+
+data class ShareRequest(
+    val targetUserId: Int,
+    val role: String
+)
+
+data class UpdateRoleRequest(
+    val role: String
+)
+
+data class CreatePantryRequest(
+    val name: String
 )
 
 data class PantryUpsertRequest(
-    val pantryItemId: Int? = null,
-    val userId: Int,
+    val pantryId: Int,
     val ingredientName: String,
     val quantity: Double,
     val unit: String,
@@ -71,8 +111,26 @@ data class PantryUpsertRequest(
 )
 
 data class PantryDeleteRequest(
-    val userId: Int,
-    val pantryItemId: Int
+    val pantryId: Int,
+    val itemId: Int
+)
+
+data class PageMeta(
+    val page: Int,
+    val limit: Int,
+    val total: Int,
+    val hasMore: Boolean
+)
+
+data class PaginatedResponse<T>(
+    val data: List<T>,
+    val meta: PageMeta
+)
+
+data class ErrorResponse(
+    val success: Boolean = false,
+    val error: String,
+    val message: String
 )
 
 data class RecommendationRequest(

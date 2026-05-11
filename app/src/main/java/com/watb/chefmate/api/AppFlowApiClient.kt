@@ -17,10 +17,16 @@ import com.watb.chefmate.data.MealPrimaryRecipeRequest
 import com.watb.chefmate.data.MealRecipeStatusRequest
 import com.watb.chefmate.data.MealSessionCreateRequest
 import com.watb.chefmate.data.MealSessionRecipesReplaceRequest
+import com.watb.chefmate.data.Pantry
 import com.watb.chefmate.data.PantryDeleteRequest
 import com.watb.chefmate.data.PantryItem
 import com.watb.chefmate.data.PantryUpsertRequest
+import com.watb.chefmate.data.CreatePantryRequest
+import com.watb.chefmate.data.PantryShare
+import com.watb.chefmate.data.ShareRequest
+import com.watb.chefmate.data.UpdateRoleRequest
 import com.watb.chefmate.data.RecommendationPayload
+import com.watb.chefmate.data.PaginatedResponse
 import com.watb.chefmate.data.ResolvePreviousSessionRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -39,7 +45,8 @@ object AppFlowApiClient {
     private inline fun <reified T> parseData(data: JsonElement?): T? {
         if (data == null || data.isJsonNull) return null
         return runCatching {
-            gson.fromJson<T>(data, object : TypeToken<T>() {}.type)
+            val jsonString = gson.toJson(data)
+            gson.fromJson<T>(jsonString, object : TypeToken<T>() {}.type)
         }.getOrNull()
     }
 
@@ -111,20 +118,72 @@ object AppFlowApiClient {
         return toTypedResult(raw, parseData(raw.data) ?: emptyList())
     }
 
-    suspend fun getPantryItems(userId: Int): ApiNetworkResult<List<PantryItem>> {
+    // Pantry CRUD
+    suspend fun listPantries(userId: Int): ApiNetworkResult<List<Pantry>> {
         val raw = ApiRequestExecutor.executeRaw(AuthMode.BEARER) {
             Request.Builder()
-                .url(buildUrl("/v2/pantry/"))
+                .url(buildUrl("/v2/pantries/"))
                 .get()
                 .build()
         }
-        return toTypedResult(raw, parseData(raw.data) ?: emptyList())
+        val parsedData: List<Pantry> = raw.data?.let { parseData<List<Pantry>>(it) } ?: emptyList()
+        return toTypedResult(raw, parsedData)
     }
 
-    suspend fun upsertPantryItem(requestBody: PantryUpsertRequest): ApiNetworkResult<List<PantryItem>> {
+    suspend fun createPantry(userId: Int, request: CreatePantryRequest): ApiNetworkResult<Pantry> {
+        val body = gson.toJson(mapOf("name" to request.name))
+            .toRequestBody(jsonMediaType)
+
+        val raw = ApiRequestExecutor.executeRaw(AuthMode.BEARER) {
+            Request.Builder()
+                .url(buildUrl("/v2/pantries/"))
+                .post(body)
+                .build()
+        }
+        return toTypedResult(raw, parseData(raw.data))
+    }
+
+    suspend fun getPantryMetadata(userId: Int, pantryId: Int): ApiNetworkResult<Pantry> {
+        val raw = ApiRequestExecutor.executeRaw(AuthMode.BEARER) {
+            Request.Builder()
+                .url(buildUrl("/v2/pantries/$pantryId"))
+                .get()
+                .build()
+        }
+        return toTypedResult(raw, parseData(raw.data))
+    }
+
+    suspend fun deletePantry(userId: Int, pantryId: Int): ApiNetworkResult<Unit> {
+        val raw = ApiRequestExecutor.executeRaw(AuthMode.BEARER) {
+            Request.Builder()
+                .url(buildUrl("/v2/pantries/$pantryId"))
+                .delete()
+                .build()
+        }
+        return ApiNetworkResult(
+            httpStatus = raw.httpStatus,
+            success = raw.success,
+            data = Unit,
+            message = raw.message,
+            code = raw.code
+        )
+    }
+
+    // Pantry Items
+    suspend fun getPantryItems(userId: Int, pantryId: Int, page: Int = 1, limit: Int = 20): ApiNetworkResult<List<PantryItem>> {
+        val raw = ApiRequestExecutor.executeRaw(AuthMode.BEARER) {
+            Request.Builder()
+                .url(buildUrl("/v2/pantries/$pantryId/items", mapOf("page" to page.toString(), "limit" to limit.toString())))
+                .get()
+                .build()
+        }
+        val items = raw.data?.let { parseData<List<PantryItem>>(it) } ?: emptyList()
+        return toTypedResult(raw, items)
+    }
+
+    suspend fun upsertPantryItem(requestBody: PantryUpsertRequest): ApiNetworkResult<PaginatedResponse<PantryItem>> {
         val body = gson.toJson(
             mapOf(
-                "pantryItemId" to requestBody.pantryItemId,
                 "ingredientName" to requestBody.ingredientName,
                 "quantity" to requestBody.quantity,
                 "unit" to requestBody.unit,
@@ -134,28 +193,89 @@ object AppFlowApiClient {
 
         val raw = ApiRequestExecutor.executeRaw(AuthMode.BEARER) {
             Request.Builder()
-                .url(buildUrl("/v2/pantry/upsert"))
+                .url(buildUrl("/v2/pantries/${requestBody.pantryId}/items"))
                 .post(body)
+                .build()
+        }
+        return toTypedResult(raw, parseData(raw.data))
+    }
+
+    suspend fun deletePantryItem(userId: Int, pantryId: Int, itemId: Int): ApiNetworkResult<Unit> {
+        val raw = ApiRequestExecutor.executeRaw(AuthMode.BEARER) {
+            Request.Builder()
+                .url(buildUrl("/v2/pantries/$pantryId/items/$itemId"))
+                .delete()
+                .build()
+        }
+        return ApiNetworkResult(
+            httpStatus = raw.httpStatus,
+            success = raw.success,
+            data = Unit,
+            message = raw.message,
+            code = raw.code
+        )
+    }
+
+    // Share Management
+    suspend fun listPantryShares(userId: Int, pantryId: Int): ApiNetworkResult<List<PantryShare>> {
+        val raw = ApiRequestExecutor.executeRaw(AuthMode.BEARER) {
+            Request.Builder()
+                .url(buildUrl("/v2/pantries/$pantryId/shares"))
+                .get()
                 .build()
         }
         return toTypedResult(raw, parseData(raw.data) ?: emptyList())
     }
 
-    suspend fun deletePantryItem(requestBody: PantryDeleteRequest): ApiNetworkResult<List<PantryItem>> {
-        val body = gson.toJson(mapOf("pantryItemId" to requestBody.pantryItemId))
+    suspend fun sharePantry(userId: Int, pantryId: Int, request: ShareRequest): ApiNetworkResult<PantryShare> {
+        val body = gson.toJson(
+            mapOf(
+                "targetUserId" to request.targetUserId,
+                "role" to request.role
+            )
+        ).toRequestBody(jsonMediaType)
+
+        val raw = ApiRequestExecutor.executeRaw(AuthMode.BEARER) {
+            Request.Builder()
+                .url(buildUrl("/v2/pantries/$pantryId/shares"))
+                .post(body)
+                .build()
+        }
+        return toTypedResult(raw, parseData(raw.data))
+    }
+
+    suspend fun updateShareRole(userId: Int, pantryId: Int, targetUserId: Int, request: UpdateRoleRequest): ApiNetworkResult<PantryShare> {
+        val body = gson.toJson(mapOf("role" to request.role))
             .toRequestBody(jsonMediaType)
 
         val raw = ApiRequestExecutor.executeRaw(AuthMode.BEARER) {
             Request.Builder()
-                .url(buildUrl("/v2/pantry/delete"))
-                .delete(body)
+                .url(buildUrl("/v2/pantries/$pantryId/shares/$targetUserId"))
+                .patch(body)
                 .build()
         }
-        return toTypedResult(raw, parseData(raw.data) ?: emptyList())
+        return toTypedResult(raw, parseData(raw.data))
     }
 
-    suspend fun getRecommendations(userId: Int, limit: Int = 10): ApiNetworkResult<RecommendationPayload> {
-        val body = gson.toJson(mapOf("limit" to limit))
+    suspend fun removeShare(userId: Int, pantryId: Int, targetUserId: Int): ApiNetworkResult<Unit> {
+        val raw = ApiRequestExecutor.executeRaw(AuthMode.BEARER) {
+            Request.Builder()
+                .url(buildUrl("/v2/pantries/$pantryId/shares/$targetUserId"))
+                .delete()
+                .build()
+        }
+        return ApiNetworkResult(
+            httpStatus = raw.httpStatus,
+            success = raw.success,
+            data = Unit,
+            message = raw.message,
+            code = raw.code
+        )
+    }
+
+    // Recommendations
+    suspend fun getRecommendations(userId: Int, pantryId: Int? = null, limit: Int = 10): ApiNetworkResult<RecommendationPayload> {
+        val body = gson.toJson(mapOf("limit" to limit, "pantryId" to pantryId))
             .toRequestBody(jsonMediaType)
 
         val raw = ApiRequestExecutor.executeRaw(AuthMode.CHAT_DUAL) {
