@@ -20,6 +20,7 @@ import com.watb.chefmate.data.MealSessionRecipesReplaceRequest
 import com.watb.chefmate.data.Pantry
 import com.watb.chefmate.data.PantryDeleteRequest
 import com.watb.chefmate.data.PantryItem
+import com.watb.chefmate.data.PantryItemsResponse
 import com.watb.chefmate.data.PantryUpsertRequest
 import com.watb.chefmate.data.CreatePantryRequest
 import com.watb.chefmate.data.PantryShare
@@ -177,8 +178,22 @@ object AppFlowApiClient {
                 .get()
                 .build()
         }
-        val items = raw.data?.let { parseData<List<PantryItem>>(it) } ?: emptyList()
-        return toTypedResult(raw, items)
+        // Get meta info directly from raw body
+        val hasMore = raw.rawBody?.let { body ->
+            try {
+                val json = com.google.gson.JsonParser.parseString(body).asJsonObject
+                json.get("meta")?.asJsonObject?.get("hasMore")?.asBoolean
+            } catch (e: Exception) { null }
+        } ?: false
+        val items: List<PantryItem> = raw.data?.let { parseData(it) } ?: emptyList()
+        android.util.Log.d("AppFlowDebug", "getPantryItems: page=$page, limit=$limit, hasMore=$hasMore, itemsLoaded=${items.size}")
+        return ApiNetworkResult(
+            httpStatus = raw.httpStatus,
+            success = raw.success,
+            data = items,
+            message = raw.message,
+            code = if (hasMore) "true" else null
+        )
     }
 
     suspend fun upsertPantryItem(requestBody: PantryUpsertRequest): ApiNetworkResult<PaginatedResponse<PantryItem>> {
