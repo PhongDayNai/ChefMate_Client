@@ -58,6 +58,7 @@ import com.watb.chefmate.database.AppDatabase
 import com.watb.chefmate.repository.RecipeRepository
 import com.watb.chefmate.ui.theme.Header
 import com.watb.chefmate.viewmodel.AppFlowViewModel
+import com.watb.chefmate.viewmodel.PantryExpirySummary
 import com.watb.chefmate.viewmodel.RecipeViewModel
 import com.watb.chefmate.viewmodel.UserViewModel
 
@@ -67,12 +68,22 @@ private data class PantryStatusSummary(
     val safeCount: Int = 0
 )
 
+data class PantryExpiryCard(
+    val pantryId: Int,
+    val pantryName: String,
+    val summary: PantryExpirySummary
+)
+
+enum class PantrySortOption {
+    ALL, EXPIRED, EXPIRING_SOON, SAFE
+}
+
 @SuppressLint("MemberExtensionConflict")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onRecipeClick: (Recipe) -> Unit,
-    onOpenPantryTab: () -> Unit,
+    onOpenPantryTab: (Int, PantrySortOption) -> Unit,
     navController: NavController,
     userViewModel: UserViewModel,
     recipeViewModel: RecipeViewModel,
@@ -95,8 +106,21 @@ fun HomeScreen(
             PantryStatusSummary(
                 expiringSoonCount = acc.expiringSoonCount + if (summary.hasExpiringSoonItems) summary.itemCountExpiringSoon else 0,
                 expiredCount = acc.expiredCount + if (summary.hasExpiredItems) summary.itemCountExpired else 0,
-                safeCount = acc.safeCount + (summary.itemCountExpiringSoon + summary.itemCountExpired).let { total -> if (total == 0 && summary.hasExpiringSoonItems || summary.hasExpiredItems) 0 else 1 }
+                safeCount = acc.safeCount + if (summary.itemCountExpiringSoon == 0 && summary.itemCountExpired == 0 && !summary.hasExpiringSoonItems && !summary.hasExpiredItems) 1 else 0
             )
+        }
+    }
+
+    val expiryCards = remember(homeState.pantries, homeState.expirySummary, homeState.pantryItems) {
+        homeState.pantries.mapNotNull { pantry ->
+            val summary = homeState.expirySummary[pantry.pantryId]
+            if (summary != null) {
+                PantryExpiryCard(
+                    pantryId = pantry.pantryId,
+                    pantryName = pantry.name,
+                    summary = summary
+                )
+            } else null
         }
     }
 
@@ -167,7 +191,7 @@ fun HomeScreen(
 
             ExpiryAlertCard(
                 isLoggedIn = isLoggedIn,
-                summary = expirySummary,
+                expiryCards = expiryCards,
                 onOpenPantry = onOpenPantryTab,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -319,8 +343,8 @@ private fun TodayEatCard(
 @Composable
 private fun ExpiryAlertCard(
     isLoggedIn: Boolean,
-    summary: PantryStatusSummary,
-    onOpenPantry: () -> Unit,
+    expiryCards: List<PantryExpiryCard>,
+    onOpenPantry: (Int, PantrySortOption) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -352,34 +376,72 @@ private fun ExpiryAlertCard(
                     )
                 }
 
-                else -> {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 14.dp)
-                    ) {
+                expiryCards.isEmpty() -> {
+                    EmptyRecommendationCard(
+                        text = stringResource(R.string.home_expiry_empty),
+                        modifier = Modifier.padding(top = 14.dp)
+                    )
+                }
 
-                        PantryStatusAction(
-                            text = stringResource(R.string.home_pantry_status_expired, summary.expiredCount),
-                            textColor = Color(0xFFDC2626),
-                            onClick = onOpenPantry,
-                            modifier = Modifier.weight(1f)
-                        )
-                        PantryStatusAction(
-                            text = stringResource(R.string.home_pantry_status_expiring_soon, summary.expiringSoonCount),
-                            textColor = Color(0xFFF97316),
-                            onClick = onOpenPantry,
-                            modifier = Modifier.weight(1f)
-                        )
-                        PantryStatusAction(
-                            text = stringResource(R.string.home_pantry_status_safe, summary.safeCount),
-                            textColor = Color(0xFF16A34A),
-                            onClick = onOpenPantry,
-                            modifier = Modifier.weight(1f)
-                        )
+                else -> {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.padding(top = 14.dp)
+                    ) {
+                        expiryCards.forEach { card ->
+                            PantryStatusRow(
+                                card = card,
+                                onOpenPantry = onOpenPantry
+                            )
+                        }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PantryStatusRow(
+    card: PantryExpiryCard,
+    onOpenPantry: (Int, PantrySortOption) -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = card.pantryName,
+                color = Color(0xFF0F172A),
+                fontSize = 14.sp,
+                fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                PantryStatusAction(
+                    text = stringResource(R.string.home_pantry_status_expired, card.summary.itemCountExpired),
+                    textColor = Color(0xFFDC2626),
+                    onClick = { onOpenPantry(card.pantryId, PantrySortOption.EXPIRED) },
+                    modifier = Modifier.weight(1f)
+                )
+                PantryStatusAction(
+                    text = stringResource(R.string.home_pantry_status_expiring_soon, card.summary.itemCountExpiringSoon),
+                    textColor = Color(0xFFF97316),
+                    onClick = { onOpenPantry(card.pantryId, PantrySortOption.EXPIRING_SOON) },
+                    modifier = Modifier.weight(1f)
+                )
+                PantryStatusAction(
+                    text = stringResource(R.string.home_pantry_status_safe, card.summary.totalItemCount - card.summary.itemCountExpiringSoon - card.summary.itemCountExpired),
+                    textColor = Color(0xFF16A34A),
+                    onClick = { onOpenPantry(card.pantryId, PantrySortOption.SAFE) },
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }
@@ -638,7 +700,7 @@ fun HomeScreenPreview() {
 
     HomeScreen(
         onRecipeClick = {},
-        onOpenPantryTab = {},
+        onOpenPantryTab = { _, _ -> },
         navController = NavController(LocalContext.current),
         userViewModel = userViewModel,
         recipeViewModel = RecipeViewModel(recipeRepository),
