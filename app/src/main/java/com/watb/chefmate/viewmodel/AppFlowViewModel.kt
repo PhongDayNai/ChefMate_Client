@@ -90,6 +90,7 @@ data class HomeFlowUiState(
     val selectedPantryId: Int? = null,
     val currentPantryName: String = "",
     val expirySummary: Map<Int, PantryExpirySummary> = emptyMap(),
+    val pendingPantryNavigation: Pair<Int, Int>? = null,
     val recommendationLimit: Int = DEFAULT_RECOMMEND_LIMIT,
     val recommendations: List<Recommendation> = emptyList(),
     val readyToCook: List<Recommendation> = emptyList(),
@@ -101,7 +102,8 @@ data class PantryExpirySummary(
     val hasExpiredItems: Boolean,
     val hasExpiringSoonItems: Boolean,
     val itemCountExpiringSoon: Int,
-    val itemCountExpired: Int
+    val itemCountExpired: Int,
+    val totalItemCount: Int
 )
 
 data class ChatUiState(
@@ -151,7 +153,7 @@ class AppFlowViewModel : ViewModel() {
                     errorMessage = result.message.takeIf { !result.success }
                 )
             }
-            if (pantries.size == 1 && _homeState.value.selectedPantryId == null) {
+            if (pantries.isNotEmpty() && _homeState.value.selectedPantryId == null) {
                 selectPantry(pantries.first().pantryId)
                 loadPantryItems(userId, pantries.first().pantryId)
             }
@@ -190,22 +192,54 @@ class AppFlowViewModel : ViewModel() {
         }
     }
 
+    fun setPendingPantryNavigation(pantryId: Int, sortOptionOrdinal: Int) {
+        _homeState.update { it.copy(pendingPantryNavigation = Pair(pantryId, sortOptionOrdinal)) }
+    }
+
+    fun clearPendingPantryNavigation() {
+        _homeState.update { it.copy(pendingPantryNavigation = null) }
+    }
+
     fun loadPantryItems(userId: Int, pantryId: Int, page: Int = 1, limit: Int = 20) {
         viewModelScope.launch {
-            android.util.Log.d("AppFlowDebug", "loadPantryItems START: userId=$userId, pantryId=$pantryId")
+            android.util.Log.d("AppFlowDebug", "loadPantryItems START: userId=$userId, pantryId=$pantryId, page=$page")
             _homeState.update { it.copy(isLoadingItems = true, errorMessage = null) }
             val result = AppFlowApiClient.getPantryItems(userId, pantryId, page, limit)
-            android.util.Log.d("AppFlowDebug", "loadPantryItems result: success=${result.success}, itemsCount=${result.data?.size}")
             val items = result.data ?: emptyList()
-            android.util.Log.d("AppFlowDebug", "loadPantryItems items count: ${items.size}")
+            android.util.Log.d("AppFlowDebug", "loadPantryItems result: success=${result.success}, itemsCount=${items.size}, hasMore=${result.code}")
             _homeState.update { state ->
                 val existingItems = state.pantryItems[pantryId] ?: emptyList()
                 val updatedItems = if (page > 1) existingItems + items else items
+                val newSummary = calculateExpirySummary(updatedItems)
+                android.util.Log.d("AppFlowDebug", "loadPantryItems: pantryId=$pantryId, totalItems=${updatedItems.size}, summary=$newSummary")
                 state.copy(
                     isLoadingItems = false,
                     pantryItems = state.pantryItems + (pantryId to updatedItems),
-                    expirySummary = state.expirySummary + (pantryId to calculateExpirySummary(updatedItems))
+                    expirySummary = state.expirySummary + (pantryId to newSummary)
                 )
+            }
+            // If there are more pages, load them with accumulated items to avoid race condition
+            if (result.code == "true") {
+                val allItems = (_homeState.value.pantryItems[pantryId] ?: emptyList())
+                loadPantryItemsRecursive(userId, pantryId, allItems, page + 1, limit)
+            }
+        }
+    }
+
+    private fun loadPantryItemsRecursive(userId: Int, pantryId: Int, accumulatedItems: List<PantryItem>, page: Int, limit: Int) {
+        viewModelScope.launch {
+            val result = AppFlowApiClient.getPantryItems(userId, pantryId, page, limit)
+            val newItems = result.data ?: emptyList()
+            val allItems = accumulatedItems + newItems
+            android.util.Log.d("AppFlowDebug", "loadPantryItemsRecursive: page=$page, newItems=${newItems.size}, total=${allItems.size}")
+            _homeState.update { state ->
+                state.copy(
+                    pantryItems = state.pantryItems + (pantryId to allItems),
+                    expirySummary = state.expirySummary + (pantryId to calculateExpirySummary(allItems))
+                )
+            }
+            if (result.code == "true") {
+                loadPantryItemsRecursive(userId, pantryId, allItems, page + 1, limit)
             }
         }
     }
@@ -300,7 +334,8 @@ class AppFlowViewModel : ViewModel() {
             hasExpiredItems = expiredCount > 0,
             hasExpiringSoonItems = expiringSoonCount > 0,
             itemCountExpiringSoon = expiringSoonCount,
-            itemCountExpired = expiredCount
+            itemCountExpired = expiredCount,
+            totalItemCount = items.size
         )
     }
 
@@ -357,10 +392,15 @@ class AppFlowViewModel : ViewModel() {
                 )
             }
 
-            if (pantries.size == 1 && _homeState.value.selectedPantryId == null) {
+            if (pantries.isNotEmpty() && _homeState.value.selectedPantryId == null) {
                 android.util.Log.d("AppFlowDebug", "Auto-selecting pantry and loading items")
-                selectPantry(pantries.first().pantryId)
-                loadPantryItems(userId, pantries.first().pantryId)
+                // Select pantry with most items based on itemCount from API response
+                val selectedPantry = pantries.maxByOrNull { it.itemCount } ?: pantries.first()
+                selectPantry(selectedPantry.pantryId)
+                // Load items for ALL pantries to compute expiry summaries
+                pantries.forEach { pantry ->
+                    loadPantryItems(userId, pantry.pantryId)
+                }
             }
         }
     }
