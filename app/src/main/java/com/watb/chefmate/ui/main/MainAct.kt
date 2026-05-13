@@ -140,7 +140,8 @@ fun MainAct(
                             onRecipeClick = { selectedRecipe ->
                                 onRecipeClick(selectedRecipe, false)
                             },
-                            onOpenPantryTab = {
+                            onOpenPantryTab = { pantryId, sortOption ->
+                                appFlowViewModel.setPendingPantryNavigation(pantryId, sortOption.ordinal)
                                 coroutineScope.launch {
                                     pagerState.animateScrollToPage(1)
                                 }
