@@ -60,15 +60,16 @@ data class PantryItem(
 ) {
     fun isExpired(): Boolean = expiresAt?.let {
         try {
-            java.time.Instant.parse(it).isBefore(java.time.Instant.now())
+            val date = java.time.LocalDate.parse(it.take(10), java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+            date.isBefore(java.time.LocalDate.now())
         } catch (e: Exception) { false }
     } ?: false
 
     fun isExpiringSoon(daysThreshold: Int = 3): Boolean = expiresAt?.let {
         try {
-            val expiry = java.time.Instant.parse(it)
-            val threshold = java.time.Instant.now().plus(java.time.Duration.ofDays(daysThreshold.toLong()))
-            expiry.isBefore(threshold) && !isExpired()
+            val date = java.time.LocalDate.parse(it.take(10), java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+            val threshold = java.time.LocalDate.now().plusDays(daysThreshold.toLong())
+            date.isBefore(threshold) && !isExpired()
         } catch (e: Exception) { false }
     } ?: false
 }
@@ -120,6 +121,11 @@ data class PageMeta(
     val limit: Int,
     val total: Int,
     val hasMore: Boolean
+)
+
+data class PantryItemsResponse(
+    val data: List<PantryItem>,
+    val meta: PageMeta
 )
 
 data class PaginatedResponse<T>(
