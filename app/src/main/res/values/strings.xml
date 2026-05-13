@@ -98,6 +98,8 @@
     <string name="pantry_sort_oldest">Cũ nhất</string>
     <string name="pantry_sort_expired">Hết hạn</string>
     <string name="pantry_sort_not_expired">Chưa hết hạn</string>
+    <string name="pantry_sort_expiring_soon">Sắp hết hạn</string>
+    <string name="pantry_sort_safe">Còn tươi ngon</string>
     <string name="pantry_quantity">Số lượng: %1$s %2$s</string>
     <string name="pantry_expiry">HSD: %1$s</string>
     <string name="pantry_editor_add_title">Thêm nguyên liệu</string>
