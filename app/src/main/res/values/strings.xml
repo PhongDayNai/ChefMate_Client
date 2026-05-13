@@ -89,6 +89,8 @@
     <string name="diet_notes_editor_keywords_placeholder">Từ khóa, ngăn cách bằng dấu phẩy</string>
     <string name="diet_notes_editor_instruction_placeholder">Hướng dẫn thêm</string>
     <string name="diet_notes_editor_active">Đang kích hoạt</string>
+    <string name="pantry_create_title">Tạo tủ lạnh mới</string>
+    <string name="pantry_create_name_label">Tên tủ lạnh</string>
     <string name="pantry_title">Tủ lạnh cá nhân</string>
     <string name="pantry_login_required_title">Bạn cần đăng nhập để quản lý tủ lạnh</string>
     <string name="pantry_list_title">Nguyên liệu hiện có</string>
@@ -179,9 +181,9 @@
     <string name="home_sign_in_for_expiry">Đăng nhập để xem cảnh báo hạn sử dụng từ tủ lạnh của bạn.</string>
     <string name="home_due_today">Hôm nay</string>
     <string name="home_overdue">Đã hết hạn</string>
-    <string name="home_pantry_status_expiring_soon">%1$d nguyên liệu sắp hết hạn</string>
-    <string name="home_pantry_status_expired">%1$d nguyên liệu đã hết hạn</string>
-    <string name="home_pantry_status_safe">%1$d nguyên liệu còn tươi ngon</string>
+    <string name="home_pantry_status_expiring_soon">%1$d sắp hết hạn</string>
+    <string name="home_pantry_status_expired">%1$d đã hết hạn</string>
+    <string name="home_pantry_status_safe">%1$d còn tươi mới</string>
     <string name="home_recently_viewed">Món vừa xem</string>
     <string name="home_recently_viewed_empty">Chưa có món nào được xem gần đây</string>
     <string name="home_search_hint">Tìm món ăn hoặc tag...</string>
@@ -214,6 +216,7 @@
     <string name="common_edit">Sửa</string>
     <string name="common_delete">Xóa</string>
     <string name="common_remove">Xóa</string>
+    <string name="common_close">Đóng</string>
     <string name="common_back_content_description">Quay lại</string>
     <string name="common_cancel_content_description">cancel</string>
     <string name="common_like_content_description">Like</string>
@@ -223,6 +226,9 @@
     <string name="common_unit">Đơn vị</string>
     <string name="common_retry">Vui lòng thử lại</string>
     <string name="share_management_title">Quản lý chia sẻ</string>
+    <string name="share_dialog_title">Chia sẻ tủ lạnh</string>
+    <string name="share_add_user">Thêm người</string>
+    <string name="share_user_identifier_placeholder">Nhập email hoặc số điện thoại</string>
     <string name="share_no_users">Chưa có người dùng được chia sẻ</string>
     <string name="share_remove_title">Xóa người dùng</string>
     <string name="share_remove_message">Bạn có chắc chắn muốn xóa %1$s khỏi danh sách chia sẻ?</string>

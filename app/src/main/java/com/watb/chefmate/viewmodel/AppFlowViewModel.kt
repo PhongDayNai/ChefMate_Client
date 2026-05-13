@@ -91,6 +91,7 @@ data class HomeFlowUiState(
     val currentPantryName: String = "",
     val expirySummary: Map<Int, PantryExpirySummary> = emptyMap(),
     val pendingPantryNavigation: Pair<Int, Int>? = null,
+    val shares: List<PantryShare> = emptyList(),
     val recommendationLimit: Int = DEFAULT_RECOMMEND_LIMIT,
     val recommendations: List<Recommendation> = emptyList(),
     val readyToCook: List<Recommendation> = emptyList(),
@@ -293,25 +294,39 @@ class AppFlowViewModel : ViewModel() {
     fun loadPantryShares(userId: Int, pantryId: Int) {
         viewModelScope.launch {
             val result = AppFlowApiClient.listPantryShares(userId, pantryId)
-            // shares will be handled by the UI state
+            _homeState.update {
+                it.copy(shares = result.data ?: emptyList())
+            }
         }
     }
 
-    fun sharePantry(userId: Int, pantryId: Int, targetUserId: Int, role: String) {
+    fun sharePantry(userId: Int, pantryId: Int, targetUserIdentifier: String, role: String) {
         viewModelScope.launch {
-            val result = AppFlowApiClient.sharePantry(userId, pantryId, ShareRequest(targetUserId, role))
+            val result = AppFlowApiClient.sharePantry(userId, pantryId, ShareRequest(targetUserIdentifier, role))
+            if (result.success) {
+                // Reload shares after adding
+                loadPantryShares(userId, pantryId)
+            }
         }
     }
 
     fun updateShareRole(userId: Int, pantryId: Int, targetUserId: Int, role: String) {
         viewModelScope.launch {
             val result = AppFlowApiClient.updateShareRole(userId, pantryId, targetUserId, UpdateRoleRequest(role))
+            if (result.success) {
+                // Reload shares after update
+                loadPantryShares(userId, pantryId)
+            }
         }
     }
 
     fun removeShare(userId: Int, pantryId: Int, targetUserId: Int) {
         viewModelScope.launch {
             val result = AppFlowApiClient.removeShare(userId, pantryId, targetUserId)
+            if (result.success) {
+                // Reload shares after removal
+                loadPantryShares(userId, pantryId)
+            }
         }
     }
 

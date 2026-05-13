@@ -245,7 +245,7 @@ object AppFlowApiClient {
     suspend fun sharePantry(userId: Int, pantryId: Int, request: ShareRequest): ApiNetworkResult<PantryShare> {
         val body = gson.toJson(
             mapOf(
-                "targetUserId" to request.targetUserId,
+                "targetUserIdentifier" to request.targetUserIdentifier,
                 "role" to request.role
             )
         ).toRequestBody(jsonMediaType)

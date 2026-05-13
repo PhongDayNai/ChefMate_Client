@@ -91,7 +91,7 @@ data class PantryShare(
 )
 
 data class ShareRequest(
-    val targetUserId: Int,
+    val targetUserIdentifier: String,
     val role: String
 )
 
