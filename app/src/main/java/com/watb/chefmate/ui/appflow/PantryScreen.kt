@@ -3,6 +3,7 @@ package com.watb.chefmate.ui.appflow
 import android.app.DatePickerDialog
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,6 +25,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -30,6 +33,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -58,6 +63,7 @@ import androidx.navigation.NavController
 import com.watb.chefmate.R
 import com.watb.chefmate.data.Pantry
 import com.watb.chefmate.data.PantryItem
+import com.watb.chefmate.data.PantryShare
 import com.watb.chefmate.data.PantryUpsertRequest
 import com.watb.chefmate.ui.theme.CustomTextField
 import com.watb.chefmate.ui.theme.Header
@@ -69,12 +75,12 @@ import java.time.format.DateTimeFormatter
 
 private enum class PantrySortOption {
     ALL,
+    EXPIRED,
+    EXPIRING_SOON,
+    SAFE,
     NEWEST,
     OLDEST,
-    EXPIRED,
-    NOT_EXPIRED,
-    EXPIRING_SOON,
-    SAFE
+    NOT_EXPIRED
 }
 
 @Composable
@@ -90,6 +96,8 @@ fun PantryScreen(
 
     var editingItem by remember { mutableStateOf<PantryItem?>(null) }
     var showEditor by remember { mutableStateOf(false) }
+    var showCreatePantryDialog by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
     var selectedSortOption by remember { mutableStateOf(PantrySortOption.ALL) }
 
     LaunchedEffect(isLoggedIn, user?.userId) {
@@ -146,7 +154,7 @@ fun PantryScreen(
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 14.dp)
@@ -164,14 +172,35 @@ fun PantryScreen(
                     },
                     modifier = Modifier.weight(1f)
                 )
+                // Share button
                 IconButton(
                     onClick = {
-                        editingItem = null
-                        showEditor = true
+                        val pId = homeState.selectedPantryId
+                        val currentUser = user!!
+                        if (pId != null && isLoggedIn) {
+                            appFlowViewModel.loadPantryShares(currentUser.userId, pId)
+                            showShareDialog = true
+                        } else {
+                            Toast.makeText(context, "Vui lòng chọn tủ lạnh trước", Toast.LENGTH_SHORT).show()
+                        }
                     },
                     modifier = Modifier
+                        .background(Color(0xFFF3F4F6), RoundedCornerShape(10.dp))
+                        .size(36.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_share),
+                        contentDescription = stringResource(R.string.share_management_title),
+                        tint = Color(0xFF6B7280),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                // Create new pantry button
+                IconButton(
+                    onClick = { showCreatePantryDialog = true },
+                    modifier = Modifier
                         .background(Color(0xFFF97316), CircleShape)
-                        .size(34.dp)
+                        .size(36.dp)
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_add),
@@ -182,11 +211,36 @@ fun PantryScreen(
                 }
             }
 
-            PantrySortDropdown(
-                selectedOption = selectedSortOption,
-                onOptionSelected = { selectedSortOption = it },
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 4.dp)
+            ) {
+                PantrySortDropdown(
+                    selectedOption = selectedSortOption,
+                    onOptionSelected = { selectedSortOption = it },
+                    modifier = Modifier.weight(1f)
+                )
+                // Add item button - same style as create pantry button (orange circle)
+                IconButton(
+                    onClick = {
+                        editingItem = null
+                        showEditor = true
+                    },
+                    modifier = Modifier
+                        .background(Color(0xFFF97316), CircleShape)
+                        .size(36.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_add),
+                        contentDescription = stringResource(R.string.pantry_editor_add_title),
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
 
             LazyColumn(
                 modifier = Modifier
@@ -234,6 +288,34 @@ fun PantryScreen(
             }
         )
     }
+
+    if (showCreatePantryDialog && isLoggedIn && currentUser != null) {
+        CreatePantryDialog(
+            onDismiss = { showCreatePantryDialog = false },
+            onCreate = { name ->
+                appFlowViewModel.createPantry(currentUser.userId, name)
+                showCreatePantryDialog = false
+            }
+        )
+    }
+
+    if (showShareDialog && homeState.selectedPantryId != null && isLoggedIn && currentUser != null) {
+        val pId = homeState.selectedPantryId!!
+        ShareDialog(
+            shares = homeState.shares,
+            pantryId = pId,
+            onDismiss = { showShareDialog = false },
+            onAddShare = { targetUserIdentifier, role ->
+                appFlowViewModel.sharePantry(currentUser.userId, pId, targetUserIdentifier, role)
+            },
+            onUpdateRole = { targetUserId, role ->
+                appFlowViewModel.updateShareRole(currentUser.userId, pId, targetUserId, role)
+            },
+            onRemoveShare = { targetUserId ->
+                appFlowViewModel.removeShare(currentUser.userId, pId, targetUserId)
+            }
+        )
+    }
 }
 
 @Composable
@@ -243,6 +325,13 @@ private fun PantryItemCard(
     onDelete: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    val borderColor = when {
+        item.isExpired() -> Color(0xFFDC2626)
+        item.isExpiringSoon() -> Color(0xFFF97316)
+        item.expiresAt != null -> Color(0xFF16A34A)
+        else -> Color.Transparent
+    }
+    val borderWidth = if (borderColor != Color.Transparent) 2.dp else 0.dp
 
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -251,6 +340,13 @@ private fun PantryItemCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 12.dp)
+            .then(
+                if (borderWidth > 0.dp) {
+                    Modifier.border(borderWidth, borderColor, RoundedCornerShape(16.dp))
+                } else {
+                    Modifier
+                }
+            )
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Row(
@@ -378,17 +474,19 @@ private fun PantrySortDropdown(
                         text = {
                             Text(
                                 text = sortOptionLabel(option),
-                                fontSize = 13.sp,
+                                fontSize = 14.sp,
+                                fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                                color = if (option == selectedOption) Color(0xFFF97316) else Color(0xFF111827)
                             )
                         },
                         onClick = {
                             expanded = false
                             onOptionSelected(option)
                         },
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(40.dp)
+                            .height(44.dp)
                             .background(Color.White)
                     )
                 }
@@ -830,4 +928,221 @@ private fun Modifier.shadowCardBackground(): Modifier {
     return this
         .shadow(elevation = 8.dp, shape = RoundedCornerShape(16.dp))
         .background(Color.White, RoundedCornerShape(16.dp))
+}
+
+@Composable
+private fun CreatePantryDialog(
+    onDismiss: () -> Unit,
+    onCreate: (String) -> Unit
+) {
+    var pantryName by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.pantry_create_title),
+                fontSize = 18.sp,
+                fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                color = Color(0xFF111827)
+            )
+        },
+        text = {
+            androidx.compose.foundation.layout.Column {
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
+                CustomTextField(
+                    value = pantryName,
+                    onValueChange = { pantryName = it },
+                    placeholder = stringResource(R.string.pantry_create_name_label)
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (pantryName.isNotBlank()) {
+                        onCreate(pantryName.trim())
+                        onDismiss()
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF97316))
+            ) {
+                Text(
+                    text = stringResource(R.string.common_create),
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                    color = Color.White
+                )
+            }
+        },
+        dismissButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF3F4F6))
+            ) {
+                Text(
+                    text = stringResource(R.string.common_cancel),
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                    color = Color(0xFF6B7280)
+                )
+            }
+        },
+        containerColor = Color.White
+    )
+}
+
+@Composable
+private fun ShareDialog(
+    shares: List<PantryShare>,
+    pantryId: Int,
+    onDismiss: () -> Unit,
+    onAddShare: (String, String) -> Unit,
+    onUpdateRole: (Int, String) -> Unit,
+    onRemoveShare: (Int) -> Unit
+) {
+    var showAddForm by remember { mutableStateOf(false) }
+    var targetUserIdentifier by remember { mutableStateOf("") }
+    var selectedRole by remember { mutableStateOf("editor") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.share_dialog_title),
+                fontSize = 18.sp,
+                fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                color = Color(0xFF111827)
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 400.dp)
+            ) {
+                if (shares.isEmpty() && !showAddForm) {
+                    Text(
+                        text = stringResource(R.string.share_no_users),
+                        color = Color(0xFF6B7280),
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                } else {
+                    // List of shared users
+                    shares.forEach { share ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = share.fullName,
+                                    fontSize = 14.sp,
+                                    fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                                    color = Color(0xFF111827)
+                                )
+                                Text(
+                                    text = share.role,
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF6B7280)
+                                )
+                            }
+                            IconButton(
+                                onClick = { onRemoveShare(share.userId) },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_cancel),
+                                    contentDescription = stringResource(R.string.common_delete),
+                                    tint = Color(0xFFDC2626),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                        Divider(color = Color(0xFFF3F4F6))
+                    }
+                }
+
+                if (showAddForm) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    CustomTextField(
+                        value = targetUserIdentifier,
+                        onValueChange = { targetUserIdentifier = it },
+                        placeholder = stringResource(R.string.share_user_identifier_placeholder)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("editor", "viewer").forEach { role ->
+                            FilterChip(
+                                selected = selectedRole == role,
+                                onClick = { selectedRole = role },
+                                label = {
+                                    Text(
+                                        text = if (role == "editor") "Editor" else "Viewer",
+                                        fontSize = 13.sp,
+                                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium))
+                                    )
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Color(0xFFF97316),
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = {
+                            if (targetUserIdentifier.isNotBlank()) {
+                                onAddShare(targetUserIdentifier.trim(), selectedRole)
+                                targetUserIdentifier = ""
+                                showAddForm = false
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF97316))
+                    ) {
+                        Text(
+                            text = stringResource(R.string.common_add),
+                            fontSize = 14.sp,
+                            fontFamily = FontFamily(Font(resId = R.font.roboto_medium))
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            if (!showAddForm) {
+                Button(
+                    onClick = { showAddForm = true },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF97316))
+                ) {
+                    Text(
+                        text = stringResource(R.string.share_add_user),
+                        fontSize = 14.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium))
+                    )
+                }
+            }
+        },
+        dismissButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF3F4F6))
+            ) {
+                Text(
+                    text = stringResource(R.string.common_close),
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                    color = Color(0xFF6B7280)
+                )
+            }
+        },
+        containerColor = Color.White
+    )
 }
