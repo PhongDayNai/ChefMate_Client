@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.watb.chefmate.R
+import com.watb.chefmate.data.Pantry
 import com.watb.chefmate.data.PantryItem
 import com.watb.chefmate.data.PantryUpsertRequest
 import com.watb.chefmate.ui.theme.CustomTextField
@@ -71,7 +72,9 @@ private enum class PantrySortOption {
     NEWEST,
     OLDEST,
     EXPIRED,
-    NOT_EXPIRED
+    NOT_EXPIRED,
+    EXPIRING_SOON,
+    SAFE
 }
 
 @Composable
@@ -93,6 +96,21 @@ fun PantryScreen(
         val userId = user?.userId
         if (isLoggedIn && userId != null) {
             appFlowViewModel.refreshPantry(userId)
+        }
+    }
+
+    // Handle pending navigation from HomeScreen
+    LaunchedEffect(homeState.pendingPantryNavigation) {
+        val pending = homeState.pendingPantryNavigation
+        if (pending != null) {
+            val (pantryId, sortOrdinal) = pending
+            appFlowViewModel.selectPantry(pantryId)
+            val userId = user?.userId
+            if (isLoggedIn && userId != null) {
+                appFlowViewModel.loadPantryItems(userId, pantryId)
+            }
+            selectedSortOption = PantrySortOption.entries.getOrNull(sortOrdinal) ?: PantrySortOption.ALL
+            appFlowViewModel.clearPendingPantryNavigation()
         }
     }
 
@@ -133,11 +151,18 @@ fun PantryScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 14.dp)
             ) {
-                Text(
-                    text = homeState.currentPantryName.ifEmpty { stringResource(R.string.pantry_title) },
-                    color = Color(0xFF111827),
-                    fontSize = 18.sp,
-                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                PantrySelectorDropdown(
+                    pantries = homeState.pantries,
+                    selectedPantryId = selectedPantryId,
+                    currentPantryName = homeState.currentPantryName,
+                    onPantrySelected = { pantryId ->
+                        appFlowViewModel.selectPantry(pantryId)
+                        val userId = user?.userId
+                        if (isLoggedIn && userId != null) {
+                            appFlowViewModel.loadPantryItems(userId, pantryId)
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
                 )
                 IconButton(
                     onClick = {
@@ -367,6 +392,76 @@ private fun PantrySortDropdown(
                             .background(Color.White)
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PantrySelectorDropdown(
+    pantries: List<Pantry>,
+    selectedPantryId: Int?,
+    currentPantryName: String,
+    onPantrySelected: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val density = LocalDensity.current
+    var rowWidth by remember { mutableStateOf(0) }
+
+    Box(modifier = modifier) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFF3F4F6), RoundedCornerShape(12.dp))
+                .clickable { expanded = true }
+                .padding(horizontal = 14.dp, vertical = 10.dp)
+                .onGloballyPositioned { layoutCoordinates ->
+                    rowWidth = layoutCoordinates.size.width
+                }
+        ) {
+            Text(
+                text = currentPantryName.ifEmpty { "Chọn tủ lạnh" },
+                color = Color(0xFF111827),
+                fontSize = 16.sp,
+                fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+            )
+            Text(
+                text = if (expanded) "▲" else "▼",
+                color = Color(0xFF6B7280),
+                fontSize = 11.sp,
+                fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            offset = DpOffset(x = 0.dp, y = 4.dp),
+            modifier = Modifier
+                .width(with(density) { rowWidth.toDp() })
+                .background(Color.White)
+        ) {
+            pantries.forEach { pantry ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = pantry.name,
+                            fontSize = 14.sp,
+                            color = if (pantry.pantryId == selectedPantryId) Color(0xFFF97316) else Color(0xFF111827)
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        onPantrySelected(pantry.pantryId)
+                    },
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .background(Color.White)
+                )
             }
         }
     }
@@ -626,6 +721,8 @@ private fun sortOptionLabel(option: PantrySortOption): String {
         PantrySortOption.OLDEST -> stringResource(R.string.pantry_sort_oldest)
         PantrySortOption.EXPIRED -> stringResource(R.string.pantry_sort_expired)
         PantrySortOption.NOT_EXPIRED -> stringResource(R.string.pantry_sort_not_expired)
+        PantrySortOption.EXPIRING_SOON -> stringResource(R.string.pantry_sort_expiring_soon)
+        PantrySortOption.SAFE -> stringResource(R.string.pantry_sort_safe)
     }
 }
 
@@ -671,6 +768,28 @@ private fun buildVisiblePantryItems(
         PantrySortOption.NOT_EXPIRED -> items.filter { item ->
             val date = parsePantryDate(item.expiresAt)
             date == null || !date.isBefore(today)
+        }.sortedWith(
+            compareBy<PantryItem> { item ->
+                parsePantryDate(item.expiresAt) ?: LocalDate.MAX
+            }.thenBy { item ->
+                item.ingredientName.lowercase()
+            }
+        )
+
+        PantrySortOption.EXPIRING_SOON -> items.filter { item ->
+            val date = parsePantryDate(item.expiresAt) ?: return@filter false
+            !date.isBefore(today) && date.isBefore(today.plusDays(3))
+        }.sortedWith(
+            compareBy<PantryItem> { item ->
+                parsePantryDate(item.expiresAt) ?: LocalDate.MAX
+            }.thenBy { item ->
+                item.ingredientName.lowercase()
+            }
+        )
+
+        PantrySortOption.SAFE -> items.filter { item ->
+            val date = parsePantryDate(item.expiresAt)
+            date == null || !date.isBefore(today) && !date.isBefore(today.plusDays(3))
         }.sortedWith(
             compareBy<PantryItem> { item ->
                 parsePantryDate(item.expiresAt) ?: LocalDate.MAX
