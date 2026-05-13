@@ -41,6 +41,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -425,19 +426,22 @@ private fun PantryStatusRow(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 PantryStatusAction(
-                    text = stringResource(R.string.home_pantry_status_expired, card.summary.itemCountExpired),
+                    count = card.summary.itemCountExpired,
+                    label = stringResource(R.string.home_pantry_status_expired, card.summary.itemCountExpired).substringAfter(" "),
                     textColor = Color(0xFFDC2626),
                     onClick = { onOpenPantry(card.pantryId, PantrySortOption.EXPIRED) },
                     modifier = Modifier.weight(1f)
                 )
                 PantryStatusAction(
-                    text = stringResource(R.string.home_pantry_status_expiring_soon, card.summary.itemCountExpiringSoon),
+                    count = card.summary.itemCountExpiringSoon,
+                    label = stringResource(R.string.home_pantry_status_expiring_soon, card.summary.itemCountExpiringSoon).substringAfter(" "),
                     textColor = Color(0xFFF97316),
                     onClick = { onOpenPantry(card.pantryId, PantrySortOption.EXPIRING_SOON) },
                     modifier = Modifier.weight(1f)
                 )
                 PantryStatusAction(
-                    text = stringResource(R.string.home_pantry_status_safe, card.summary.totalItemCount - card.summary.itemCountExpiringSoon - card.summary.itemCountExpired),
+                    count = card.summary.totalItemCount - card.summary.itemCountExpiringSoon - card.summary.itemCountExpired,
+                    label = stringResource(R.string.home_pantry_status_safe, card.summary.totalItemCount - card.summary.itemCountExpiringSoon - card.summary.itemCountExpired).substringAfter(" "),
                     textColor = Color(0xFF16A34A),
                     onClick = { onOpenPantry(card.pantryId, PantrySortOption.SAFE) },
                     modifier = Modifier.weight(1f)
@@ -449,7 +453,8 @@ private fun PantryStatusRow(
 
 @Composable
 private fun PantryStatusAction(
-    text: String,
+    count: Int,
+    label: String,
     textColor: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -462,25 +467,33 @@ private fun PantryStatusAction(
             .height(80.dp)
             .clickable(onClick = onClick)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp)
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 8.dp, vertical = 8.dp)
         ) {
             Text(
-                text = text,
+                text = count.toString(),
                 color = textColor,
-                fontSize = 12.sp,
-                fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
-                modifier = Modifier.weight(1f),
-                lineHeight = 16.sp
+                fontSize = 24.sp,
+                fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+            )
+            Text(
+                text = label,
+                color = textColor.copy(alpha = 0.8f),
+                fontSize = 11.sp,
+                fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
+                modifier = Modifier.padding(top = 2.dp)
             )
             Icon(
                 painter = painterResource(R.drawable.ic_arrow_right),
                 contentDescription = null,
                 tint = Color(0xFF94A3B8),
                 modifier = Modifier
-                    .size(16.dp)
-                    .padding(start = 4.dp, top = 1.dp)
+                    .size(14.dp)
+                    .padding(top = 4.dp)
             )
         }
     }
