@@ -1,6 +1,15 @@
 package com.watb.chefmate.ui.home
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
@@ -14,6 +23,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -505,6 +517,7 @@ private fun PantryStatusAction(
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun PantryRecommendationOverlay(
     isLoading: Boolean,
@@ -516,11 +529,15 @@ private fun PantryRecommendationOverlay(
     onOpenRecipeChat: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.padding(bottom = 18.dp)) {
+    var expandedPantryId by remember { mutableStateOf<Int?>(null) }
+
+    Column(modifier = modifier) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             Text(
                 text = stringResource(R.string.home_today_eat_title),
@@ -542,54 +559,116 @@ private fun PantryRecommendationOverlay(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 20.dp)
+                    .padding(vertical = 40.dp)
             ) {
                 CircularProgressIndicator(color = Color(0xFFF97316))
             }
             return
         }
 
-        // Group recommendations by pantry in bottom sheet
-        pantryRecommendations.forEach { (pantryId, recommendations) ->
-            val pantryName = pantryNames[pantryId] ?: "Pantry #$pantryId"
-            val pantryReadyToCook = recommendations.filter { it.completionRate == 100 }
-            val pantryAlmostReady = recommendations.filter { it.completionRate != null && it.completionRate < 100 }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        ) {
+            pantryRecommendations.forEach { (pantryId, recommendations) ->
+                val pantryName = pantryNames[pantryId] ?: "Pantry #$pantryId"
+                val isExpanded = expandedPantryId == pantryId
+                val recipeCount = recommendations.size
 
-            if (recommendations.isEmpty()) return@forEach
-
-            Text(
-                text = pantryName,
-                color = Color(0xFF6B7280),
-                fontSize = 12.sp,
-                fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
-                modifier = Modifier.padding(top = 14.dp, bottom = 4.dp)
-            )
-
-            if (pantryReadyToCook.isNotEmpty()) {
-                Text(
-                    text = stringResource(R.string.home_ready_to_cook),
-                    color = Color(0xFF15803D),
-                    fontSize = 14.sp,
-                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
-                    modifier = Modifier.padding(top = 4.dp)
+                PantryExpandableItem(
+                    pantryId = pantryId,
+                    pantryName = pantryName,
+                    recipeCount = recipeCount,
+                    recipes = recommendations,
+                    isExpanded = isExpanded,
+                    onToggle = {
+                        expandedPantryId = if (isExpanded) null else pantryId
+                    },
+                    onOpenRecipeChat = onOpenRecipeChat
                 )
-                pantryReadyToCook.take(6).forEach { recommendation ->
-                    RecommendationOverlayCard(
-                        recommendation = recommendation,
-                        onOpenRecipeChat = onOpenRecipeChat
+            }
+        }
+    }
+}
+
+@Composable
+private fun PantryExpandableItem(
+    pantryId: Int,
+    pantryName: String,
+    recipeCount: Int,
+    recipes: List<Recommendation>,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    onOpenRecipeChat: (Int) -> Unit
+) {
+    val headerColor = if (isExpanded) Color(0xFFFFF9E1) else Color.White
+    val animatedColor by animateColorAsState(
+        targetValue = headerColor,
+        animationSpec = tween(300),
+        label = "headerColor"
+    )
+    val rotationAngle by animateFloatAsState(
+        targetValue = if (isExpanded) 90f else 0f,
+        animationSpec = tween(300),
+        label = "arrowRotation"
+    )
+
+    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+        Card(
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = animatedColor),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggle)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp)
+            ) {
+                Text(
+                    text = pantryName,
+                    color = Color(0xFF111827),
+                    fontSize = 15.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "$recipeCount món",
+                        color = Color(0xFF6B7280),
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily(Font(resId = R.font.roboto_medium))
+                    )
+                    Icon(
+                        painter = painterResource(R.drawable.ic_arrow_right),
+                        contentDescription = if (isExpanded) "Thu gọn" else "Mở rộng",
+                        tint = Color(0xFF6B7280),
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .graphicsLayer {
+                                rotationZ = rotationAngle
+                            }
                     )
                 }
             }
+        }
 
-            if (pantryAlmostReady.isNotEmpty()) {
-                Text(
-                    text = stringResource(R.string.home_almost_ready),
-                    color = Color(0xFFB45309),
-                    fontSize = 14.sp,
-                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
-                    modifier = Modifier.padding(top = 10.dp)
-                )
-                pantryAlmostReady.take(6).forEach { recommendation ->
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = expandVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)),
+            exit = shrinkVertically(animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+        ) {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(recipes) { recommendation ->
                     RecommendationOverlayCard(
                         recommendation = recommendation,
                         onOpenRecipeChat = onOpenRecipeChat
@@ -629,14 +708,9 @@ private fun RecommendationOverlayCard(
                 modifier = Modifier.padding(top = 4.dp)
             )
 
-            if (recommendation.missing.isNotEmpty()) {
-                val missingText = recommendation.missing.joinToString { item ->
-                    val need = item.need ?: 0.0
-                    val unit = item.unit.orEmpty()
-                    "${item.ingredientName} (${need}${unit})"
-                }
+            if (recommendation.reasons.isNotEmpty()) {
                 Text(
-                    text = stringResource(R.string.home_missing, missingText),
+                    text = recommendation.reasons.take(2).joinToString(" • "),
                     color = Color(0xFF92400E),
                     fontSize = 12.sp,
                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
