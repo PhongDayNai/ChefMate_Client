@@ -96,7 +96,9 @@ data class HomeFlowUiState(
     val recommendations: List<Recommendation> = emptyList(),
     val readyToCook: List<Recommendation> = emptyList(),
     val almostReady: List<Recommendation> = emptyList(),
-    val trendingSuggestions: List<Recommendation> = emptyList()
+    val trendingSuggestions: List<Recommendation> = emptyList(),
+    // Per-pantry recommendations for bottom sheet grouping
+    val pantryRecommendations: Map<Int, List<Recommendation>> = emptyMap()
 )
 
 data class PantryExpirySummary(
@@ -358,64 +360,92 @@ class AppFlowViewModel : ViewModel() {
         viewModelScope.launch {
             _homeState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            val (dietResult, recommendationResult, trendingResult) = coroutineScope {
-                val dietDeferred = async { AppFlowApiClient.getDietNotes(userId) }
-                val pantryDeferred = async { AppFlowApiClient.listPantries(userId) }
-                val recommendationDeferred = async {
-                    AppFlowApiClient.getRecommendations(
-                        userId = userId,
-                        pantryId = _homeState.value.selectedPantryId,
-                        limit = _homeState.value.recommendationLimit
+            // First: get pantries
+            android.util.Log.d("AppFlowDebug", "refreshHomeContext START: userId=$userId")
+            val pantryResult = AppFlowApiClient.listPantries(userId)
+            val pantries = pantryResult.data ?: emptyList()
+            android.util.Log.d("AppFlowDebug", "refreshHomeContext: pantries.size=${pantries.size}")
+
+            if (pantries.isEmpty()) {
+                android.util.Log.d("AppFlowDebug", "refreshHomeContext: pantries IS EMPTY, returning early")
+                _homeState.update {
+                    it.copy(
+                        isLoading = false,
+                        pantries = emptyList(),
+                        recommendations = emptyList(),
+                        readyToCook = emptyList(),
+                        almostReady = emptyList(),
+                        pantryRecommendations = emptyMap()
                     )
                 }
-                val trendingDeferred = async {
-                    ApiClient.getTopTrending(userId = userId, page = 1, limit = 20, period = "all")
-                }
-                Triple(dietDeferred.await(), recommendationDeferred.await(), trendingDeferred.await())
+                return@launch
             }
 
-            val pantryResult = coroutineScope {
-                val pantryDeferred = async { AppFlowApiClient.listPantries(userId) }
-                pantryDeferred.await()
+            // Call recommendations for EACH pantry in parallel, plus trending
+            android.util.Log.d("AppFlowDebug", "refreshHomeContext: calling recommendations for ${pantries.size} pantries")
+            val trendingDeferred = async {
+                ApiClient.getTopTrending(userId = userId, page = 1, limit = 20, period = "all")
             }
 
-            val pantries = pantryResult.data ?: emptyList()
+            val recommendationResults = coroutineScope {
+                pantries.map { pantry ->
+                    async {
+                        android.util.Log.d("AppFlowDebug", "refreshHomeContext: calling getRecommendations for pantryId=${pantry.pantryId}")
+                        val result = AppFlowApiClient.getRecommendations(
+                            pantryId = pantry.pantryId,
+                            limit = _homeState.value.recommendationLimit
+                        )
+                        android.util.Log.d("AppFlowDebug", "refreshHomeContext: getRecommendations result for pantryId=${pantry.pantryId}: success=${result.success}, httpStatus=${result.httpStatus}, data=${result.data}")
+                        pantry.pantryId to (result.data ?: RecommendationPayload())
+                    }
+                }.map { it.await() }
+            }
+            android.util.Log.d("AppFlowDebug", "refreshHomeContext: all recommendations received, count=${recommendationResults.size}")
 
-            val recommendationPayload = recommendationResult.data ?: RecommendationPayload(
-                recommendationLimit = _homeState.value.recommendationLimit
-            )
+            val trendingResult = trendingDeferred.await()
+
+            val recommendationsByPantry = mutableMapOf<Int, List<Recommendation>>()
+            val allReadyToCook = mutableListOf<Recommendation>()
+            val allAlmostReady = mutableListOf<Recommendation>()
+            val allRecommendations = mutableListOf<Recommendation>()
+
+            recommendationResults.forEach { (pantryId, payload) ->
+                recommendationsByPantry[pantryId] = payload.recommendations
+                allReadyToCook.addAll(payload.readyToCook)
+                allAlmostReady.addAll(payload.almostReady)
+                allRecommendations.addAll(payload.recommendations)
+            }
+
+            // Deduplicate by recipeId across all pantries
+            val deduplicatedReadyToCook = allReadyToCook.distinctBy { it.recipeId }
+            val deduplicatedAlmostReady = allAlmostReady.distinctBy { it.recipeId }
+            val deduplicatedRecommendations = allRecommendations.distinctBy { it.recipeId }
             val trendingSuggestions = mapRecipesToRecommendations(trendingResult?.data.orEmpty())
-            val fallbackRecommendations = recommendationPayload.recommendations.ifEmpty { trendingSuggestions }
+            val fallbackRecommendations = deduplicatedRecommendations.ifEmpty { trendingSuggestions }
 
-            val errorMessage = listOfNotNull(
-                dietResult.message.takeIf { !dietResult.success },
-                recommendationResult.message.takeIf { !recommendationResult.success },
-                trendingResult?.message.takeIf { trendingResult?.success == false }
-            ).firstOrNull()
+            // Auto-select first pantry if none selected
+            if (_homeState.value.selectedPantryId == null) {
+                val selectedPantry = pantries.maxByOrNull { it.itemCount } ?: pantries.first()
+                selectPantry(selectedPantry.pantryId)
+            }
+
+            // Load items for ALL pantries to compute expiry summaries
+            pantries.forEach { pantry ->
+                loadPantryItems(userId, pantry.pantryId)
+            }
 
             _homeState.update {
                 it.copy(
                     isLoading = false,
-                    errorMessage = errorMessage,
-                    dietNotes = dietResult.data ?: emptyList(),
                     pantries = pantries,
-                    recommendationLimit = recommendationPayload.recommendationLimit,
+                    recommendationLimit = recommendationResults.firstOrNull()?.second?.recommendationLimit
+                        ?: _homeState.value.recommendationLimit,
                     recommendations = fallbackRecommendations,
-                    readyToCook = recommendationPayload.readyToCook,
-                    almostReady = recommendationPayload.almostReady,
+                    readyToCook = deduplicatedReadyToCook,
+                    almostReady = deduplicatedAlmostReady,
+                    pantryRecommendations = recommendationsByPantry,
                     trendingSuggestions = trendingSuggestions
                 )
-            }
-
-            if (pantries.isNotEmpty() && _homeState.value.selectedPantryId == null) {
-                android.util.Log.d("AppFlowDebug", "Auto-selecting pantry and loading items")
-                // Select pantry with most items based on itemCount from API response
-                val selectedPantry = pantries.maxByOrNull { it.itemCount } ?: pantries.first()
-                selectPantry(selectedPantry.pantryId)
-                // Load items for ALL pantries to compute expiry summaries
-                pantries.forEach { pantry ->
-                    loadPantryItems(userId, pantry.pantryId)
-                }
             }
         }
     }
@@ -423,27 +453,68 @@ class AppFlowViewModel : ViewModel() {
     fun refreshRecommendations(userId: Int) {
         viewModelScope.launch {
             _homeState.update { it.copy(isRefreshingRecommendations = true, errorMessage = null) }
-            val recommendationResult = AppFlowApiClient.getRecommendations(
-                userId = userId,
-                pantryId = _homeState.value.selectedPantryId,
-                limit = _homeState.value.recommendationLimit
-            )
-            val trendingResult = ApiClient.getTopTrending(userId = userId, page = 1, limit = 20, period = "all")
-            val payload = recommendationResult.data ?: RecommendationPayload(
-                recommendationLimit = _homeState.value.recommendationLimit
-            )
+
+            android.util.Log.d("AppFlowDebug", "refreshRecommendations START: userId=$userId")
+            val pantries = _homeState.value.pantries
+            android.util.Log.d("AppFlowDebug", "refreshRecommendations: pantries.size=${pantries.size}")
+            if (pantries.isEmpty()) {
+                android.util.Log.d("AppFlowDebug", "refreshRecommendations: pantries IS EMPTY, returning early")
+                _homeState.update { it.copy(isRefreshingRecommendations = false) }
+                return@launch
+            }
+
+            // Call recommendations for EACH pantry in parallel
+            android.util.Log.d("AppFlowDebug", "refreshRecommendations: calling recommendations for ${pantries.size} pantries")
+            val recommendationsByPantry = mutableMapOf<Int, List<Recommendation>>()
+            val allReadyToCook = mutableListOf<Recommendation>()
+            val allAlmostReady = mutableListOf<Recommendation>()
+            val allRecommendations = mutableListOf<Recommendation>()
+
+            val trendingDeferred = async {
+                ApiClient.getTopTrending(userId = userId, page = 1, limit = 20, period = "all")
+            }
+
+            val recommendationResults = coroutineScope {
+                pantries.map { pantry ->
+                    async {
+                        android.util.Log.d("AppFlowDebug", "refreshRecommendations: calling getRecommendations for pantryId=${pantry.pantryId}")
+                        val result = AppFlowApiClient.getRecommendations(
+                            pantryId = pantry.pantryId,
+                            limit = _homeState.value.recommendationLimit
+                        )
+                        android.util.Log.d("AppFlowDebug", "refreshRecommendations: getRecommendations result for pantryId=${pantry.pantryId}: success=${result.success}, httpStatus=${result.httpStatus}, data=${result.data}")
+                        pantry.pantryId to (result.data ?: RecommendationPayload())
+                    }
+                }.map { it.await() }
+            }
+            android.util.Log.d("AppFlowDebug", "refreshRecommendations: all recommendations received, count=${recommendationResults.size}")
+
+            val trendingResult = trendingDeferred.await()
+
+            recommendationResults.forEach { (pantryId, payload) ->
+                recommendationsByPantry[pantryId] = payload.recommendations
+                allReadyToCook.addAll(payload.readyToCook)
+                allAlmostReady.addAll(payload.almostReady)
+                allRecommendations.addAll(payload.recommendations)
+            }
+
+            // Deduplicate by recipeId
+            val deduplicatedReadyToCook = allReadyToCook.distinctBy { it.recipeId }
+            val deduplicatedAlmostReady = allAlmostReady.distinctBy { it.recipeId }
+            val deduplicatedRecommendations = allRecommendations.distinctBy { it.recipeId }
             val trendingSuggestions = mapRecipesToRecommendations(trendingResult?.data.orEmpty())
+            val fallbackRecommendations = deduplicatedRecommendations.ifEmpty { trendingSuggestions }
+
             _homeState.update {
                 it.copy(
                     isRefreshingRecommendations = false,
-                    errorMessage = listOfNotNull(
-                        recommendationResult.message.takeIf { !recommendationResult.success },
-                        trendingResult?.message.takeIf { trendingResult?.success == false }
-                    ).firstOrNull(),
-                    recommendationLimit = payload.recommendationLimit,
-                    recommendations = payload.recommendations.ifEmpty { trendingSuggestions },
-                    readyToCook = payload.readyToCook,
-                    almostReady = payload.almostReady,
+                    errorMessage = null,
+                    recommendationLimit = recommendationResults.firstOrNull()?.second?.recommendationLimit
+                        ?: _homeState.value.recommendationLimit,
+                    recommendations = fallbackRecommendations,
+                    readyToCook = deduplicatedReadyToCook,
+                    almostReady = deduplicatedAlmostReady,
+                    pantryRecommendations = recommendationsByPantry,
                     trendingSuggestions = trendingSuggestions
                 )
             }
@@ -1016,7 +1087,7 @@ class AppFlowViewModel : ViewModel() {
             if (result.httpStatus == 503 && result.code == ChatBusinessCode.AI_SERVER_BUSY) {
                 markMessageFailed(
                     localId = optimisticLocalId,
-                    errorText = result.message ?: "AI server đang bận, hãy thử lại sau.",
+                    errorText = "Máy chủ AI đang bận hoặc tạm thời không khả dụng, anh vui lòng thử lại sau ít phút.",
                     retryable = true,
                     retryAfterMs = DEFAULT_RETRY_AFTER_MS
                 )
@@ -1027,7 +1098,7 @@ class AppFlowViewModel : ViewModel() {
             if (!result.success) {
                 markMessageFailed(
                     localId = optimisticLocalId,
-                    errorText = result.message ?: "Không thể gửi tin nhắn lúc này.",
+                    errorText = "Không thể gửi tin nhắn lúc này.",
                     retryable = false,
                     retryAfterMs = null
                 )

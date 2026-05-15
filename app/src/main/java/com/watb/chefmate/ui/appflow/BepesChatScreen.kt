@@ -2599,7 +2599,7 @@ private fun ChatBubble(
                         if (message.retryable) {
                             if (retryCountdown > 0L) {
                                 Text(
-                                    text = "Gui lai sau ${retryCountdown / 1000}s",
+                                    text = "Gửi lại sau ${retryCountdown / 1000}s",
                                     color = Color(0xFF92400E),
                                     fontSize = 12.sp,
                                     fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -2607,7 +2607,7 @@ private fun ChatBubble(
                                 )
                             } else {
                                 ContextActionChip(
-                                    text = "Gui lai",
+                                    text = "Gửi lại",
                                     onClick = onRetry,
                                     containerColor = Color(0xFFF97316),
                                     textColor = Color.White,
@@ -2659,7 +2659,7 @@ private fun InlinePromptBubble(
             ) {
                 Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp)) {
                     Text(
-                        text = "Bepes can ban xac nhan",
+                        text = "Bepes cần bạn xác nhận",
                         color = Color(0xFFF97316),
                         fontSize = 12.sp,
                         fontFamily = FontFamily(Font(resId = R.font.roboto_bold))
@@ -2673,7 +2673,7 @@ private fun InlinePromptBubble(
                     )
                     if (!message.recipeName.isNullOrBlank()) {
                         Text(
-                            text = "Mon: ${message.recipeName}",
+                            text = "Món: ${message.recipeName}",
                             color = Color(0xFF6B7280),
                             fontSize = 12.sp,
                             fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -2683,7 +2683,7 @@ private fun InlinePromptBubble(
                     when (status) {
                         PromptStatus.RESOLVED -> {
                             Text(
-                                text = "Da chon: ${message.selectedActionId.orEmpty()}",
+                                text = "Đã chọn: ${message.selectedActionId.orEmpty()}",
                                 color = Color(0xFF166534),
                                 fontSize = 12.sp,
                                 fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
@@ -2692,7 +2692,7 @@ private fun InlinePromptBubble(
                         }
                         PromptStatus.ERROR -> {
                             Text(
-                                text = message.errorText ?: "Khong the xu ly prompt.",
+                                text = message.errorText ?: "Không thể xử lý prompt.",
                                 color = Color(0xFFB91C1C),
                                 fontSize = 12.sp,
                                 fontFamily = FontFamily(Font(resId = R.font.roboto_regular)),
@@ -2744,12 +2744,12 @@ private fun InlinePromptBubble(
 
 private fun promptActionLabel(actionId: String, fallback: String): String {
     return when (actionId) {
-        MealCompletionAction.MARK_DONE -> "Da xong mon"
-        MealCompletionAction.MARK_SKIPPED -> "Bo qua mon"
-        MealCompletionAction.CONTINUE_CURRENT -> "Chua xong, tiep tuc"
-        MealCompletionAction.COMPLETE_SESSION -> "Dong phien"
-        MealCompletionAction.KEEP_SESSION_OPEN -> "Giu phien mo"
-        MealCompletionAction.ADD_MORE_RECIPES -> "Chon them mon"
+        MealCompletionAction.MARK_DONE -> "Đã xong món"
+        MealCompletionAction.MARK_SKIPPED -> "Bỏ qua món"
+        MealCompletionAction.CONTINUE_CURRENT -> "Chưa xong, tiếp tục"
+        MealCompletionAction.COMPLETE_SESSION -> "Đóng phiên"
+        MealCompletionAction.KEEP_SESSION_OPEN -> "Giữ phiên mở"
+        MealCompletionAction.ADD_MORE_RECIPES -> "Chọn thêm món"
         else -> fallback.ifBlank { actionId }
     }
 }

@@ -205,6 +205,9 @@ fun HomeScreen(
 
     if (showRecommendationOverlay && isLoggedIn && user != null) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val pantryNames = remember(homeState.pantries) {
+            homeState.pantries.associate { it.pantryId to it.name }
+        }
         ModalBottomSheet(
             onDismissRequest = { showRecommendationOverlay = false },
             sheetState = sheetState,
@@ -214,6 +217,8 @@ fun HomeScreen(
                 isLoading = homeState.isLoading || homeState.isRefreshingRecommendations,
                 readyToCook = readyToCook,
                 almostReady = almostReady,
+                pantryRecommendations = homeState.pantryRecommendations,
+                pantryNames = pantryNames,
                 onRefresh = { appFlowViewModel.refreshRecommendations(user!!.userId) },
                 onOpenRecipeChat = { recipeId ->
                     showRecommendationOverlay = false
@@ -290,6 +295,7 @@ private fun TodayEatCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val totalCount = readyToCook.size + almostReady.size
     Card(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF9E1)),
@@ -318,10 +324,10 @@ private fun TodayEatCard(
                     )
                 }
                 StatusBadge(
-                    text = when {
-                        readyToCook.isNotEmpty() -> stringResource(R.string.home_ready_count, readyToCook.size)
-                        almostReady.isNotEmpty() -> stringResource(R.string.home_almost_ready_count, almostReady.size)
-                        else -> stringResource(R.string.home_ready_count, 0)
+                    text = if (totalCount > 0) {
+                        stringResource(R.string.home_ready_count, totalCount)
+                    } else {
+                        stringResource(R.string.home_ready_count, 0)
                     },
                     containerColor = Color(0xFFFFEDD5),
                     textColor = Color(0xFFC2410C)
@@ -504,6 +510,8 @@ private fun PantryRecommendationOverlay(
     isLoading: Boolean,
     readyToCook: List<Recommendation>,
     almostReady: List<Recommendation>,
+    pantryRecommendations: Map<Int, List<Recommendation>>,
+    pantryNames: Map<Int, String>,
     onRefresh: () -> Unit,
     onOpenRecipeChat: (Int) -> Unit,
     modifier: Modifier = Modifier
@@ -541,39 +549,52 @@ private fun PantryRecommendationOverlay(
             return
         }
 
-        Text(
-            text = stringResource(R.string.home_ready_to_cook),
-            color = Color(0xFF15803D),
-            fontSize = 14.sp,
-            fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
-            modifier = Modifier.padding(top = 10.dp)
-        )
-        if (readyToCook.isEmpty()) {
-            EmptyRecommendationCard(text = stringResource(R.string.home_empty_ready_to_cook))
-        } else {
-            readyToCook.take(6).forEach { recommendation ->
-                RecommendationOverlayCard(
-                    recommendation = recommendation,
-                    onOpenRecipeChat = onOpenRecipeChat
-                )
-            }
-        }
+        // Group recommendations by pantry in bottom sheet
+        pantryRecommendations.forEach { (pantryId, recommendations) ->
+            val pantryName = pantryNames[pantryId] ?: "Pantry #$pantryId"
+            val pantryReadyToCook = recommendations.filter { it.completionRate == 100 }
+            val pantryAlmostReady = recommendations.filter { it.completionRate != null && it.completionRate < 100 }
 
-        Text(
-            text = stringResource(R.string.home_almost_ready),
-            color = Color(0xFFB45309),
-            fontSize = 14.sp,
-            fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
-            modifier = Modifier.padding(top = 12.dp)
-        )
-        if (almostReady.isEmpty()) {
-            EmptyRecommendationCard(text = stringResource(R.string.home_empty_almost_ready))
-        } else {
-            almostReady.take(6).forEach { recommendation ->
-                RecommendationOverlayCard(
-                    recommendation = recommendation,
-                    onOpenRecipeChat = onOpenRecipeChat
+            if (recommendations.isEmpty()) return@forEach
+
+            Text(
+                text = pantryName,
+                color = Color(0xFF6B7280),
+                fontSize = 12.sp,
+                fontFamily = FontFamily(Font(resId = R.font.roboto_medium)),
+                modifier = Modifier.padding(top = 14.dp, bottom = 4.dp)
+            )
+
+            if (pantryReadyToCook.isNotEmpty()) {
+                Text(
+                    text = stringResource(R.string.home_ready_to_cook),
+                    color = Color(0xFF15803D),
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                    modifier = Modifier.padding(top = 4.dp)
                 )
+                pantryReadyToCook.take(6).forEach { recommendation ->
+                    RecommendationOverlayCard(
+                        recommendation = recommendation,
+                        onOpenRecipeChat = onOpenRecipeChat
+                    )
+                }
+            }
+
+            if (pantryAlmostReady.isNotEmpty()) {
+                Text(
+                    text = stringResource(R.string.home_almost_ready),
+                    color = Color(0xFFB45309),
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily(Font(resId = R.font.roboto_bold)),
+                    modifier = Modifier.padding(top = 10.dp)
+                )
+                pantryAlmostReady.take(6).forEach { recommendation ->
+                    RecommendationOverlayCard(
+                        recommendation = recommendation,
+                        onOpenRecipeChat = onOpenRecipeChat
+                    )
+                }
             }
         }
     }

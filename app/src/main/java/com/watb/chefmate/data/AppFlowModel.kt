@@ -160,14 +160,24 @@ data class Recommendation(
     val cookingTime: String? = null,
     val ration: Int? = null,
     val completionRate: Int? = null,
-    val missing: List<MissingIngredient> = emptyList()
+    val missing: List<MissingIngredient> = emptyList(),
+    // New API fields
+    val score: Double? = null,
+    val reasons: List<String> = emptyList(),
+    val scoreBreakdown: Map<String, Double> = emptyMap()
 )
 
 data class RecommendationPayload(
     val recommendationLimit: Int = 10,
     val recommendations: List<Recommendation> = emptyList(),
     val readyToCook: List<Recommendation> = emptyList(),
-    val almostReady: List<Recommendation> = emptyList()
+    val almostReady: List<Recommendation> = emptyList(),
+    // New API response structure
+    val context: String? = null,
+    val appliedContext: Map<String, Any>? = null,
+    val profileConfidence: Double? = null,
+    val insights: List<Map<String, Any>> = emptyList(),
+    val items: List<Recommendation> = emptyList()
 )
 
 data class ChatSession(

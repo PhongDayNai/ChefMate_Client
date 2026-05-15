@@ -42,6 +42,7 @@ object AppFlowApiClient {
 
     private const val V1_CHAT_BASE = "/v2/ai-chat-v1"
     private const val V2_CHAT_BASE = "/v2/ai-chat"
+    private const val V2_RECOMMENDATIONS_BASE = "/v2/recommendations"
 
     private inline fun <reified T> parseData(data: JsonElement?): T? {
         if (data == null || data.isJsonNull) return null
@@ -289,18 +290,24 @@ object AppFlowApiClient {
     }
 
     // Recommendations
-    suspend fun getRecommendations(userId: Int, pantryId: Int? = null, limit: Int = 10): ApiNetworkResult<RecommendationPayload> {
-        val body = gson.toJson(mapOf("limit" to limit, "pantryId" to pantryId))
-            .toRequestBody(jsonMediaType)
+    suspend fun getRecommendations(pantryId: Int? = null, limit: Int = 10): ApiNetworkResult<RecommendationPayload> {
+        val url = buildUrl("$V2_RECOMMENDATIONS_BASE/personalized", mapOf(
+            "limit" to limit.toString(),
+            "pantryId" to pantryId?.toString()
+        ))
+        android.util.Log.d("AppFlowDebug", "getRecommendations: URL=$url")
 
-        val raw = ApiRequestExecutor.executeRaw(AuthMode.CHAT_DUAL) {
+        val raw = ApiRequestExecutor.executeRaw(AuthMode.BEARER) {
             Request.Builder()
-                .url(buildUrl("$V1_CHAT_BASE/recommendations-from-pantry"))
-                .post(body)
+                .url(url)
+                .get()
                 .build()
         }
+        android.util.Log.d("AppFlowDebug", "getRecommendations: raw.success=${raw.success}, httpStatus=${raw.httpStatus}, code=${raw.code}, rawBody=${raw.rawBody?.take(500)}")
         val payload = parseData<RecommendationPayload>(raw.data)
+        android.util.Log.d("AppFlowDebug", "getRecommendations: parsed payload=$payload")
         val normalized = payload?.normalizeRecommendations() ?: RecommendationPayload(recommendationLimit = limit)
+        android.util.Log.d("AppFlowDebug", "getRecommendations: normalized recommendations.size=${normalized.recommendations.size}, readyToCook.size=${normalized.readyToCook.size}, almostReady.size=${normalized.almostReady.size}")
         return toTypedResult(raw, normalized)
     }
 
@@ -546,19 +553,33 @@ object AppFlowApiClient {
     }
 
     private fun RecommendationPayload.normalizeRecommendations(): RecommendationPayload {
+        // New API returns `items` with recommendationType instead of completionRate
+        val sourceItems = items.ifEmpty { recommendations }
+
+        // Classify by recommendationType (new API uses this instead of completionRate)
+        // pantry_optimized = can make with pantry ingredients (almost ready - needs some ingredients)
+        // preference_match = matched to user preferences (ready to cook)
         val ready = if (readyToCook.isNotEmpty()) {
             readyToCook
         } else {
-            recommendations.filter { it.recommendationType == "ready_to_cook" }
+            sourceItems.filter { it.recommendationType == "ready_to_cook" || it.recommendationType == "preference_match" }
         }
 
         val almost = if (almostReady.isNotEmpty()) {
             almostReady
         } else {
-            recommendations.filter { it.recommendationType == "almost_ready" }
+            sourceItems.filter { it.recommendationType == "almost_ready" || it.recommendationType == "pantry_optimized" }
+        }
+
+        // Use items as recommendations if recommendations is empty
+        val finalRecommendations = if (recommendations.isNotEmpty()) {
+            recommendations
+        } else {
+            items
         }
 
         return copy(
+            recommendations = finalRecommendations,
             readyToCook = ready,
             almostReady = almost
         )
